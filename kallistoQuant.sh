@@ -1,11 +1,21 @@
 #!/bin/bash
 
 ORG_TYPE=$1 # adult or juvenile
+TRANSCRIPTOME_TYPE=$2 # A (adult) or LA (Larvae Adult) or LJA (Larvae Juvenile Adult)
 SEQ_PATH=/scratch2/genomes/mmeynadier/results/trimmomatic/$ORG_TYPE
-TRANSCRIPT_INDEX=/scratch2/genomes/mmeynadier/results/kallisto/transcriptAdultIndex.idx
-SEQ_DIR=$2 # name of dir
-OUTPUT_DIR=/scratch2/genomes/mmeynadier/results/kallisto/$ORG_TYPE/$SEQ_DIR
-SEQUENCE_TYPE=$3 # paired or single
+SEQ_DIR=$3 # name of dir
+SEQUENCE_TYPE=$4 # paired or single
+
+if [ $TRANSCRIPTOME_TYPE = "A" ]; then
+  TRANSCRIPT_INDEX=/scratch2/genomes/mmeynadier/results/kallisto/transcriptAdultIndex.idx
+  OUTPUT_DIR=/scratch2/genomes/mmeynadier/results/kallisto/$ORG_TYPE/adultTranscriptome/$SEQ_DIR
+fi
+
+if [ $TRANSCRIPTOME_TYPE = "LA" ]; then
+  TRANSCRIPT_INDEX=/scratch2/genomes/mmeynadier/results/kallisto/transcriptLarvaeAdultIndex.idx
+  OUTPUT_DIR=/scratch2/genomes/mmeynadier/results/kallisto/$ORG_TYPE/larvaeAdultTranscriptome/$SEQ_DIR
+fi
+
 
 if [ $SEQUENCE_TYPE = "paired" ]; then
   for i in ${SEQ_PATH}/${SEQ_DIR}/*_1_paired_trimmed.fq.gz
@@ -21,8 +31,8 @@ if [ $SEQUENCE_TYPE = "paired" ]; then
 fi
 
 if [ $SEQUENCE_TYPE = "single" ]; then
-  LENGTH=$4
-  SD=$5
+  LENGTH=$5
+  SD=$6
   for i in ${SEQ_PATH}/${SEQ_DIR}/*.fq.gz
   do
     SAMPLE_NAME=$(echo $i | cut -d . -f 1 | sed 's|.*/||')
