@@ -1,6 +1,6 @@
 # Differential expression on Kallisto data 
 
-setwd('~/Documents/Projet/code/rstudioEnv')
+setwd('~/Documents/Projet/code/kallistoResults')
 
 # Functions
 
@@ -27,16 +27,21 @@ tx2gene <- function(){
 
 # Packages dependance
 
-packageCheckClassic(c('DESeq2','tidyverse','devtools','BiocManager','tximportData'))
-remotes::install_github("pachterlab/sleuth#260")
-BiocManager::install('tximport', force = TRUE)
-library('tximport')
+packageCheckClassic(c('DESeq2','tidyverse','devtools','BiocManager','tximportData','rhdf5'))
+#remotes::install_github("pachterlab/sleuth#260")
+#BiocManager::install('tximport', force = TRUE)
+#library('tximport')
 
 # Data importation
 
-dataset15873 <- '~/Documents/Projet/code/rstudioEnv/15873'
-dataset15941 <- '~/Documents/Projet/code/rstudioEnv/15941'
+BiocManager::install("tximportData")
+library(tximportData)
+dir <- system.file("extdata", package = "tximportData")
+list.files(dir)
 
 
-t2g <- tx2gene()
+adultTranscriptome_adult_nov2016 <- '~/Documents/Projet/code/kallistoResults/adultTranscriptome/adult/nov2016'
+larvaeAdultTranscriptome_adult_nov2016 <- '~/Documents/Projet/code/kallistoResults/larvaeAdultdultTranscriptome/adult/nov2016'
+
+
 
