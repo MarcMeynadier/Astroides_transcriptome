@@ -36,31 +36,19 @@ packageCheckClassic(c('DESeq2','tidyverse','devtools','BiocManager','tximport','
 
 library(tximport)
 
-samples<-read.table('../sample_list.txt',header=T)
+samples<-read.table('sample_list.txt',header=T)
 
-# regex try
-grx <- glob2rx("*.tsv")
-
-files <- file.path(samples$dir, with(samples, subset(samples, subset = grepl(grx, rownames(samples)))))
+files<-paste0(samples$sample,'.tsv')
 
 names(files)<-samples$sample
 
-txi <- tximport(files, type = "kallisto", txOut=T)
-
-#normal try
-files <- file.path(samples$dir, "abundance.tsv")
-
-names(files)<-samples$sample
-
-txi <- tximport(files, type = "kallisto", txOut=T)
+txi<-tximport(files = files,type='kallisto',txOut=T)
 
 names(txi)
 
 head(txi$counts)
 
 
-adultTranscriptome_adult_nov2016 <- '~/Documents/Projet/code/kallistoResults/adultTranscriptome/adult/nov2016'
-larvaeAdultTranscriptome_adult_nov2016 <- '~/Documents/Projet/code/kallistoResults/larvaeAdultdultTranscriptome/adult/nov2016'
 
 
 
