@@ -1,6 +1,6 @@
 # Differential expression on Kallisto data 
 
-setwd('~/Documents/Projet/code/kallistoResults')
+setwd('~/Documents/Projet/code/kallistoResults/adultTranscriptome/adult/nov2016')
 
 # Functions
 
@@ -27,17 +27,36 @@ tx2gene <- function(){
 
 # Packages dependance
 
-packageCheckClassic(c('DESeq2','tidyverse','devtools','BiocManager','tximportData','rhdf5'))
+packageCheckClassic(c('DESeq2','tidyverse','devtools','BiocManager','tximport','rhdf5'))
 #remotes::install_github("pachterlab/sleuth#260")
 #BiocManager::install('tximport', force = TRUE)
 #library('tximport')
 
-# Data importation
+# Data importation - tximport
 
-BiocManager::install("tximportData")
-library(tximportData)
-dir <- system.file("extdata", package = "tximportData")
-list.files(dir)
+library(tximport)
+
+samples<-read.table('../sample_list.txt',header=T)
+
+# regex try
+grx <- glob2rx("*.tsv")
+
+files <- file.path(samples$dir, with(samples, subset(samples, subset = grepl(grx, rownames(samples)))))
+
+names(files)<-samples$sample
+
+txi <- tximport(files, type = "kallisto", txOut=T)
+
+#normal try
+files <- file.path(samples$dir, "abundance.tsv")
+
+names(files)<-samples$sample
+
+txi <- tximport(files, type = "kallisto", txOut=T)
+
+names(txi)
+
+head(txi$counts)
 
 
 adultTranscriptome_adult_nov2016 <- '~/Documents/Projet/code/kallistoResults/adultTranscriptome/adult/nov2016'
