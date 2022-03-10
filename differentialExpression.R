@@ -116,7 +116,7 @@ p = EnhancedVolcano(data.frame(res_gm_pv), lab = rownames(data.frame(res_gm_pv))
                     xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                     pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
                     title = "Volcano plot", subtitle = "Contrast between gm and pv",
-                    caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res), ' variables'),
+                    caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_gm_pv), ' variables'),
                     legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
                     legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
 
@@ -175,11 +175,11 @@ dev.off()
 pCutoff = 0.05
 FCcutoff = 1.0
 
-p = EnhancedVolcano(data.frame(res_gm_sa), lab = rownames(data.frame(res)), x = 'log2FoldChange', y = 'padj',
+p = EnhancedVolcano(data.frame(res_gm_sa), lab = rownames(data.frame(res_gm_sa)), x = 'log2FoldChange', y = 'padj',
                     xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                     pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
                     title = "Volcano plot", subtitle = "Contrast between gm and sa",
-                    caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res), ' variables'),
+                    caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_gm_sa), ' variables'),
                     legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
                     legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
 
@@ -190,8 +190,8 @@ dev.off()
 
 # Exporting results
 
-resOrdered_gm_pv <- res_gm_pv[order(res$pvalue),]
-resOrdered_gm_sa <- res_gm_sa[order(res$pvalue),]
+resOrdered_gm_pv <- res_gm_pv[order(res_gm_pv$pvalue),]
+resOrdered_gm_sa <- res_gm_sa[order(res_gm_sa$pvalue),]
 head(resOrdered_gm_pv)
 head(resOrdered_gm_sa)
 
