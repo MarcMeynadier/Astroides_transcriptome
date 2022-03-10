@@ -30,9 +30,13 @@ tx2gene <- function(){
 packageCheckClassic(c('DESeq2','tidyverse','devtools','BiocManager','rhdf5','ggplot2','ggrepel'))
 #remotes::install_github("pachterlab/sleuth#260")
 #BiocManager::install('tximport', force = TRUE)
-BiocManager::install('apeglm')
+#BiocManager::install('apeglm')
+#BiocManager::install('ashr')
+BiocManager::install("EnhancedVolcano")
 library('tximport')
 library('apeglm')
+library('ashr')
+library('EnhancedVolcano')
 
 # Data importation - tximport
 
@@ -48,24 +52,23 @@ names(txi)
 
 head(txi$counts)
 
-dds<-DESeqDataSetFromTximport(txi,colData=samples,design=~condition)
+dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~ condition)
+
+keep <- rowSums(counts(dds)) >= 10 # pre-filtering
+dds <- dds[keep,]
 
 # Differential expression analysis
 
 dds<-DESeq(dds)
 cbind(resultsNames(dds))
-res1<-results(dds, name = "Intercept", alpha = 0.05)
-res2<-results(dds, name = "condition_pv_pv_pre_vs_gm_gm_pre", alpha = 0.05)
-res3<-results(dds, name = "condition_sa_sa_pre_vs_gm_gm_pre", alpha = 0.05) 
-summary(res1)
-summary(res2)
-summary(res3) 
+res<-results(dds, contrast=c("condition","sa","pv"), alpha = 0.05)
+summary(res)
 
 # Exploring the results
 
 #MA-plot
-resLFC = lfcShrink(dds, coef = "condition_pv_pv_pre_vs_gm_gm_pre", 
-                   type="apeglm")
+resLFC = lfcShrink(dds, contrast=c("condition","sa","pv"), 
+                   type="ashr")
 
 png("DGE_MA-plot.kallisto.png", width=7, height=5, units = "in", res = 300)
 plotMA(resLFC, alpha = 0.05, ylim=c(-6,6), 
@@ -84,7 +87,7 @@ percentVar = round(100 * attr(pcaData, "percentVar"))
 png("DGE_PCA-rlog.kallisto.png", width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = condition)) + 
   geom_point(size = 2) + theme_bw() + 
-  scale_color_manual(values = c("blue", "red")) +
+  scale_color_manual(values = c("blue", "red","green")) +
   geom_text_repel(aes(label = condition), nudge_x = -1, nudge_y = 0.2, size = 3) +
   ggtitle("Principal Component Analysis (PCA)", subtitle = "rlog transformation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
@@ -94,14 +97,15 @@ dev.off()
 # vst transformation
 vsd = vst(dds)
 
-pcaData = plotPCA(vsd, intgroup=c("individual","paris_classification"), 
+pcaData = plotPCA(vsd, intgroup="condition", 
                   returnData=TRUE)
 percentVar = round(100 * attr(pcaData, "percentVar"))
 
 png("DGE_PCA-vst.kallisto.png", width=7, height=7, units = "in", res = 300)
-ggplot(pcaData, aes(PC1, PC2, colour = paris_classification)) + 
-  geom_point(size = 2) +theme_bw() + scale_color_manual(values = c("blue", "red")) +
-  geom_text_repel(aes(label = individual), nudge_x = -1, nudge_y = 0.2, size = 3) +
+ggplot(pcaData, aes(PC1, PC2, colour = condition)) + 
+  geom_point(size = 2) + theme_bw() + 
+  scale_color_manual(values = c("blue", "red","green")) +
+  geom_text_repel(aes(label = condition), nudge_x = -1, nudge_y = 0.2, size = 3) +
   ggtitle("Principal Component Analysis (PCA)", subtitle = "vst transformation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance"))
@@ -111,14 +115,24 @@ dev.off()
 pCutoff = 0.05
 FCcutoff = 1.0
 
-p = EnhancedVolcano(data.frame(res), lab = NA, x = 'log2FoldChange', y = 'padj',
+p = EnhancedVolcano(data.frame(res), lab = rownames(data.frame(res)), x = 'log2FoldChange', y = 'padj',
                     xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                     pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
-                    title = "Volcano plot", subtitle = "SSA/P vs. Normal",
+                    title = "Volcano plot", subtitle = "Contrast between conditions",
                     caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res), ' variables'),
-                    legend=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
+                    legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
                     legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
 
 png("DGE_VolcanoPlots.kallisto.png", width=7, height=7, units = "in", res = 300)
 print(p)
 dev.off()
+
+# Exporting results
+
+resOrdered <- res[order(res$pvalue),]
+head(resOrdered)
+
+resOrderedDF <- as.data.frame(resOrdered)
+write.csv(resOrderedDF, file = "results.csv")
+
+sessionInfo()
