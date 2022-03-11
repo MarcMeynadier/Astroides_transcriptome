@@ -68,8 +68,7 @@ resLFC = lfcShrink(dds, contrast=c("condition","gm","pv"),
                    type="ashr")
 
 png("DGE_MA-plot_adult_adultTranscriptome_nov2016_gm_VS_pv.png", width=7, height=5, units = "in", res = 300)
-plotMA(resLFC, alpha = 0.05, ylim=c(-6,6), 
-       main = "MA-plot for the shrunken log2 fold changes")
+plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), plot.it=T, main = "MA-plot for the shrunken log2 fold changes")
 dev.off()
 
 # Principal Component Analysis
@@ -81,14 +80,15 @@ pcaData = plotPCA(rld, intgroup="condition",
                   returnData=TRUE)
 percentVar = round(100 * attr(pcaData, "percentVar"))
 
-png("DGE_PCA-rlog_adult_adultTranscriptome_nov2016_gm_VS_pv.png", width=7, height=7, units = "in", res = 300)
-ggplot(pcaData, aes(PC1, PC2, colour = condition)) + 
+rldPlot<-ggplot(pcaData, aes(PC1, PC2, colour = condition)) + 
   geom_point(size = 2) + theme_bw() + 
   scale_color_manual(values = c("blue", "red","green")) +
   geom_text_repel(aes(label = condition), nudge_x = -1, nudge_y = 0.2, size = 3) +
   ggtitle("Principal Component Analysis (PCA)", subtitle = "rlog transformation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance"))
+rldPlot
+png("DGE_PCA-rlog_adult_adultTranscriptome_nov2016_gm_VS_pv.png", width=7, height=7, units = "in", res = 300)
 dev.off()
 
 # vst transformation
