@@ -16,7 +16,7 @@ packageCheckClassic <- function(x){
   }
 }
 
-packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel'))
+packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown'))
 #BiocManager::install('tximport', force = TRUE)
 #BiocManager::install('apeglm')
 #BiocManager::install('ashr')
@@ -31,7 +31,7 @@ library('EnhancedVolcano')
 
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
 scriptPath <- sub("/[^/]+$", "", scriptPath)
-dataPath<-'/data/intermediateData/5_kallisto/adult/adultTranscriptome/nov2016'
+dataPath<-'/data/net/5_kallisto/larvaeAdultTranscriptome/adult/nov2016'
 outputPath<-paste(scriptPath,'/output/DESeq2/1_preliminarySamples/',sep='')
 wdPath<-paste(scriptPath,dataPath,sep='')
 setwd(wdPath)
@@ -39,12 +39,13 @@ setwd(wdPath)
 # Data importation - txImport
 
 samples<-read.table('tximport_design_preliminarySamples.txt',header=T)
+tx2gene<-read.table('tx2gene',header=T)
 
 files<-paste0(samples$sample,'.tsv')
 
 names(files)<-samples$sample
 
-txi<-tximport(files = files,type='kallisto',txOut=T)
+txi<-tximport(files = files,type='kallisto',tx2gene = tx2gene)
 
 names(txi)
 
@@ -192,7 +193,7 @@ head(resOrdered_gm_sa)
 
 resOrderedDF_gm_pv <- as.data.frame(resOrdered_gm_pv)
 resOrderedDF_gm_sa <- as.data.frame(resOrdered_gm_sa)
-write.csv(resOrderedDF_gm_pv, file = paste(scriptPath,'/data/intermediateData/6_deseq2/adult/1_preliminarySamples/DESeq2_results_adult_adultTranscriptome_nov2016_gm_VS_pv.csv',sep=''))
-write.csv(resOrderedDF_gm_sa, file = paste(scriptPath,'/data/intermediateData/6_deseq2/adult/1_preliminarySamples/DESeq2_results_adult_adultTranscriptome_nov2016_gm_VS_sa.csv',sep=''))
+write.csv(resOrderedDF_gm_pv, file = paste(scriptPath,'/data/net/6_deseq2/adult/1_preliminarySamples/DESeq2_results_adult_adultTranscriptome_nov2016_gm_VS_pv.csv',sep=''))
+write.csv(resOrderedDF_gm_sa, file = paste(scriptPath,'/data/net/6_deseq2/adult/1_preliminarySamples/DESeq2_results_adult_adultTranscriptome_nov2016_gm_VS_sa.csv',sep=''))
 
 sessionInfo()
