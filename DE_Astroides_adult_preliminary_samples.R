@@ -16,7 +16,7 @@ packageCheckClassic <- function(x){
   }
 }
 
-packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown'))
+packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown','pheatmap','RColorBrewer','genefilter','gplots'))
 #BiocManager::install('tximport', force = TRUE)
 #BiocManager::install('apeglm')
 #BiocManager::install('ashr')
@@ -25,7 +25,6 @@ library('tximport')
 library('apeglm')
 library('ashr')
 library('EnhancedVolcano')
-
 
 # Working environment 
 
@@ -53,7 +52,8 @@ head(txi$counts)
 
 dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~condition)
 
-keep <- rowSums(counts(dds)) >= 10 # pre-filtering
+# pre-filtering
+keep <- rowSums(counts(dds)) >= 10 
 dds <- dds[keep,]
 
 # Differential expression analysis
@@ -108,6 +108,7 @@ vstPlot<-ggplot(pcaData, aes(PC1, PC2, colour = condition)) +
   ggtitle("Principal Component Analysis (PCA)", subtitle = "vst transformation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance"))
+vstPlot
 dev.off()
 
 # Volcano plot
@@ -182,6 +183,16 @@ EnhancedVolcano(data.frame(res_gm_sa), lab = rownames(data.frame(res_gm_sa)), x 
                     legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
                     legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
 dev.off()
+
+
+# heatmap
+
+topVarGenes <- head(order(rowVars(assay(vsd)), decreasing=TRUE), 100 )
+heatmap.2(assay(vsd)[topVarGenes,], trace="none",scale="row", dendrogram="column", keysize=1, key.par = list(cex=0.5),
+           col=colorRampPalette(rev(brewer.pal(9,"RdBu")))(255), cexRow=0.5, cexCol=0.7, labCol=F,
+           ColSideColors=c(gm="gray", pv="green", sa="yellow")[
+             colData(vsd)$condition],xlab="sampling sites",ylab="genes",margins = c(2, 11),
+          lmat=rbind(c(5, 4, 2), c(6, 1, 3)), lhei=c(2.5, 5), lwid=c(1, 10, 1))
 
 
 # Exporting results
