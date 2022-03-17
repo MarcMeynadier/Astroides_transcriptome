@@ -70,7 +70,7 @@ dev.off()
 # Volcano plot
 pCutoff = 0.05
 FCcutoff = 1.0
-png(paste(outputPath,'DGE_volcanoPlot_adult_preliminarySamples_VS_pv.png',sep=''), width=7, height=7, units = "in", res = 300)
+png(paste(outputPath,'DGE_volcanoPlot_adult_preliminarySamples_gm_VS_pv.png',sep=''), width=7, height=7, units = "in", res = 300)
 EnhancedVolcano(data.frame(res_gm_pv), lab = rownames(data.frame(res_gm_pv)), x = 'log2FoldChange', y = 'padj',
                     xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                     pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,

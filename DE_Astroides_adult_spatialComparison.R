@@ -15,7 +15,7 @@ packageCheckClassic <- function(x){
   }
 }
 
-packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown','pheatmap','RColorBrewer','genefilter','gplots'))
+packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown','RColorBrewer','genefilter','gplots'))
 #BiocManager::install('tximport', force = TRUE)
 #BiocManager::install('apeglm')
 #BiocManager::install('ashr')
@@ -24,6 +24,8 @@ library('tximport')
 library('apeglm')
 library('ashr')
 library('EnhancedVolcano')
+install_github('cran/heatmap.plus')
+library(heatmap.plus)
 
 # Working environment 
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
@@ -57,94 +59,216 @@ ddsPaired <- ddsPaired[keepPaired,]
 keepSingle <- rowSums(counts(ddsSingle)) >= 10 
 ddsSingle <- ddsSingle[keepSingle,]
 
-  # Differential expression analysis
-dds<-DESeq(dds)
-cbind(resultsNames(dds))
-res_gm_pv<-results(dds, contrast=c("site","gm","pv"), alpha = 0.05)
-res_gm_sp<-results(dds, contrast=c("site","gm","sp"), alpha = 0.05)
-res_gm_sa<-results(dds, contrast=c("site","gm","sa"), alpha = 0.05)
-res_paired_single<-results(dds, contrast=c("sequence","paired","single"), alpha = 0.05)
-res_tro_bck<-results(dds, contrast=c("experiment","tro","bck"), alpha = 0.05)
-summary(res_gm_pv)
-summary(res_gm_sp)
-summary(res_paired_single)
-summary(res_tro_bck)
+# Differential expression analysis
+
+# Paired end sequences 
+ddsPaired<-DESeq(ddsPaired)
+cbind(resultsNames(ddsPaired))
+res_gm_pv_paired<-results(ddsPaired, contrast=c("site","gm","pv"), alpha = 0.05)
+res_gm_sp_paired<-results(ddsPaired, contrast=c("site","gm","sp"), alpha = 0.05)
+res_gm_sa_paired<-results(ddsPaired, contrast=c("site","gm","sa"), alpha = 0.05)
+res_tro_bck_paired<-results(ddsPaired, contrast=c("experiment","tro","bck"), alpha = 0.05)
+summary(res_gm_pv_paired)
+summary(res_gm_sp_paired)
+summary(res_gm_sa_paired)
+summary(res_tro_bck_paired)
+
+# Single end sequences 
+ddsSingle<-DESeq(ddsSingle)
+cbind(resultsNames(ddsSingle))
+res_gm_pv_single<-results(ddsSingle, contrast=c("site","gm","pv"), alpha = 0.05)
+res_gm_sp_single<-results(ddsSingle, contrast=c("site","gm","sp"), alpha = 0.05)
+res_tro_bck_single<-results(ddsSingle, contrast=c("experiment","tro","bck"), alpha = 0.05)
+summary(res_gm_pv_single)
+summary(res_gm_sp_single)
+summary(res_tro_bck_single)
 
 # Exploring the results
 
 # Results gm VS pv
 
-#MA-plot
-png(paste(outputPath,'DGE_MA-plot_adult_preliminarySamples_gm_VS_pv.png',sep=''), width=7, height=5, units = "in", res = 300)
-resLFC = lfcShrink(dds, contrast=c("site","gm","pv"), 
+# MA-plot
+# Paired
+png(paste(outputPath,'DGE_MA-plot_adult_spatialComparisonPaired_gm_VS_pv.png',sep=''), width=7, height=5, units = "in", res = 300)
+resLFC = lfcShrink(ddsPaired, contrast=c("site","gm","pv"), 
+                   type="ashr")
+plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes")
+dev.off()
+
+# Single
+png(paste(outputPath,'DGE_MA-plot_adult_spatialComparisonSingle_gm_VS_pv.png',sep=''), width=7, height=5, units = "in", res = 300)
+resLFC = lfcShrink(ddsSingle, contrast=c("site","gm","pv"), 
                    type="ashr")
 plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes")
 dev.off()
 
 # Volcano plot
+# Paired
 pCutoff = 0.05
 FCcutoff = 1.0
-png(paste(outputPath,'DGE_volcanoPlot_adult_preliminarySamples_VS_pv.png',sep=''), width=7, height=7, units = "in", res = 300)
-EnhancedVolcano(data.frame(res_gm_pv), lab = rownames(data.frame(res_gm_pv)), x = 'log2FoldChange', y = 'padj',
+png(paste(outputPath,'DGE_volcanoPlot_adult_spatialComparisonPaired_gm_VS_pv.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(res_gm_pv_paired), lab = rownames(data.frame(res_gm_pv_paired)), x = 'log2FoldChange', y = 'padj',
                 xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                 pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
                 title = "Volcano plot", subtitle = "Contrast between gm and pv",
-                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_gm_pv), ' variables'),
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_gm_pv_paired), ' variables'),
+                legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
+                legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
+dev.off()
+
+# Single
+png(paste(outputPath,'DGE_volcanoPlot_adult_spatialComparisonSingle_gm_VS_pv.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(res_gm_pv_single), lab = rownames(data.frame(res_gm_pv_single)), x = 'log2FoldChange', y = 'padj',
+                xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
+                title = "Volcano plot", subtitle = "Contrast between gm and pv",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_gm_pv_single), ' variables'),
                 legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
                 legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
 dev.off()
 
 # Results gm VS sp
 
-#MA-plot
-png(paste(outputPath,'DGE_MA-plot_adult_preliminarySamples_gm_VS_sa.png',sep=''), width=7, height=5, units = "in", res = 300)
-resLFC = lfcShrink(dds, contrast=c("site","gm","sp"), 
+# MA-plot
+# Paired
+png(paste(outputPath,'DGE_MA-plot_adult_spatialComparisonPaired_gm_VS_sp.png',sep=''), width=7, height=5, units = "in", res = 300)
+resLFC = lfcShrink(ddsPaired, contrast=c("site","gm","sp"), 
+                   type="ashr")
+plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), 
+       main = "MA-plot for the shrunken log2 fold changes")
+dev.off()
+
+# Single
+png(paste(outputPath,'DGE_MA-plot_adult_spatialComparisonSingle_gm_VS_sp.png',sep=''), width=7, height=5, units = "in", res = 300)
+resLFC = lfcShrink(ddsSingle, contrast=c("site","gm","sp"), 
                    type="ashr")
 plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), 
        main = "MA-plot for the shrunken log2 fold changes")
 dev.off()
 
 # Volcano plot
-png(paste(outputPath,'DGE_volcanoPlot_adult_preliminarySamples_gm_VS_sa.png',sep=''), width=7, height=7, units = "in", res = 300)
-EnhancedVolcano(data.frame(res_gm_sp), lab = rownames(data.frame(res_gm_sa)), x = 'log2FoldChange', y = 'padj',
+# Paired
+png(paste(outputPath,'DGE_volcanoPlot_adult_spatialComparisonPaired_gm_VS_sp.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(res_gm_sp_paired), lab = rownames(data.frame(res_gm_sp_paired)), x = 'log2FoldChange', y = 'padj',
                 xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                 pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
                 title = "Volcano plot", subtitle = "Contrast between gm and sa",
-                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_gm_sa), ' variables'),
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_gm_sp_paired), ' variables'),
                 legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
                 legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
 dev.off()
 
+# Single
+png(paste(outputPath,'DGE_volcanoPlot_adult_spatialComparisonSingle_gm_VS_sp.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(res_gm_sp_single), lab = rownames(data.frame(res_gm_sp_single)), x = 'log2FoldChange', y = 'padj',
+                xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
+                title = "Volcano plot", subtitle = "Contrast between gm and sa",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_gm_sp_single), ' variables'),
+                legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
+                legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
+dev.off()
+
+# Results gm VS sa
+
+# MA-plot
+# Paired
+png(paste(outputPath,'DGE_MA-plot_adult_spatialComparisonPaired_gm_VS_sa.png',sep=''), width=7, height=5, units = "in", res = 300)
+resLFC = lfcShrink(ddsPaired, contrast=c("site","gm","sa"), 
+                   type="ashr")
+plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), 
+       main = "MA-plot for the shrunken log2 fold changes")
+dev.off()
+
+# Volcano plot
+# Paired
+png(paste(outputPath,'DGE_volcanoPlot_adult_spatialComparisonPaired_gm_VS_sa.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(res_gm_sa_paired), lab = rownames(data.frame(res_gm_sa_paired)), x = 'log2FoldChange', y = 'padj',
+                xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
+                title = "Volcano plot", subtitle = "Contrast between gm and sa",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_gm_sa_paired), ' variables'),
+                legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
+                legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
+dev.off()
+
+# Results tro vs bck
+
+# MA-plot
+# Paired
+png(paste(outputPath,'DGE_MA-plot_adult_spatialComparisonPaired_tro_VS_bck.png',sep=''), width=7, height=5, units = "in", res = 300)
+resLFC = lfcShrink(ddsPaired, contrast=c("experiment","tro","bck"), 
+                   type="ashr")
+plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), 
+       main = "MA-plot for the shrunken log2 fold changes")
+dev.off()
+
+# Single
+png(paste(outputPath,'DGE_MA-plot_adult_spatialComparisonSingle_tro_VS_bck.png',sep=''), width=7, height=5, units = "in", res = 300)
+resLFC = lfcShrink(ddsSingle, contrast=c("experiment","tro","bck"), 
+                   type="ashr")
+plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), 
+       main = "MA-plot for the shrunken log2 fold changes")
+dev.off()
+
+# Volcano plot
+# Paired
+png(paste(outputPath,'DGE_volcanoPlot_adult_spatialComparisonPaired_tro_VS_bck.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(res_tro_bck_paired), lab = rownames(data.frame(res_tro_bck_paired)), x = 'log2FoldChange', y = 'padj',
+                xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
+                title = "Volcano plot", subtitle = "Contrast between gm and sa",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_tro_bck_paired), ' variables'),
+                legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
+                legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
+dev.off()
+
+# Single
+png(paste(outputPath,'DGE_volcanoPlot_adult_spatialComparisonSingle_tro_VS_bck.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(res_tro_bck_single), lab = rownames(data.frame(res_tro_bck_single)), x = 'log2FoldChange', y = 'padj',
+                xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
+                title = "Volcano plot", subtitle = "Contrast between gm and sa",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_tro_bck_single), ' variables'),
+                legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
+                legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
+dev.off()
+
+
 # Principal Component Analysis
 
-# rlog transformation
-rld = rlog(dds)
+# vst transformation
 
-pcaData = plotPCA(rld, intgroup="site", 
+# Paired
+vsdPaired = vst(ddsPaired)
+
+pcaData = plotPCA(vsdPaired, intgroup=c("site","experiment"), 
                   returnData=TRUE)
 percentVar = round(100 * attr(pcaData, "percentVar"))
 
-png(paste(outputPath,'DGE_PCA_rlog_adult_preliminarySamples.png',sep=''), width=7, height=7, units = "in", res = 300)
-ggplot(pcaData, aes(PC1, PC2, colour = site)) + 
+png(paste(outputPath,'DGE_PCA_vst_adult_spatialComparisonPaired.png',sep=''), width=7, height=7, units = "in", res = 300)
+ggplot(pcaData, aes(PC1, PC2, colour = site, shape = experiment)) + 
   geom_point(size = 2) + theme_bw() + 
-  scale_color_manual(values = c("blue", "red","green")) +
+  scale_color_manual(values = c("blue", "red","green","yellow")) +
+  scale_shape_manual(values = c("triangle","circle")) +
   geom_text_repel(aes(label = site), nudge_x = -1, nudge_y = 0.2, size = 3) +
-  ggtitle("Principal Component Analysis (PCA)", subtitle = "rlog transformation") +
+  ggtitle("Principal Component Analysis (PCA)", subtitle = "vst transformation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance"))
 dev.off()
 
-# vst transformation
-vsd = vst(dds)
+# Single
+vsdSingle = vst(ddsSingle)
 
-pcaData = plotPCA(vsd, intgroup=c("site","experiment","sequence"), 
+pcaData = plotPCA(vsdSingle, intgroup=c("site","experiment"), 
                   returnData=TRUE)
 percentVar = round(100 * attr(pcaData, "percentVar"))
 
-png(paste(outputPath,'DGE_PCA_vst_adult_preliminarySamples.png',sep=''), width=7, height=7, units = "in", res = 300)
-ggplot(pcaData, aes(PC1, PC2, colour = sequence)) + 
+png(paste(outputPath,'DGE_PCA_vst_adult_spatialComparisonSingle.png',sep=''), width=7, height=7, units = "in", res = 300)
+ggplot(pcaData, aes(PC1, PC2, colour = site, shape = experiment)) + 
   geom_point(size = 2) + theme_bw() + 
   scale_color_manual(values = c("blue", "red","green","yellow")) +
+  scale_shape_manual(values = c("triangle","circle")) +
   geom_text_repel(aes(label = site), nudge_x = -1, nudge_y = 0.2, size = 3) +
   ggtitle("Principal Component Analysis (PCA)", subtitle = "vst transformation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
@@ -153,24 +277,38 @@ dev.off()
 
 # heatmap
 
-# rlog transformation
-topVarGenesRld <- head(order(rowVars(assay(rld)), decreasing=TRUE), 100 )
-png(paste(outputPath,'DGE_heatmap_rlog_adult_preliminarySamples.png',sep=''), width=20, height=20, units = "in", res = 300)
-heatmap.2(assay(rld)[topVarGenesRld,], trace="none",scale="row",keysize=1, key.par = list(cex=0.5),
-          col=colorRampPalette(rev(brewer.pal(9,"RdBu")))(255), cexRow=0.5, cexCol=0.7, labCol=F,
-          main = "Differentially expressed genes\nin preliminary samples (rlog transformation)",
-          ColSideColors=c(gm="gray", pv="green", sa="yellow")[
-            colData(vsd)$site],xlab="sampling sites",ylab="genes",margins = c(2, 11))
-dev.off()
-
 # vst transformation
-topVarGenesVsd <- head(order(rowVars(assay(vsd)), decreasing=TRUE), 100 )
-png(paste(outputPath,'DGE_heatmap_vst_adult_preliminarySamples.png',sep=''), width=7, height=7, units = "in", res = 300)
-heatmap.2(assay(vsd)[topVarGenesVsd,], trace="none",scale="row",keysize=1, key.par = list(cex=0.5),
+
+# Paired
+topVarGenesVsdPaired <- head(order(rowVars(assay(vsdPaired)), decreasing=TRUE), 100 )
+png(paste(outputPath,'DGE_heatmap_vst_adult_spatialComparisonPaired.png',sep=''), width=7, height=7, units = "in", res = 300)
+heatmap.2(assay(vsdPaired)[topVarGenesVsdPaired,], trace="none",scale="row",keysize=1, key.par = list(cex=0.5),
           col=colorRampPalette(rev(brewer.pal(9,"RdBu")))(255), cexRow=0.5, cexCol=0.7, labCol=F,
           main = "Differentially expressed genes\nin preliminary samples (vst transformation)",
-          ColSideColors=c(gm="gray", pv="green", sa="yellow")[
-            colData(vsd)$site],xlab="sampling sites",ylab="genes",margins = c(2, 11))
+          ColSideColors=c(gm="gray", pv="green", sp="yellow", sa="violet", tro="black", bck="pink")[
+            c(colData(vsdPaired)$site,colData(vsdPaired)$experiment)],xlab="sampling sites & experiment conditions",ylab="genes",margins = c(2, 11))
+dev.off()
+
+# Single
+topVarGenesVsdSingle <- head(order(rowVars(assay(vsdSingle)), decreasing=TRUE), 100 )
+png(paste(outputPath,'DGE_heatmap_vst_adult_spatialComparisonSingle.png',sep=''), width=7, height=7, units = "in", res = 300)
+heatmap.2(assay(vsdSingle)[topVarGenesVsdSingle,], trace="none",scale="row",keysize=1, key.par = list(cex=0.5),
+          col=colorRampPalette(rev(brewer.pal(9,"RdBu")))(255), cexRow=0.5, cexCol=0.7, labCol=F,
+          main = "Differentially expressed genes\nin preliminary samples (vst transformation)",
+          ColSideColors=c(gm="gray", pv="green", sp="yellow", bck="black", tro="pink")[
+            colData(vsdSingle)$site],xlab="sampling sites & experiment conditions",ylab="genes",margins = c(2, 11))
+
+
+topVarGenesVsdSingle <- head(order(rowVars(assay(vsdSingle)), decreasing=TRUE), 100 )
+png(paste(outputPath,'DGE_heatmap_vst_adult_spatialComparisonSingle.png',sep=''), width=7, height=7, units = "in", res = 300)
+heatmap.2(assay(vsdSingle)[topVarGenesVsdSingle,], trace="none",scale="row",keysize=1, key.par = list(cex=0.5),
+          col=colorRampPalette(rev(brewer.pal(9,"RdBu")))(255), cexRow=0.5, cexCol=0.7, labCol=F,
+          main = "Differentially expressed genes\nin preliminary samples (vst transformation)",
+          ColSideColors=c(gm="gray", pv="green", sp="yellow", bck="black", tro="pink")[
+            colData(vsdSingle)$site],xlab="sampling sites & experiment conditions",ylab="genes",margins = c(2, 11))
+
+
+
 dev.off()
 
 # Exporting results
