@@ -1,4 +1,4 @@
-dir sample originSite finalSite
+dir samples originSite finalSite
 4_trueTransplant abundance_adult_may2018_gm_pv_trt_15873X32_trimmed gm pv
 4_trueTransplant abundance_adult_may2018_gm_pv_trt_15873X8_trimmed gm pv
 4_trueTransplant abundance_adult_may2018_gm_pv_trt_15941X20_trimmed gm pv
