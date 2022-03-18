@@ -24,8 +24,9 @@ library('tximport')
 library('apeglm')
 library('ashr')
 library('EnhancedVolcano')
-install_github('cran/heatmap.plus')
-library(heatmap.plus)
+source_url("https://raw.githubusercontent.com/obigriffith/biostar-tutorials/master/Heatmaps/heatmap.3.R")
+#install_github('cran/heatmap.plus')
+#library(heatmap.plus)
 
 # Working environment 
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
@@ -298,15 +299,20 @@ heatmap.2(assay(vsdSingle)[topVarGenesVsdSingle,], trace="none",scale="row",keys
           ColSideColors=c(gm="gray", pv="green", sp="yellow", bck="black", tro="pink")[
             colData(vsdSingle)$site],xlab="sampling sites & experiment conditions",ylab="genes",margins = c(2, 11))
 
+siteColors=sample(c("black","white","grey"), length(ncol(vsdSingle)), replace = TRUE, prob = NULL)
+expColors=sample(c("purple","green"), length(ncol(vsdSingle)), replace = TRUE, prob = NULL)
+cLab=cbind(siteColors,expColors)
+colnames(cLab)=c("Sampling site","Experiment condition")
+myclust=function(c) {hclust(c,method="average")}
 
 topVarGenesVsdSingle <- head(order(rowVars(assay(vsdSingle)), decreasing=TRUE), 100 )
 png(paste(outputPath,'DGE_heatmap_vst_adult_spatialComparisonSingle.png',sep=''), width=7, height=7, units = "in", res = 300)
-heatmap.2(assay(vsdSingle)[topVarGenesVsdSingle,], trace="none",scale="row",keysize=1, key.par = list(cex=0.5),
-          col=colorRampPalette(rev(brewer.pal(9,"RdBu")))(255), cexRow=0.5, cexCol=0.7, labCol=F,
-          main = "Differentially expressed genes\nin preliminary samples (vst transformation)",
-          ColSideColors=c(gm="gray", pv="green", sp="yellow", bck="black", tro="pink")[
-            colData(vsdSingle)$site],xlab="sampling sites & experiment conditions",ylab="genes",margins = c(2, 11))
-
+main_title="Differentially expressed genes response with spatial comparison"
+par(cex.main=1)
+heatmap.3(assay(vsdSingle)[topVarGenesVsdSingle,],hclustfun=myclust,na.rm=T,scale="none", dendrogram="both", margins=c(6,12),
+          Rowv=TRUE, Colv=TRUE, ColSideColors=clab,symbreaks=FALSE, key=TRUE, symkey=FALSE,
+          density.info="none", trace="none", main=main_title, labCol=FALSE,cexRow=1,col=colorRampPalette(rev(brewer.pal(9,"RdBu")))(255),
+          )
 
 
 dev.off()
