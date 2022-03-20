@@ -310,7 +310,7 @@ png(paste(outputPath,'DGE_heatmap_vst_adult_spatialComparisonSingle.png',sep='')
 main_title="Differentially expressed genes response with spatial comparison"
 par(cex.main=1)
 heatmap.3(assay(vsdSingle)[topVarGenesVsdSingle,],hclustfun=myclust,na.rm=T,scale="none", dendrogram="both", margins=c(6,12),
-          Rowv=TRUE, Colv=TRUE, ColSideColors=clab,symbreaks=FALSE, key=TRUE, symkey=FALSE,
+          Rowv=TRUE, Colv=TRUE, ColSideColors=cLab,symbreaks=FALSE, key=TRUE, symkey=FALSE,
           density.info="none", trace="none", main=main_title, labCol=FALSE,cexRow=1,col=colorRampPalette(rev(brewer.pal(9,"RdBu")))(255),
           )
 

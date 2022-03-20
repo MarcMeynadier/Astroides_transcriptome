@@ -1,3 +1,11 @@
+---
+title: "DE_Astroides_adult_trueTransplant"
+author: "Marc Meynadier"
+date: '2022-03-20'
+output: html_document
+---
+
+```{r}
 # Differential expression on Kallisto data 
 
 # Preliminary samples 
@@ -44,7 +52,6 @@ setwd(wdPath)
 files<-paste0(samples$samples,'.tsv')
 names(files)<-samples$samples
 txi<-tximport(files = files,type='kallisto',tx2gene = tx2gene)
-names(txi)
 head(txi$counts)
 dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~originSite_finalSite)
 
@@ -67,106 +74,100 @@ summary(res_sp_gm_VS_gm_pv)
 # Results gm_sp VS gm_pv
 
 #MA-plot
-png(paste(outputPath,'DGE_MA-plot_adult_trueTransplant_gm_VS_pv.png',sep=''), width=7, height=5, units = "in", res = 300)
-resLFC = lfcShrink(dds, coef="originSite_finalSite_pv_gm_vs_gm_pv", 
+resLFC = lfcShrink(dds, coef="originSite_finalSite_gm_sp_vs_gm_pv", 
                    type="apeglm")
 plotMA(resLFC, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes")
-dev.off()
 
 # Volcano plot
 pCutoff = 0.05
 FCcutoff = 1.0
-png(paste(outputPath,'DGE_volcanoPlot_adult_preliminarySamples_gm_VS_pv.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(res_gm_sp_VS_gm_pv), lab = rownames(data.frame(res_pv_gm_VS_gm_pv)), x = 'log2FoldChange', y = 'padj',
+                xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
+                title = "Volcano plot", subtitle = "Contrast between gm_sp and gm_pv",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_gm_sp_VS_gm_pv), ' variables'),
+                legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
+                legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
+
+# Results pv_gm vs gm_pv
+
+#MA-plot
+resLFC = lfcShrink(dds, coef="originSite_finalSite_pv_gm_vs_gm_pv", 
+                   type="apeglm")
+plotMA(resLFC, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes")
+
+# Volcano plot
 EnhancedVolcano(data.frame(res_pv_gm_VS_gm_pv), lab = rownames(data.frame(res_pv_gm_VS_gm_pv)), x = 'log2FoldChange', y = 'padj',
                 xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                 pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
-                title = "Volcano plot", subtitle = "Contrast between gm and pv",
+                title = "Volcano plot", subtitle = "Contrast between pv_gm and gm_pv",
                 caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_pv_gm_VS_gm_pv), ' variables'),
                 legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
                 legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
-dev.off()
 
-# Results gm VS sa
+# Results sp_gm VS gm_pv
 
 #MA-plot
-png(paste(outputPath,'DGE_MA-plot_adult_preliminarySamples_gm_VS_sa.png',sep=''), width=7, height=5, units = "in", res = 300)
-resLFC = lfcShrink(dds, contrast=c("site","gm","sa"), 
-                   type="ashr")
-plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), 
-       main = "MA-plot for the shrunken log2 fold changes")
-dev.off()
+resLFC = lfcShrink(dds, coef="originSite_finalSite_sp_gm_vs_gm_pv", 
+                   type="apeglm")
+plotMA(resLFC, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes")
 
 # Volcano plot
-png(paste(outputPath,'DGE_volcanoPlot_adult_preliminarySamples_gm_VS_sa.png',sep=''), width=7, height=7, units = "in", res = 300)
-EnhancedVolcano(data.frame(res_gm_sa), lab = rownames(data.frame(res_gm_sa)), x = 'log2FoldChange', y = 'padj',
+EnhancedVolcano(data.frame(res_sp_gm_VS_gm_pv), lab = rownames(data.frame(res_pv_gm_VS_gm_pv)), x = 'log2FoldChange', y = 'padj',
                 xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                 pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
-                title = "Volcano plot", subtitle = "Contrast between gm and sa",
-                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_gm_sa), ' variables'),
+                title = "Volcano plot", subtitle = "Contrast between sp_gm and gm_pv",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_sp_gm_VS_gm_pv), ' variables'),
                 legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
                 legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
-dev.off()
+
+
+# Results sp_gm vs gm_pv
+
+
 
 # Principal Component Analysis
 
-# rlog transformation
-rld = rlog(dds)
-
-pcaData = plotPCA(rld, intgroup="originSite_finalSite", 
-                  returnData=TRUE)
-percentVar = round(100 * attr(pcaData, "percentVar"))
-
-png(paste(outputPath,'DGE_PCA_rlog_adult_preliminarySamples.png',sep=''), width=7, height=7, units = "in", res = 300)
-ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite)) + 
-  geom_point(size = 2) + theme_bw() + 
-  scale_color_manual(values = c("blue", "red","green","yellow")) +
-  geom_text_repel(aes(label = originSite_finalSite), nudge_x = -1, nudge_y = 0.2, size = 3) +
-  ggtitle("Principal Component Analysis (PCA)", subtitle = "rlog transformation") +
-  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-  ylab(paste0("PC2: ",percentVar[2],"% variance"))
-dev.off()
-
-# vst transformation
 vsd = vst(dds)
 
 pcaData = plotPCA(vsd, intgroup="originSite_finalSite", 
                   returnData=TRUE)
 percentVar = round(100 * attr(pcaData, "percentVar"))
 
-png(paste(outputPath,'DGE_PCA_vst_adult_preliminarySamples.png',sep=''), width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite)) + 
   geom_point(size = 2) + theme_bw() + 
-  scale_color_manual(values = c("blue", "red","green","yellow")) +
+  scale_color_manual(values = c("#ff0040", "#a40000","#6699cc","#9bddff")) +
   geom_text_repel(aes(label = originSite_finalSite), nudge_x = -1, nudge_y = 0.2, size = 3) +
   ggtitle("Principal Component Analysis (PCA)", subtitle = "vst transformation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance"))
-dev.off()
 
 # heatmap
 
-# vst transformation
 topVarGenesVsd <- head(order(rowVars(assay(vsd)), decreasing=TRUE), 50 )
-png(paste(outputPath,'DGE_heatmap_vst_adult_preliminarySamples.png',sep=''), width=7, height=7, units = "in", res = 300)
 heatmap.2(assay(vsd)[topVarGenesVsd,], Rowv=T,trace="none",scale="row",keysize=1, key.par = list(mar=c(3,4,3,0)),
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.5, cexCol=0.7, labCol=F,
-          main = "Differentially expressed genes\nin true transplant experiment (vst transformation)",
-          ColSideColors=c(gm_pv="#ff4040", gm_sp="green", pv_gm="yellow",sp_gm="purple")
-          [colData(vsd)$originSite_finalSite],xlab="sampling sites", density.info="none",
+          main = "Differentially expressed genes\nin true transplant experiment",
+          ColSideColors=c(gm_pv="#ff0040", gm_sp="#a40000", pv_gm="#6699cc",sp_gm="#9bddff")
+          [colData(vsd)$originSite_finalSite],xlab="sampling sites after transplantation", density.info="none",
           ylab="genes",margins=c(2,8))
-legend(0.93,1.02,title = "originSite_finalSite",legend=c("gm_pv","gm_sp","pv_gm","sp_gm"), 
-       fill=c("#ff4040","green","yellow","purple"), cex=0.5, box.lty=1,xpd=T)
-dev.off()
+#legend(0.93,1.02,title = "originSite_finalSite",legend=c("gm_pv","gm_sp","pv_gm","sp_gm"), 
+#       fill=c("#ff0040","#a40000","#6699cc","#9bddff"), cex=0.5, box.lty=1,xpd=T)
 
 # Exporting results
-resOrdered_gm_pv <- res_gm_pv[order(res_gm_pv$pvalue),]
-resOrdered_gm_sa <- res_gm_sa[order(res_gm_sa$pvalue),]
-head(resOrdered_gm_pv)
-head(resOrdered_gm_sa)
+resOrdered_gm_sp_VS_gm_pv <- res_gm_sp_VS_gm_pv[order(res_gm_sp_VS_gm_pv$pvalue),]
+resOrdered_pv_gm_VS_gm_pv <- res_pv_gm_VS_gm_pv[order(res_pv_gm_VS_gm_pv$pvalue),]
+resOrdered_sp_gm_VS_gm_pv <- res_sp_gm_VS_gm_pv[order(res_sp_gm_VS_gm_pv$pvalue),]
+head(resOrdered_gm_sp_VS_gm_pv)
+head(resOrdered_pv_gm_VS_gm_pv)
+head(resOrdered_sp_gm_VS_gm_pv)
 
-resOrderedDF_gm_pv <- as.data.frame(resOrdered_gm_pv)
-resOrderedDF_gm_sa <- as.data.frame(resOrdered_gm_sa)
-write.csv(resOrderedDF_gm_pv, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_preliminarySamples_gm_VS_pv.csv',sep=''))
-write.csv(resOrderedDF_gm_sa, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_preliminarySamples_gm_VS_sa.csv',sep=''))
+resOrderedDF_gm_sp_VS_gm_pv <- as.data.frame(resOrdered_gm_sp_VS_gm_pv)
+resOrderedDF_pv_gm_VS_gm_pv <- as.data.frame(resOrdered_pv_gm_VS_gm_pv)
+resOrderedDF_pv_sp_gm_VS_gm_pv <- as.data.frame(resOrdered_sp_gm_VS_gm_pv)
+write.csv(resOrdered_gm_sp_VS_gm_pv, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_gm_sp_vs_gm_pv.csv',sep=''))
+write.csv(resOrderedDF_pv_gm_VS_gm_pv, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_pv_gm_VS_gm_pv.csv',sep=''))
+write.csv(resOrderedDF_pv_sp_gm_VS_gm_pv, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_pv_sp_gm_VS_gm_pv.csv',sep=''))
 
 sessionInfo()
+```
