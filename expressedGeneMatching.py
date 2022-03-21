@@ -14,8 +14,6 @@ path=os.getcwd()
 filenamesPreSamp = glob.glob(path + "/*preliminarySamples*.csv")
 filenamesTrueTransp = glob.glob(path + "/*trueTransplant*.csv")
 
-threshold=0.05
-
 dfsPreSamp = [pd.read_csv(filename) for filename in filenamesPreSamp]
 for i in range(len(dfsPreSamp)):
     dfsPreSamp[i]=dfsPreSamp[i].drop(dfsPreSamp[i][dfsPreSamp[i].padj>threshold_pvalue].index)
@@ -33,7 +31,6 @@ concatTrueTransp = pd.concat(dfsTrueTransp, ignore_index=True)
 #for index, row in concatPreSamp.iterrows():
 #  print(row[0])
 
-
 def comparingDataframe(df1,df2):
     sharedGenes=[]
     unsharedGenes=[]
@@ -45,6 +42,5 @@ def comparingDataframe(df1,df2):
     print("list of shared genes :",sharedGenes)
     print("Number of shared genes :",len(sharedGenes))
     return sharedGenes
-
-            
+  
 comparingDataframe(concatPreSamp,concatTrueTransp)
