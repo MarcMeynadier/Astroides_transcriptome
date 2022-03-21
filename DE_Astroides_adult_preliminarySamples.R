@@ -131,7 +131,7 @@ heatmap.2(assay(vsd)[topVarGenesVsd,], Rowv=T,trace="none",scale="row",keysize=1
           ColSideColors=c(gm="#ff4040",pv="#6699cc",sa="#9bddff")
           [colData(vsd)$site],xlab="sampling sites", density.info="none",
           ylab="genes",margins=c(2,8))
-legend(0.93,1.02,title = "sampling site",legend=c("gm","pv","sa"), 
+legend(0.93,1.08,title = "sampling site",legend=c("gm","pv","sa"), 
        fill=c("#ff4040","#6699cc","#9bddff"), cex=0.5, box.lty=1,xpd=T)
 dev.off()
 

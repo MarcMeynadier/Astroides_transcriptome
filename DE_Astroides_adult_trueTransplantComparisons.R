@@ -31,7 +31,7 @@ library('limma')
 # Working environment 
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(scriptPath)
-samples<-read.table('tximport_design_trueTransplant.txt',header=T)
+samples<-read.table('tximport_design_trueTransplantComparisons.txt',header=T)
 tx2gene<-read.table('tx2gene',header=T)
 scriptPath <- sub("/[^/]+$", "", scriptPath)
 dataPath<-'/data/net/5_kallisto/adult/4_trueTransplant'
@@ -45,7 +45,7 @@ names(files)<-samples$samples
 txi<-tximport(files = files,type='kallisto',tx2gene = tx2gene)
 names(txi)
 head(txi$counts)
-dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~originSite_finalSite)
+dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~originSite_finalSite + experiment)
 
 # pre-filtering
 keep <- rowSums(counts(dds)) >= 10 
@@ -111,15 +111,15 @@ dev.off()
 # vst transformation
 vsd = vst(dds,blind=F)
 
-pcaData = plotPCA(vsd, intgroup="originSite_finalSite", 
+pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment", 
                   returnData=TRUE)
 percentVar = round(100 * attr(pcaData, "percentVar"))
 
 png(paste(outputPath,'DGE_PCA_vst_adult_preliminarySamples.png',sep=''), width=7, height=7, units = "in", res = 300)
-ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite)) + 
+ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
   geom_point(size = 2) + theme_bw() + 
-  scale_color_manual(values = c("#ff0040", "#a40000","#6699cc","#9bddff")) +
-  geom_text_repel(aes(label = originSite_finalSite), nudge_x = -1, nudge_y = 0.2, size = 3) +
+  scale_color_manual(values = c("#ff0040", "#a40000","#6699cc","#9bddff","green","yellow","purple","pink","brown","black")) +
+  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3) +
   ggtitle("Principal Component Analysis (PCA)", subtitle = "vst transformation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance"))
