@@ -24,9 +24,9 @@ library('tximport')
 library('apeglm')
 library('ashr')
 library('EnhancedVolcano')
-source_url("https://raw.githubusercontent.com/obigriffith/biostar-tutorials/master/Heatmaps/heatmap.3.R")
+#source_url("https://raw.githubusercontent.com/obigriffith/biostar-tutorials/master/Heatmaps/heatmap.3.R")
 #install_github('cran/heatmap.plus')
-#library(heatmap.plus)
+library(heatmap.plus)
 
 # Working environment 
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
@@ -69,9 +69,9 @@ res_pv_gm_paired<-results(ddsPaired, contrast=c("site","pv","gm"), alpha = 0.05)
 res_sa_gm_paired<-results(ddsPaired, contrast=c("site","sa","gm"), alpha = 0.05)
 res_sp_gm_paired<-results(ddsPaired, contrast=c("site","sp","gm"), alpha = 0.05)
 res_tro_bck_paired<-results(ddsPaired, contrast=c("experiment","tro","bck"), alpha = 0.05)
-summary(res_gm_pv_paired)
-summary(res_gm_sp_paired)
-summary(res_gm_sa_paired)
+summary(res_pv_gm_paired)
+summary(res_sa_gm_paired)
+summary(res_sp_gm_paired)
 summary(res_tro_bck_paired)
 
 # Single end sequences 
@@ -80,8 +80,8 @@ cbind(resultsNames(ddsSingle))
 res_pv_gm_single<-results(ddsSingle, contrast=c("site","pv","gm"), alpha = 0.05)
 res_sp_gm_single<-results(ddsSingle, contrast=c("site","sp","gm"), alpha = 0.05)
 res_tro_bck_single<-results(ddsSingle, contrast=c("experiment","tro","bck"), alpha = 0.05)
-summary(res_gm_pv_single)
-summary(res_gm_sp_single)
+summary(res_pv_gm_single)
+summary(res_sp_gm_single)
 summary(res_tro_bck_single)
 
 # Exploring the results
@@ -277,6 +277,16 @@ ggplot(pcaData, aes(PC1, PC2, colour = site, shape = experiment)) +
 dev.off()
 
 # heatmap
+
+condition_colors_paired <- unlist(lapply(rownames(samplesPaired$experiment),function(x){
+  if(grepl('bck',x)) '#FFC0CB' #pink
+  else if(grepl('tro',x)) '#808080' #grey
+}))
+
+condition_colors_single <- unlist(lapply(rownames(samplesSingle$experiment),function(x){
+  if(grepl('bck',x)) '#FFC0CB' #pink
+  else if(grepl('tro',x)) '#808080' #grey
+}))
 
 # vst transformation
 
