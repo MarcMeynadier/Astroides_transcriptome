@@ -45,81 +45,108 @@ names(files)<-samples$samples
 txi<-tximport(files = files,type='kallisto',tx2gene = tx2gene)
 names(txi)
 head(txi$counts)
-dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~originSite_finalSite)
+dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~originSite_finalSite_experiment)
 
 # pre-filtering
 keep <- rowSums(counts(dds)) >= 10 
 dds <- dds[keep,]
 
 # Differential expression analysis
-dds<-DESeq(dds)
-cbind(resultsNames(dds))
-res_gm_sp_VS_gm_pv<-results(dds, name="originSite_finalSite_gm_sp_vs_gm_pv", alpha = 0.05)
-res_pv_gm_VS_gm_pv<-results(dds, name="originSite_finalSite_pv_gm_vs_gm_pv", alpha = 0.05)
-res_sp_gm_VS_gm_pv<-results(dds, name="originSite_finalSite_sp_gm_vs_gm_pv", alpha = 0.05)
-summary(res_gm_sp_VS_gm_pv)
-summary(res_pv_gm_VS_gm_pv)
-summary(res_sp_gm_VS_gm_pv)
+dds$originSite_finalSite_experiment <- relevel(dds$originSite_finalSite_experiment, ref = "gm_gm_bck")
+ddsGmRef<-DESeq(dds)
+dds$originSite_finalSite_experiment <- relevel(dds$originSite_finalSite_experiment, ref = "pv_pv_bck")
+ddsPvRef<-DESeq(dds)
+dds$originSite_finalSite_experiment <- relevel(dds$originSite_finalSite_experiment, ref = "sp_sp_bck")
+ddsSpRef<-DESeq(dds)
+cbind(resultsNames(ddsGmRef))
+cbind(resultsNames(ddsPvRef))
+cbind(resultsNames(ddsSpRef))
+gm_gm_tro_VS_gm_gm_bck<-results(ddsGmRef, contrast=c("originSite_finalSite_experiment","gm_gm_tro","gm_gm_bck"), alpha = 0.05)
+pv_gm_trt_VS_pv_pv_bck<-results(ddsPvRef, contrast=c("originSite_finalSite_experiment","pv_gm_trt","pv_pv_bck"), alpha = 0.05)
+sp_gm_trt_VS_sp_sp_bck<-results(ddsSpRef, contrast=c("originSite_finalSite_experiment","sp_gm_trt","sp_sp_bck"), alpha = 0.05)
+summary(gm_gm_tro_VS_gm_gm_bck)
+summary(pv_gm_trt_VS_pv_pv_bck)
+summary(sp_gm_trt_VS_sp_sp_bck)
 
 # Exploring the results
 
-# Results gm_sp VS gm_pv
+# Results gm_gm_tro VS gm_gm_bck
 
 #MA-plot
-png(paste(outputPath,'DGE_MA-plot_adult_trueTransplant_gm_VS_pv.png',sep=''), width=7, height=5, units = "in", res = 300)
-resLFC = lfcShrink(dds, coef="originSite_finalSite_pv_gm_vs_gm_pv", 
-                   type="apeglm")
+png(paste(outputPath,'DGE_MA-plot_adult_trueTransplant_gm_gm_bck_VS_gm_gm_tro.png',sep=''), width=7, height=5, units = "in", res = 300)
+resLFC = lfcShrink(ddsGmRef, contrast=c("originSite_finalSite_experiment","gm_gm_tro","gm_gm_bck"), 
+                   type="ashr")
 plotMA(resLFC, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes")
 dev.off()
 
 # Volcano plot
 pCutoff = 0.05
 FCcutoff = 1.0
-png(paste(outputPath,'DGE_volcanoPlot_adult_preliminarySamples_gm_VS_pv.png',sep=''), width=7, height=7, units = "in", res = 300)
-EnhancedVolcano(data.frame(res_pv_gm_VS_gm_pv), lab = rownames(data.frame(res_pv_gm_VS_gm_pv)), x = 'log2FoldChange', y = 'padj',
+png(paste(outputPath,'DGE_volcanoPlot_adult_trueTransplant_gm_gm_bck_VS_gm_gm_tro.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(gm_gm_tro_VS_gm_gm_bck), lab = rownames(data.frame(gm_gm_tro_VS_gm_gm_bck)), x = 'log2FoldChange', y = 'padj',
                 xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                 pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
-                title = "Volcano plot", subtitle = "Contrast between gm and pv",
-                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_pv_gm_VS_gm_pv), ' variables'),
+                title = "Volcano plot", subtitle = "Contrast between gm_bck and gm_tro",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(gm_gm_tro_VS_gm_gm_bck), ' variables'),
                 legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
                 legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
 dev.off()
 
-# Results gm VS sa
+# Results pv_gm_trt VS pv_pv_bck
 
 #MA-plot
-png(paste(outputPath,'DGE_MA-plot_adult_preliminarySamples_gm_VS_sa.png',sep=''), width=7, height=5, units = "in", res = 300)
-resLFC = lfcShrink(dds, contrast=c("site","gm","sa"), 
+png(paste(outputPath,'DGE_MA-plot_adult_trueTransplant_pv_gm_trt_VS_pv_pv_bck.png',sep=''), width=7, height=5, units = "in", res = 300)
+resLFC = lfcShrink(ddsPvRef, contrast=c("originSite_finalSite_experiment","pv_gm_trt","pv_pv_bck"), 
                    type="ashr")
-plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), 
-       main = "MA-plot for the shrunken log2 fold changes")
+plotMA(resLFC, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes")
 dev.off()
 
 # Volcano plot
-png(paste(outputPath,'DGE_volcanoPlot_adult_preliminarySamples_gm_VS_sa.png',sep=''), width=7, height=7, units = "in", res = 300)
-EnhancedVolcano(data.frame(res_gm_sa), lab = rownames(data.frame(res_gm_sa)), x = 'log2FoldChange', y = 'padj',
+png(paste(outputPath,'DGE_volcanoPlot_adult_trueTransplant_pv_gm_trt_VS_pv_pv_bck.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(pv_gm_trt_VS_pv_pv_bck), lab = rownames(data.frame(pv_gm_trt_VS_pv_pv_bck)), x = 'log2FoldChange', y = 'padj',
                 xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                 pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
-                title = "Volcano plot", subtitle = "Contrast between gm and sa",
-                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_gm_sa), ' variables'),
+                title = "Volcano plot", subtitle = "Contrast between pv_gm_trt and pv_bck",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(pv_gm_trt_VS_pv_pv_bck), ' variables'),
                 legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
                 legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
 dev.off()
+
+# Results sp_gm_trt VS sp_sp_bck
+
+#MA-plot
+png(paste(outputPath,'DGE_MA-plot_adult_trueTransplant_sp_gm_trt_VS_sp_sp_bck.png',sep=''), width=7, height=5, units = "in", res = 300)
+resLFC = lfcShrink(ddsSpRef, contrast=c("originSite_finalSite_experiment","sp_gm_trt","sp_sp_bck"), 
+                   type="ashr")
+plotMA(resLFC, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes")
+dev.off()
+
+# Volcano plot
+png(paste(outputPath,'DGE_volcanoPlot_adult_trueTransplant_sp_gm_trt_VS_sp_sp_bck.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(sp_gm_trt_VS_sp_sp_bck), lab = rownames(data.frame(sp_gm_trt_VS_sp_sp_bck)), x = 'log2FoldChange', y = 'padj',
+                xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
+                title = "Volcano plot", subtitle = "Contrast between sp_gm_trt and sp_bck",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(sp_gm_trt_VS_sp_sp_bck), ' variables'),
+                legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
+                legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
+dev.off()
+
 
 # Principal Component Analysis
 
 # vst transformation
-vsd = vst(dds,blind=F)
+vsd = vst(ddsGmRef,blind=F)
 
-pcaData = plotPCA(vsd, intgroup="originSite_finalSite", 
+pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment", 
                   returnData=TRUE)
 percentVar = round(100 * attr(pcaData, "percentVar"))
 
-png(paste(outputPath,'DGE_PCA_vst_adult_preliminarySamples.png',sep=''), width=7, height=7, units = "in", res = 300)
-ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite)) + 
+png(paste(outputPath,'DGE_PCA_vst_adult_trueTransplant.png',sep=''), width=7, height=7, units = "in", res = 300)
+ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
   geom_point(size = 2) + theme_bw() + 
-  scale_color_manual(values = c("#ff0040", "#a40000","#6699cc","#9bddff")) +
-  geom_text_repel(aes(label = originSite_finalSite), nudge_x = -1, nudge_y = 0.2, size = 3) +
+  scale_color_manual(values = c("#ff0040", "#a40000","#9bddff")) +
+  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3) +
   ggtitle("Principal Component Analysis (PCA)", subtitle = "vst transformation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance"))
@@ -141,20 +168,20 @@ legend(0.93,1.08,title = "originSite_finalSite",legend=c("gm_pv","gm_sp","pv_gm"
 dev.off()
 
 # Exporting results
-resOrdered_gm_sp_VS_gm_pv <- res_gm_sp_VS_gm_pv[order(res_gm_sp_VS_gm_pv$pvalue),]
-resOrdered_pv_gm_VS_gm_pv <- res_pv_gm_VS_gm_pv[order(res_pv_gm_VS_gm_pv$pvalue),]
-resOrdered_sp_gm_VS_gm_pv <- res_sp_gm_VS_gm_pv[order(res_sp_gm_VS_gm_pv$pvalue),]
+resOrdered_gm_gm_tro_VS_gm_gm_bck <- gm_gm_tro_VS_gm_gm_bck[order(gm_gm_tro_VS_gm_gm_bck$pvalue),]
+resOrdered_pv_gm_trt_VS_pv_pv_bck <- pv_gm_trt_VS_pv_pv_bck[order(pv_gm_trt_VS_pv_pv_bck$pvalue),]
+resOrdered_sp_gm_trt_VS_sp_sp_bck <- sp_gm_trt_VS_sp_sp_bck[order(sp_gm_trt_VS_sp_sp_bck$pvalue),]
 
-head(resOrdered_gm_sp_VS_gm_pv)
-head(resOrdered_pv_gm_VS_gm_pv)
-head(resOrdered_sp_gm_VS_gm_pv)
+head(resOrdered_gm_gm_tro_VS_gm_gm_bck)
+head(resOrdered_pv_gm_trt_VS_pv_pv_bck)
+head(resOrdered_sp_gm_trt_VS_sp_sp_bck)
 
-resOrderedDF_gm_sp_VS_gm_pv <- as.data.frame(resOrdered_gm_sp_VS_gm_pv)
-resOrderedDF_pv_gm_VS_gm_pv <- as.data.frame(resOrdered_pv_gm_VS_gm_pv)
-resOrderedDF_pv_sp_gm_VS_gm_pv <- as.data.frame(resOrdered_sp_gm_VS_gm_pv)
+resOrderedDF_gm_gm_tro_VS_gm_gm_bck <- as.data.frame(resOrdered_gm_gm_tro_VS_gm_gm_bck)
+resOrderedDF_pv_gm_trt_VS_pv_pv_bck <- as.data.frame(resOrdered_pv_gm_trt_VS_pv_pv_bck)
+resOrderedDF_sp_gm_trt_VS_sp_sp_bck <- as.data.frame(resOrdered_sp_gm_trt_VS_sp_sp_bck)
 
-write.csv(resOrdered_gm_sp_VS_gm_pv, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_gm_sp_vs_gm_pv.csv',sep=''))
-write.csv(resOrderedDF_pv_gm_VS_gm_pv, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_pv_gm_VS_gm_pv.csv',sep=''))
-write.csv(resOrderedDF_pv_sp_gm_VS_gm_pv, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_pv_sp_gm_VS_gm_pv.csv',sep=''))
+write.csv(resOrdered_gm_gm_tro_VS_gm_gm_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_gm_gm_tro_VS_gm_gm_bck.csv',sep=''))
+write.csv(resOrderedDF_pv_gm_trt_VS_pv_pv_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_pv_gm_trt_VS_pv_pv_bck.csv',sep=''))
+write.csv(resOrderedDF_sp_gm_trt_VS_sp_sp_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_sp_gm_trt_VS_sp_sp_bck.csv',sep=''))
 
 sessionInfo()

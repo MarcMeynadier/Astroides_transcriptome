@@ -311,9 +311,9 @@ topVarGenesVsdPaired <- head(order(rowVars(assay(vsdPaired)), decreasing=TRUE), 
 png(paste(outputPath,'DGE_heatmap_adult_spatialComparisonPaired.png',sep=''), width=7, height=7, units = "in", res = 300)
 heatmap.3(assay(vsdPaired)[topVarGenesVsdPaired,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7, labCol=F,density.info="none",
-          ColSideColors=myColsPaired,xlab="sampling sites & experiment conditions",ylab="genes",margins = c(2,9))
-legend(1.02,1.1,legend=c("gm","pv","sa","sp"),fill=c("#ff4040","#6699cc","#9bddff","#000080"),cex=0.5,xpd=T)
-legend(1.02,0.99,legend=c("bck","tro"),fill=c('#FFC0CB','#808080'),cex=0.5,xpd=T)
+          ColSideColors=myColsPaired,xlab="sampling sites & experiment conditions",ylab="genes",margins = c(2,8))
+legend(0.95,1,legend=c("gm","pv","sa","sp"),fill=c("#ff4040","#6699cc","#9bddff","#000080"),cex=0.5,xpd=T)
+legend(0.95,0.91,legend=c("bck","tro"),fill=c('#FFC0CB','#808080'),cex=0.5,xpd=T)
 dev.off()
 
 # Single
@@ -321,10 +321,9 @@ topVarGenesVsdSingle <- head(order(rowVars(assay(vsdSingle)), decreasing=TRUE), 
 png(paste(outputPath,'DGE_heatmap_vst_adult_spatialComparisonSingle.png',sep=''), width=7, height=7, units = "in", res = 300)
 heatmap.3(assay(vsdSingle)[topVarGenesVsdSingle,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7, labCol=F,density.info="none",
-          ColSideColors=myColsSingle,xlab="sampling sites & experiment conditions",ylab="genes",margins = c(2,9))
-legend(0.93,1,legend=c("gm","pv","sp"),fill=c("#ff4040","#6699cc","#000080"),cex=0.5,xpd=T)
-legend(0.93,0.93,legend=c("bck","tro"),fill=c('#FFC0CB','#808080'),cex=0.5,xpd=T)
-dev.off()
+          ColSideColors=myColsSingle,xlab="sampling sites & experiment conditions",ylab="genes",margins = c(2,8))
+legend(0.95,0.98,legend=c("gm","pv","sp"),fill=c("#ff4040","#6699cc","#000080"),cex=0.5,xpd=T)
+legend(0.95,0.91,legend=c("bck","tro"),fill=c('#FFC0CB','#808080'),cex=0.5,xpd=T)
 dev.off()
 
 # Exporting results
