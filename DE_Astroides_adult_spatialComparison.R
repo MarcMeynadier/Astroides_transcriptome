@@ -24,7 +24,7 @@ library('tximport')
 library('apeglm')
 library('ashr')
 library('EnhancedVolcano')
-#source_url("https://raw.githubusercontent.com/obigriffith/biostar-tutorials/master/Heatmaps/heatmap.3.R")
+source_url("https://raw.githubusercontent.com/obigriffith/biostar-tutorials/master/Heatmaps/heatmap.3.R")
 #install_github('cran/heatmap.plus')
 library(heatmap.plus)
 
@@ -241,7 +241,7 @@ dev.off()
 # vst transformation
 
 # Paired
-vsdPaired = vst(ddsPaired,blind=F)
+vsdPaired = vst(ddsPaired,blind=T)
 
 pcaData = plotPCA(vsdPaired, intgroup=c("site","experiment"), 
                   returnData=TRUE)
@@ -250,7 +250,7 @@ percentVar = round(100 * attr(pcaData, "percentVar"))
 png(paste(outputPath,'DGE_PCA_vst_adult_spatialComparisonPaired.png',sep=''), width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = site, shape = experiment)) + 
   geom_point(size = 2) + theme_bw() + 
-  scale_color_manual(values = c("#ff4040", "#6699cc","#9bddff","#000080")) +
+  scale_color_manual(values = c("#ff4040","#6699cc","#9bddff","#000080")) +
   scale_shape_manual(values = c("triangle","circle")) +
   geom_text_repel(aes(label = site), nudge_x = -1, nudge_y = 0.2, size = 3) +
   ggtitle("Principal Component Analysis (PCA)", subtitle = "vst transformation") +
@@ -259,7 +259,7 @@ ggplot(pcaData, aes(PC1, PC2, colour = site, shape = experiment)) +
 dev.off()
 
 # Single
-vsdSingle = vst(ddsSingle,blind=F)
+vsdSingle = vst(ddsSingle,blind=T)
 
 pcaData = plotPCA(vsdSingle, intgroup=c("site","experiment"), 
                   returnData=TRUE)
@@ -268,7 +268,7 @@ percentVar = round(100 * attr(pcaData, "percentVar"))
 png(paste(outputPath,'DGE_PCA_vst_adult_spatialComparisonSingle.png',sep=''), width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = site, shape = experiment)) + 
   geom_point(size = 2) + theme_bw() + 
-  scale_color_manual(values = c("#ff4040", "#6699cc","#9bddff","#000080")) +
+  scale_color_manual(values = c("#ff4040","#6699cc","#000080")) +
   scale_shape_manual(values = c("triangle","circle")) +
   geom_text_repel(aes(label = site), nudge_x = -1, nudge_y = 0.2, size = 3) +
   ggtitle("Principal Component Analysis (PCA)", subtitle = "vst transformation") +
@@ -278,53 +278,53 @@ dev.off()
 
 # heatmap
 
-condition_colors_paired <- unlist(lapply(rownames(samplesPaired$experiment),function(x){
+experiment_colors_paired <- unlist(lapply(samplesPaired$experiment,function(x){
   if(grepl('bck',x)) '#FFC0CB' #pink
   else if(grepl('tro',x)) '#808080' #grey
 }))
 
-condition_colors_single <- unlist(lapply(rownames(samplesSingle$experiment),function(x){
+experiment_colors_single <- unlist(lapply(samplesSingle$experiment,function(x){
   if(grepl('bck',x)) '#FFC0CB' #pink
   else if(grepl('tro',x)) '#808080' #grey
 }))
+
+site_colors_paired <- unlist(lapply(samplesPaired$site,function(x){
+  if(grepl('gm',x)) '#ff4040' #red
+  else if(grepl('pv',x)) '#6699cc' #blue1
+  else if(grepl('sa',x)) '#9bddff' #blue2
+  else if(grepl('sp',x)) '#000080' #blue3
+}))
+
+site_colors_single <- unlist(lapply(samplesSingle$site,function(x){
+  if(grepl('gm',x)) '#ff4040' #red
+  else if(grepl('pv',x)) '#6699cc' #blue1
+  else if(grepl('sp',x)) '#000080' #blue3
+}))
+
+myColsPaired <- cbind(experiment_colors_paired,site_colors_paired)
+myColsSingle <- cbind(experiment_colors_single,site_colors_single)
 
 # vst transformation
 
 # Paired
 topVarGenesVsdPaired <- head(order(rowVars(assay(vsdPaired)), decreasing=TRUE), 50 )
-png(paste(outputPath,'DGE_heatmap_vst_adult_spatialComparisonPaired.png',sep=''), width=7, height=7, units = "in", res = 300)
-heatmap.2(assay(vsdPaired)[topVarGenesVsdPaired,], trace="none",scale="row",keysize=1, key.par = list(cex=0.5),
-          col=colorRampPalette(rev(brewer.pal(9,"RdBu")))(255), cexRow=0.5, cexCol=0.7, labCol=F,
-          main = "Differentially expressed genes\nin preliminary samples (vst transformation)",
-          ColSideColors=c(gm="gray", pv="green", sp="yellow", sa="violet", tro="black", bck="pink")[
-            c(colData(vsdPaired)$site,colData(vsdPaired)$experiment)],xlab="sampling sites & experiment conditions",ylab="genes",margins = c(2, 11))
+png(paste(outputPath,'DGE_heatmap_adult_spatialComparisonPaired.png',sep=''), width=7, height=7, units = "in", res = 300)
+heatmap.3(assay(vsdPaired)[topVarGenesVsdPaired,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
+          col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7, labCol=F,density.info="none",
+          ColSideColors=myColsPaired,xlab="sampling sites & experiment conditions",ylab="genes",margins = c(2,9))
+legend(1.02,1.1,legend=c("gm","pv","sa","sp"),fill=c("#ff4040","#6699cc","#9bddff","#000080"),cex=0.5,xpd=T)
+legend(1.02,0.99,legend=c("bck","tro"),fill=c('#FFC0CB','#808080'),cex=0.5,xpd=T)
 dev.off()
 
 # Single
 topVarGenesVsdSingle <- head(order(rowVars(assay(vsdSingle)), decreasing=TRUE), 50 )
 png(paste(outputPath,'DGE_heatmap_vst_adult_spatialComparisonSingle.png',sep=''), width=7, height=7, units = "in", res = 300)
-heatmap.2(assay(vsdSingle)[topVarGenesVsdSingle,], trace="none",scale="row",keysize=1, key.par = list(cex=0.5),
-          col=colorRampPalette(rev(brewer.pal(9,"RdBu")))(255), cexRow=0.5, cexCol=0.7, labCol=F,
-          main = "Differentially expressed genes\nin preliminary samples (vst transformation)",
-          ColSideColors=c(gm="gray", pv="green", sp="yellow", bck="black", tro="pink")[
-            colData(vsdSingle)$site],xlab="sampling sites & experiment conditions",ylab="genes",margins = c(2, 11))
-
-siteColors=sample(c("black","white","grey"), length(ncol(vsdSingle)), replace = TRUE, prob = NULL)
-expColors=sample(c("purple","green"), length(ncol(vsdSingle)), replace = TRUE, prob = NULL)
-cLab=cbind(siteColors,expColors)
-colnames(cLab)=c("Sampling site","Experiment condition")
-myclust=function(c) {hclust(c,method="average")}
-
-topVarGenesVsdSingle <- head(order(rowVars(assay(vsdSingle)), decreasing=TRUE), 100 )
-png(paste(outputPath,'DGE_heatmap_vst_adult_spatialComparisonSingle.png',sep=''), width=7, height=7, units = "in", res = 300)
-main_title="Differentially expressed genes response with spatial comparison"
-par(cex.main=1)
-heatmap.3(assay(vsdSingle)[topVarGenesVsdSingle,],hclustfun=myclust,na.rm=T,scale="none", dendrogram="both", margins=c(6,12),
-          Rowv=TRUE, Colv=TRUE, ColSideColors=cLab,symbreaks=FALSE, key=TRUE, symkey=FALSE,
-          density.info="none", trace="none", main=main_title, labCol=FALSE,cexRow=1,col=colorRampPalette(rev(brewer.pal(9,"RdBu")))(255),
-          )
-
-
+heatmap.3(assay(vsdSingle)[topVarGenesVsdSingle,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
+          col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7, labCol=F,density.info="none",
+          ColSideColors=myColsSingle,xlab="sampling sites & experiment conditions",ylab="genes",margins = c(2,9))
+legend(0.93,1,legend=c("gm","pv","sp"),fill=c("#ff4040","#6699cc","#000080"),cex=0.5,xpd=T)
+legend(0.93,0.93,legend=c("bck","tro"),fill=c('#FFC0CB','#808080'),cex=0.5,xpd=T)
+dev.off()
 dev.off()
 
 # Exporting results
