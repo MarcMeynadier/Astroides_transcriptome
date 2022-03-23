@@ -1,6 +1,6 @@
 # Differential expression on Kallisto data 
 
-# True transplant 
+# Garden short 
 
 # Packages and dependence
 packageCheckClassic <- function(x){
@@ -31,11 +31,11 @@ library('limma')
 # Working environment 
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(scriptPath)
-samples<-read.table('tximport_design_trueTransplant.txt',header=T)
+samples<-read.table('tximport_design_gardenShort.txt',header=T)
 tx2gene<-read.table('tx2gene',header=T)
 scriptPath <- sub("/[^/]+$", "", scriptPath)
-dataPath<-'/data/net/5_kallisto/adult/4_trueTransplant'
-outputPath<-paste(scriptPath,'/output/DESeq2/4_trueTransplant/',sep='')
+dataPath<-'/data/net/5_kallisto/adult/4_gardenShort'
+outputPath<-paste(scriptPath,'/output/DESeq2/4_gardenShort/',sep='')
 wdPath<-paste(scriptPath,dataPath,sep='')
 setwd(wdPath)
 
@@ -73,7 +73,7 @@ summary(sp_gm_trt_VS_sp_sp_bck)
 # Results gm_gm_tro VS gm_gm_bck
 
 #MA-plot
-png(paste(outputPath,'DGE_MA-plot_adult_trueTransplant_gm_gm_bck_VS_gm_gm_tro.png',sep=''), width=7, height=5, units = "in", res = 300)
+png(paste(outputPath,'DGE_MA-plot_adult_gardenShort_gm_gm_bck_VS_gm_gm_tro.png',sep=''), width=7, height=5, units = "in", res = 300)
 resLFC = lfcShrink(ddsGmRef, contrast=c("originSite_finalSite_experiment","gm_gm_tro","gm_gm_bck"), 
                    type="ashr")
 plotMA(resLFC, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes")
@@ -82,7 +82,7 @@ dev.off()
 # Volcano plot
 pCutoff = 0.05
 FCcutoff = 1.0
-png(paste(outputPath,'DGE_volcanoPlot_adult_trueTransplant_gm_gm_bck_VS_gm_gm_tro.png',sep=''), width=7, height=7, units = "in", res = 300)
+png(paste(outputPath,'DGE_volcanoPlot_adult_gardenShort_gm_gm_bck_VS_gm_gm_tro.png',sep=''), width=7, height=7, units = "in", res = 300)
 EnhancedVolcano(data.frame(gm_gm_tro_VS_gm_gm_bck), lab = rownames(data.frame(gm_gm_tro_VS_gm_gm_bck)), x = 'log2FoldChange', y = 'padj',
                 xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                 pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
@@ -95,14 +95,14 @@ dev.off()
 # Results pv_gm_trt VS pv_pv_bck
 
 #MA-plot
-png(paste(outputPath,'DGE_MA-plot_adult_trueTransplant_pv_gm_trt_VS_pv_pv_bck.png',sep=''), width=7, height=5, units = "in", res = 300)
+png(paste(outputPath,'DGE_MA-plot_adult_gardenShort_pv_gm_trt_VS_pv_pv_bck.png',sep=''), width=7, height=5, units = "in", res = 300)
 resLFC = lfcShrink(ddsPvRef, contrast=c("originSite_finalSite_experiment","pv_gm_trt","pv_pv_bck"), 
                    type="ashr")
 plotMA(resLFC, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes")
 dev.off()
 
 # Volcano plot
-png(paste(outputPath,'DGE_volcanoPlot_adult_trueTransplant_pv_gm_trt_VS_pv_pv_bck.png',sep=''), width=7, height=7, units = "in", res = 300)
+png(paste(outputPath,'DGE_volcanoPlot_adult_gardenShort_pv_gm_trt_VS_pv_pv_bck.png',sep=''), width=7, height=7, units = "in", res = 300)
 EnhancedVolcano(data.frame(pv_gm_trt_VS_pv_pv_bck), lab = rownames(data.frame(pv_gm_trt_VS_pv_pv_bck)), x = 'log2FoldChange', y = 'padj',
                 xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                 pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
@@ -115,14 +115,14 @@ dev.off()
 # Results sp_gm_trt VS sp_sp_bck
 
 #MA-plot
-png(paste(outputPath,'DGE_MA-plot_adult_trueTransplant_sp_gm_trt_VS_sp_sp_bck.png',sep=''), width=7, height=5, units = "in", res = 300)
+png(paste(outputPath,'DGE_MA-plot_adult_gardenShort_sp_gm_trt_VS_sp_sp_bck.png',sep=''), width=7, height=5, units = "in", res = 300)
 resLFC = lfcShrink(ddsSpRef, contrast=c("originSite_finalSite_experiment","sp_gm_trt","sp_sp_bck"), 
                    type="ashr")
 plotMA(resLFC, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes")
 dev.off()
 
 # Volcano plot
-png(paste(outputPath,'DGE_volcanoPlot_adult_trueTransplant_sp_gm_trt_VS_sp_sp_bck.png',sep=''), width=7, height=7, units = "in", res = 300)
+png(paste(outputPath,'DGE_volcanoPlot_adult_gardenShort_sp_gm_trt_VS_sp_sp_bck.png',sep=''), width=7, height=7, units = "in", res = 300)
 EnhancedVolcano(data.frame(sp_gm_trt_VS_sp_sp_bck), lab = rownames(data.frame(sp_gm_trt_VS_sp_sp_bck)), x = 'log2FoldChange', y = 'padj',
                 xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                 pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
@@ -142,7 +142,7 @@ pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment",
                   returnData=TRUE)
 percentVar = round(100 * attr(pcaData, "percentVar"))
 
-png(paste(outputPath,'DGE_PCA_vst_adult_trueTransplant.png',sep=''), width=7, height=7, units = "in", res = 300)
+png(paste(outputPath,'DGE_PCA_vst_adult_gardenShort.png',sep=''), width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
   geom_point(size = 2) + theme_bw() + 
   scale_color_manual(values = c("#ff0040", "#a40000","#9bddff")) +
@@ -180,8 +180,8 @@ resOrderedDF_gm_gm_tro_VS_gm_gm_bck <- as.data.frame(resOrdered_gm_gm_tro_VS_gm_
 resOrderedDF_pv_gm_trt_VS_pv_pv_bck <- as.data.frame(resOrdered_pv_gm_trt_VS_pv_pv_bck)
 resOrderedDF_sp_gm_trt_VS_sp_sp_bck <- as.data.frame(resOrdered_sp_gm_trt_VS_sp_sp_bck)
 
-write.csv(resOrdered_gm_gm_tro_VS_gm_gm_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_gm_gm_tro_VS_gm_gm_bck.csv',sep=''))
-write.csv(resOrderedDF_pv_gm_trt_VS_pv_pv_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_pv_gm_trt_VS_pv_pv_bck.csv',sep=''))
-write.csv(resOrderedDF_sp_gm_trt_VS_sp_sp_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_sp_gm_trt_VS_sp_sp_bck.csv',sep=''))
+write.csv(resOrdered_gm_gm_tro_VS_gm_gm_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_gardenShort_gm_gm_tro_VS_gm_gm_bck.csv',sep=''))
+write.csv(resOrderedDF_pv_gm_trt_VS_pv_pv_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_gardenShort_pv_gm_trt_VS_pv_pv_bck.csv',sep=''))
+write.csv(resOrderedDF_sp_gm_trt_VS_sp_sp_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_gardenShort_sp_gm_trt_VS_sp_sp_bck.csv',sep=''))
 
 sessionInfo()
