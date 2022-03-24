@@ -52,18 +52,13 @@ keep <- rowSums(counts(dds)) >= 10
 dds <- dds[keep,]
 
 # Differential expression analysis
-dds$originSite_finalSite_experiment <- relevel(dds$originSite_finalSite_experiment, ref = "gm_gm_bck")
-ddsGmRef<-DESeq(dds)
-dds$originSite_finalSite_experiment <- relevel(dds$originSite_finalSite_experiment, ref = "pv_pv_bck")
-ddsPvRef<-DESeq(dds)
-dds$originSite_finalSite_experiment <- relevel(dds$originSite_finalSite_experiment, ref = "sp_sp_bck")
-ddsSpRef<-DESeq(dds)
-cbind(resultsNames(ddsGmRef))
-cbind(resultsNames(ddsPvRef))
-cbind(resultsNames(ddsSpRef))
-gm_gm_tro_VS_gm_gm_bck<-results(ddsGmRef, contrast=c("originSite_finalSite_experiment","gm_gm_tro","gm_gm_bck"), alpha = 0.05)
-pv_gm_trt_VS_pv_pv_bck<-results(ddsPvRef, contrast=c("originSite_finalSite_experiment","pv_gm_trt","pv_pv_bck"), alpha = 0.05)
-sp_gm_trt_VS_sp_sp_bck<-results(ddsSpRef, contrast=c("originSite_finalSite_experiment","sp_gm_trt","sp_sp_bck"), alpha = 0.05)
+dds$originSite_finalSite_experiment <- dds$originSite_finalSite_experiment
+dds<-DESeq(dds)
+write.table(counts(dds,normalized=TRUE),file='normalized_count_table_trueTransplant.txt',quote=F)
+cbind(resultsNames(dds))
+gm_gm_tro_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_gm_tro","gm_gm_bck"), alpha = 0.05)
+pv_gm_trt_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_gm_trt","pv_pv_bck"), alpha = 0.05)
+sp_gm_trt_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_gm_trt","sp_sp_bck"), alpha = 0.05)
 summary(gm_gm_tro_VS_gm_gm_bck)
 summary(pv_gm_trt_VS_pv_pv_bck)
 summary(sp_gm_trt_VS_sp_sp_bck)
@@ -74,11 +69,8 @@ summary(sp_gm_trt_VS_sp_sp_bck)
 
 #MA-plot
 png(paste(outputPath,'DGE_MA-plot_adult_trueTransplant_gm_gm_bck_VS_gm_gm_tro.png',sep=''), width=7, height=5, units = "in", res = 300)
-resLFC = lfcShrink(ddsGmRef, contrast=c("originSite_finalSite_experiment","gm_gm_tro","gm_gm_bck"), 
-                   type="ashr")
-plotMA(resLFC, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes")
+DESeq2::plotMA(gm_gm_tro_VS_gm_gm_bck,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\ngm_gm_bck_VS_gm_gm_tro")
 dev.off()
-
 # Volcano plot
 pCutoff = 0.05
 FCcutoff = 1.0
@@ -96,9 +88,7 @@ dev.off()
 
 #MA-plot
 png(paste(outputPath,'DGE_MA-plot_adult_trueTransplant_pv_gm_trt_VS_pv_pv_bck.png',sep=''), width=7, height=5, units = "in", res = 300)
-resLFC = lfcShrink(ddsPvRef, contrast=c("originSite_finalSite_experiment","pv_gm_trt","pv_pv_bck"), 
-                   type="ashr")
-plotMA(resLFC, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes")
+DESeq2::plotMA(pv_gm_trt_VS_pv_pv_bck,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\npv_gm_trt_VS_pv_pv_bck")
 dev.off()
 
 # Volcano plot
@@ -116,9 +106,7 @@ dev.off()
 
 #MA-plot
 png(paste(outputPath,'DGE_MA-plot_adult_trueTransplant_sp_gm_trt_VS_sp_sp_bck.png',sep=''), width=7, height=5, units = "in", res = 300)
-resLFC = lfcShrink(ddsSpRef, contrast=c("originSite_finalSite_experiment","sp_gm_trt","sp_sp_bck"), 
-                   type="ashr")
-plotMA(resLFC, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes")
+DESeq2::plotMA(sp_gm_trt_VS_sp_sp_bck,ylim=c(-30,30),main="MA-plot for the shrunken log2 fold changes\nsp_gm_trt_VS_sp_sp_bck")
 dev.off()
 
 # Volcano plot
@@ -136,13 +124,13 @@ dev.off()
 # Principal Component Analysis
 
 # vst transformation
-vsd = vst(ddsGmRef,blind=F)
+vsd = vst(dds,blind=F)
 
 pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment", 
                   returnData=TRUE)
 percentVar = round(100 * attr(pcaData, "percentVar"))
 
-png(paste(outputPath,'DGE_PCA_vst_adult_trueTransplant.png',sep=''), width=7, height=7, units = "in", res = 300)
+png(paste(outputPath,'DGE_PCA_adult_trueTransplant.png',sep=''), width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
   geom_point(size = 2) + theme_bw() + 
   scale_color_manual(values = c("#ff0040", "#a40000","#9bddff")) +
@@ -156,7 +144,7 @@ dev.off()
 
 # vst transformation
 topVarGenesVsd <- head(order(rowVars(assay(vsd)), decreasing=TRUE), 50 )
-png(paste(outputPath,'DGE_heatmap_vst_adult_preliminarySamples.png',sep=''), width=7, height=7, units = "in", res = 300)
+png(paste(outputPath,'DGE_heatmap_adult_trueTransplant.png',sep=''), width=7, height=7, units = "in", res = 300)
 heatmap.2(assay(vsd)[topVarGenesVsd,], Rowv=T,trace="none",scale="row",keysize=1, key.par = list(mar=c(3,4,3,0)),
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.5, cexCol=0.7, labCol=F,
           main = "Differentially expressed genes\nin true transplant experiment",
