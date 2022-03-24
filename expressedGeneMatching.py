@@ -29,8 +29,7 @@ concatTrueTransp = pd.concat(dfsTrueTransp, ignore_index=True)
 #for index, row in concatPreSamp.iterrows():
 #  print(row[0])
 
-#output2=list(set(dfsTrueTransp[0].gene) & set(dfsTrueTransp[2].gene))
-output=list(reduce(set.intersection, map(set, [dfsTrueTransp[0].gene, dfsTrueTransp[2].gene])))
+output=list(reduce(set.intersection, map(set, [dfsTrueTransp[1].gene, dfsTrueTransp[0].gene])))
 for i in range(len(output)):
     output[i]=output[i].replace('TRINITY_','')
 print(output) ; print(len(output))
