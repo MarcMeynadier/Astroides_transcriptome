@@ -61,11 +61,15 @@ pv_pv_tro_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment
 sp_sp_tro_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_tro","sp_sp_bck"), alpha = 0.05)
 pv_gm_trt_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_gm_trt","pv_pv_bck"), alpha = 0.05)
 sp_gm_trt_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_gm_trt","sp_sp_bck"), alpha = 0.05)
+sp_sp_tro_VS_sp_gm_trt<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_tro","sp_gm_trt"), alpha = 0.05)
+pv_pv_tro_VS_pv_gm_trt<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_tro","pv_gm_trt"), alpha = 0.05)
 summary(gm_gm_tro_VS_gm_gm_bck)
 summary(pv_pv_tro_VS_pv_pv_bck)
 summary(sp_sp_tro_VS_sp_sp_bck)
 summary(pv_gm_trt_VS_pv_pv_bck)
 summary(sp_gm_trt_VS_sp_sp_bck)
+summary(sp_sp_tro_VS_sp_gm_trt)
+summary(pv_pv_tro_VS_pv_gm_trt)
 
 # Exploring the results
 
@@ -160,6 +164,39 @@ EnhancedVolcano(data.frame(sp_gm_trt_VS_sp_sp_bck), lab = rownames(data.frame(sp
                 legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
 dev.off()
 
+# Results pv_pv_tro VS pv_gm_trt
+
+#MA-plot
+png(paste(outputPath,'DGE_MA-plot_adult_trueTransplant_pv_pv_tro_VS_pv_gm_trt.png',sep=''), width=7, height=5, units = "in", res = 300)
+DESeq2::plotMA(pv_pv_tro_VS_pv_gm_trt,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\npv_pv_tro_VS_pv_gm_trt")
+dev.off()
+# Volcano plot
+png(paste(outputPath,'DGE_volcanoPlot_adult_trueTransplant_pv_pv_tro_VS_pv_gm_trt.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(pv_pv_tro_VS_pv_gm_trt), lab = rownames(data.frame(pv_pv_tro_VS_pv_gm_trt)), x = 'log2FoldChange', y = 'padj',
+                xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
+                title = "Volcano plot", subtitle = "Contrast between pv_pv_tro_VS_pv_gm_trt",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(pv_pv_tro_VS_pv_gm_trt), ' variables'),
+                legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
+                legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
+dev.off()
+
+# Results sp_sp_tro VS sp_gm_trt
+
+#MA-plot
+png(paste(outputPath,'DGE_MA-plot_adult_trueTransplant_sp_sp_tro_VS_sp_gm_trt.png',sep=''), width=7, height=5, units = "in", res = 300)
+DESeq2::plotMA(sp_sp_tro_VS_sp_gm_trt,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\nsp_sp_tro_VS_sp_gm_trt")
+dev.off()
+# Volcano plot
+png(paste(outputPath,'DGE_volcanoPlot_adult_trueTransplant_sp_sp_tro_VS_sp_gm_trt.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(sp_sp_tro_VS_sp_gm_trt), lab = rownames(data.frame(sp_sp_tro_VS_sp_gm_trt)), x = 'log2FoldChange', y = 'padj',
+                xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
+                title = "Volcano plot", subtitle = "Contrast between sp_sp_tro_VS_sp_gm_trt",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(sp_sp_tro_VS_sp_gm_trt), ' variables'),
+                legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
+                legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
+dev.off()
 
 # Principal Component Analysis
 
