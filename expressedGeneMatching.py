@@ -65,7 +65,7 @@ def compareGenes(filenames,experiment):
     outputStr =", ".join(str(elem) for elem in output)
     print("\nShared genes list : \n\n",outputStr) ; print("\n\nNumber of shared genes :\n\n",len(output),"\n")
     filesNamesClean2 = listOfFiles(filenames,experiment)
-    with open(filesNamesClean2[file1]+"_X_"+filesNamesClean2[file2]+'_comparison.txt', 'w') as f:
+    with open(filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_comparison.txt', 'w') as f:
         f.write("Shared genes list : \n\n"+outputStr)
         f.write("\n\nNumber of shared genes :\n\n"+str(len(output)))
 
