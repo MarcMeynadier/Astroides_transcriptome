@@ -234,19 +234,35 @@ dev.off()
 
 # Exporting results
 resOrdered_gm_gm_tro_VS_gm_gm_bck <- gm_gm_tro_VS_gm_gm_bck[order(gm_gm_tro_VS_gm_gm_bck$pvalue),]
+resOrdered_pv_pv_tro_VS_pv_pv_bck <- pv_pv_tro_VS_pv_pv_bck[order(pv_pv_tro_VS_pv_pv_bck$pvalue),]
+resOrdered_sp_sp_tro_VS_sp_sp_bck <- sp_sp_tro_VS_sp_sp_bck[order(sp_sp_tro_VS_sp_sp_bck$pvalue),]
 resOrdered_pv_gm_trt_VS_pv_pv_bck <- pv_gm_trt_VS_pv_pv_bck[order(pv_gm_trt_VS_pv_pv_bck$pvalue),]
 resOrdered_sp_gm_trt_VS_sp_sp_bck <- sp_gm_trt_VS_sp_sp_bck[order(sp_gm_trt_VS_sp_sp_bck$pvalue),]
+resOrdered_sp_sp_tro_VS_sp_gm_trt <- sp_sp_tro_VS_sp_gm_trt[order(sp_sp_tro_VS_sp_gm_trt$pvalue),]
+resOrdered_pv_pv_tro_VS_pv_gm_trt <- pv_pv_tro_VS_pv_gm_trt[order(pv_pv_tro_VS_pv_gm_trt$pvalue),]
 
 head(resOrdered_gm_gm_tro_VS_gm_gm_bck)
+head(resOrdered_pv_pv_tro_VS_pv_pv_bck)
+head(resOrdered_sp_sp_tro_VS_sp_sp_bck)
 head(resOrdered_pv_gm_trt_VS_pv_pv_bck)
 head(resOrdered_sp_gm_trt_VS_sp_sp_bck)
+head(resOrdered_sp_sp_tro_VS_sp_gm_trt)
+head(resOrdered_pv_pv_tro_VS_pv_gm_trt)
 
 resOrderedDF_gm_gm_tro_VS_gm_gm_bck <- as.data.frame(resOrdered_gm_gm_tro_VS_gm_gm_bck)
+resOrderedDF_pv_pv_tro_VS_pv_pv_bck <- as.data.frame(resOrdered_pv_pv_tro_VS_pv_pv_bck)
+resOrderedDF_sp_sp_tro_VS_sp_sp_bck <- as.data.frame(resOrdered_sp_sp_tro_VS_sp_sp_bck)
 resOrderedDF_pv_gm_trt_VS_pv_pv_bck <- as.data.frame(resOrdered_pv_gm_trt_VS_pv_pv_bck)
 resOrderedDF_sp_gm_trt_VS_sp_sp_bck <- as.data.frame(resOrdered_sp_gm_trt_VS_sp_sp_bck)
+resOrderedDF_sp_sp_tro_VS_sp_gm_trt <- as.data.frame(resOrdered_sp_sp_tro_VS_sp_gm_trt)
+resOrderedDF_pv_pv_tro_VS_pv_gm_trt <- as.data.frame(resOrdered_pv_pv_tro_VS_pv_gm_trt)
 
-write.csv(resOrdered_gm_gm_tro_VS_gm_gm_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_gm_gm_tro_VS_gm_gm_bck.csv',sep=''))
+write.csv(resOrderedDF_gm_gm_tro_VS_gm_gm_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_gm_gm_tro_VS_gm_gm_bck.csv',sep=''))
+write.csv(resOrderedDF_pv_pv_tro_VS_pv_pv_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_pv_pv_tro_VS_pv_pv_bck.csv',sep=''))
+write.csv(resOrderedDF_sp_sp_tro_VS_sp_sp_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_sp_sp_tro_VS_sp_sp_bck.csv',sep=''))
 write.csv(resOrderedDF_pv_gm_trt_VS_pv_pv_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_pv_gm_trt_VS_pv_pv_bck.csv',sep=''))
 write.csv(resOrderedDF_sp_gm_trt_VS_sp_sp_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_sp_gm_trt_VS_sp_sp_bck.csv',sep=''))
+write.csv(resOrderedDF_sp_sp_tro_VS_sp_gm_trt, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_sp_sp_tro_VS_sp_gm_trt.csv',sep=''))
+write.csv(resOrderedDF_pv_pv_tro_VS_pv_gm_trt, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_pv_pv_tro_VS_pv_gm_trt.csv',sep=''))
 
 sessionInfo()
