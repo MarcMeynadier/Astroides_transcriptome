@@ -45,7 +45,7 @@ def filenamesToDataframe(filenames):
     return dfs
 
 def experimentChoice():
-    print("Select your type of organisms :\n\n1 : Juvenile\n2 : Adult")
+    print("Select your type of organisms :\n\n1 : Adult\n2 : Juvenile")
     typeOrg = int(input())
     experiment = ""
     if typeOrg == 1:
