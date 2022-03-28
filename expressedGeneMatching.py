@@ -79,17 +79,24 @@ def compareGenes(filenames,experiment):
         print(filesNamesClean1[i])
     print("\nWhich files do you want to compare ? (select two)\n")
     file1=int(input()) ; file2=int(input())
-    df = filenamesToDataframe(filenames)
-    output=list(reduce(set.intersection, map(set, [df[file1-1].gene, df[file2-1].gene])))
-    for i in range(len(output)):
-        output[i]=output[i].replace('TRINITY_','')
-    outputStr =", ".join(str(elem) for elem in output)
-    print("\nShared genes list : \n\n",outputStr) ; print("\n\nNumber of shared genes :\n\n",len(output),"\n")
+    df = filenamesToDataframe(filenames) 
+    geneNames=list(reduce(set.intersection, map(set, [df[file1-1].gene, df[file2-1].gene])))
+    lfcValuesFile1 = [] ; lfcValuesFile2 = []
+    padjValuesFile1 = [] ; padjValuesFile2 = []
+    dfFile1 = df[file1-1] ; dfFile2 = df[file2-1]
+    for i in range(len(geneNames)):
+        lfcValuesFile1.append(dfFile1['log2FoldChange'][dfFile1['gene']==geneNames[i]].values[0])
+        lfcValuesFile2.append(dfFile2['log2FoldChange'][dfFile2['gene']==geneNames[i]].values[0])
+        padjValuesFile1.append(dfFile1['padj'][dfFile1['gene']==geneNames[i]].values[0])
+        padjValuesFile2.append(dfFile2['padj'][dfFile2['gene']==geneNames[i]].values[0])
+    for i in range(len(geneNames)):
+        geneNames[i]=geneNames[i].replace('TRINITY_','')
     filesNamesClean2 = listOfFiles(filenames,experiment)
-    with open(filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_comparison.txt', 'w') as f:
-        f.write("Shared genes list : \n\n"+outputStr)
-        f.write("\n\nNumber of shared genes :\n\n"+str(len(output)))
-
+    dic = {'genes':geneNames,'lfc_'+filesNamesClean2[file1-1]:lfcValuesFile1,'lfc_'+filesNamesClean2[file2-1]:lfcValuesFile2,
+    'p-adj_'+filesNamesClean2[file1-1]:padjValuesFile1,'p-adj_'+filesNamesClean2[file2-1]:padjValuesFile2}
+    outputDf = pd.DataFrame(dic)
+    outputDf.to_csv(filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_comparison.csv',encoding='utf-8')
+    
 
 #------------------------------------------------------------------------------#
 #                              Menu functions                                  #

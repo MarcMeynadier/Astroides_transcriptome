@@ -1,0 +1,10 @@
+dir samples site pH
+juvenile abundance_juvenile_rep1_gm_amb_R1CA1_ gm amb
+juvenile abundance_juvenile_rep1_gm_ext_R1EA7_ gm ext
+juvenile abundance_juvenile_rep1_gm_low_R1BA8_ gm low
+juvenile abundance_juvenile_rep1_sp_amb_R1AA8_ sp amb
+juvenile abundance_juvenile_rep1_sp_low_R1DA1_ sp low
+
+
+
+

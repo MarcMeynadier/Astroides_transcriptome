@@ -1,6 +1,6 @@
 # Differential expression on Kallisto data 
 
-# True transplant 
+# Juveniles - Replica 1 
 
 # Packages and dependence
 packageCheckClassic <- function(x){
@@ -31,11 +31,11 @@ library('limma')
 # Working environment 
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(scriptPath)
-samples<-read.table('tximport_design_trueTransplant.txt',header=T)
+samples<-read.table('tximport_design_juvenileReplica1.txt',header=T)
 tx2gene<-read.table('tx2gene',header=T)
 scriptPath <- sub("/[^/]+$", "", scriptPath)
-dataPath<-'/data/net/5_kallisto/adult/4_trueTransplant'
-outputPath<-paste(scriptPath,'/output/DESeq2/4_trueTransplant/',sep='')
+dataPath<-'/data/net/5_kallisto/juvenile'
+outputPath<-paste(scriptPath,'/output/DESeq2/juvenile/',sep='')
 wdPath<-paste(scriptPath,dataPath,sep='')
 setwd(wdPath)
 
@@ -45,7 +45,7 @@ names(files)<-samples$samples
 txi<-tximport(files = files,type='kallisto',tx2gene = tx2gene)
 names(txi)
 head(txi$counts)
-dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~originSite_finalSite_experiment)
+dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~site + pH)
 
 # pre-filtering
 keep <- rowSums(counts(dds)) >= 10 
@@ -53,22 +53,14 @@ dds <- dds[keep,]
 
 # Differential expression analysis
 dds<-DESeq(dds)
-write.table(counts(dds,normalized=TRUE),file='normalized_count_table_trueTransplant.txt',quote=F)
+write.table(counts(dds,normalized=TRUE),file='normalized_count_table_juvenileReplica1.txt',quote=F)
 cbind(resultsNames(dds))
-gm_gm_tro_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_gm_tro","gm_gm_bck"), alpha = 0.05)
-pv_pv_tro_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_tro","pv_pv_bck"), alpha = 0.05)
-sp_sp_tro_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_tro","sp_sp_bck"), alpha = 0.05)
-pv_gm_trt_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_gm_trt","pv_pv_bck"), alpha = 0.05)
-sp_gm_trt_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_gm_trt","sp_sp_bck"), alpha = 0.05)
-sp_sp_tro_VS_sp_gm_trt<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_tro","sp_gm_trt"), alpha = 0.05)
-pv_pv_tro_VS_pv_gm_trt<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_tro","pv_gm_trt"), alpha = 0.05)
-summary(gm_gm_tro_VS_gm_gm_bck)
-summary(pv_pv_tro_VS_pv_pv_bck)
-summary(sp_sp_tro_VS_sp_sp_bck)
-summary(pv_gm_trt_VS_pv_pv_bck)
-summary(sp_gm_trt_VS_sp_sp_bck)
-summary(sp_sp_tro_VS_sp_gm_trt)
-summary(pv_pv_tro_VS_pv_gm_trt)
+sp_VS_gm<-results(dds, contrast=c("site","sp","gm"), alpha = 0.05)
+ext_VS_amb<-results(dds, contrast=c("pH","ext","amb"), alpha = 0.05)
+low_VS_amb<-results(dds, contrast=c("pH","low","amb"), alpha = 0.05)
+summary(sp_VS_gm)
+summary(ext_VS_amb)
+summary(low_VS_amb)
 
 # Exploring the results
 
