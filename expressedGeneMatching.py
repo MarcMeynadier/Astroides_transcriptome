@@ -43,7 +43,28 @@ def filenamesToDataframe(filenames):
         dfs[i]=dfs[i].drop(dfs[i][dfs[i].padj>threshold_pvalue].index)
         dfs[i]=dfs[i][dfs[i]['padj'].notna()]
     return dfs
-   
+
+def experimentChoice():
+    print("Select your type of organisms :\n\n1 : Juvenile\n2 : Adult")
+    typeOrg = int(input())
+    experiment = ""
+    if typeOrg == 1:
+        print("Select your type of experiment :\n\n1 : Preliminary samples")
+        print("2 : Spatial comparison\n3 : Temporal comparison \n4 : True transplant\n5 : Garden short")
+        expType = int(input())
+        if expType == 1:
+            experiment = "preliminarySamples"
+        elif expType == 2:
+            experiment = "spatialComparison"
+        elif expType == 3:
+            experiment = "temporalComparison"
+        elif expType == 4:
+            experiment = "trueTransplant"
+        elif expType == 5:
+            experiment = "gardenShort"
+    elif typeOrg == 2:
+       print("Select your type of experiment :\n\n1 : Replica 1") 
+    return experiment
 
 #------------------------------------------------------------------------------#
 #                         Shared genes computation                             #
@@ -87,7 +108,8 @@ def menu_display():
     print("\n")
     return
 
-def menu_app(experiment):
+def menu_app():
+    experiment = experimentChoice()
     filenames = getFilenames(experiment)
     while True:
         menu_display()
@@ -103,4 +125,4 @@ def menu_app(experiment):
 #------------------------------------------------------------------------------#
 
 
-menu_app("trueTransplant")
+menu_app()
