@@ -95,6 +95,9 @@ def compareGenes(filenames,experiment):
     dic = {'genes':geneNames,'lfc_'+filesNamesClean2[file1-1]:lfcValuesFile1,'lfc_'+filesNamesClean2[file2-1]:lfcValuesFile2,
     'p-adj_'+filesNamesClean2[file1-1]:padjValuesFile1,'p-adj_'+filesNamesClean2[file2-1]:padjValuesFile2}
     outputDf = pd.DataFrame(dic)
+    outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file1-1],ascending=False)
+    outputDf = outputDf.reset_index(drop=True)
+    print(outputDf)
     outputDf.to_csv(filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_comparison.csv',encoding='utf-8')
     
 
