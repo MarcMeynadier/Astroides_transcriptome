@@ -8,6 +8,7 @@ Marc Meynadier
 #------------------------------------------------------------------------------#
 
 
+from importlib.resources import contents
 import os
 import sys
 import glob
@@ -19,6 +20,25 @@ from functools import reduce
 #                              Files management                                #
 #------------------------------------------------------------------------------#
 
+def getAnnotationFile():
+    curedFile = []
+    with open('../../7_functionnalAnnotation/ast_aa_domtbl.out') as f:
+        contents = f.readlines()
+    for i in contents:
+        if 'TRINITY' in i:
+            curedFile.append(i)
+    geneNames=[] ; pfamAnnot= []
+    for i in range(len(curedFile)):
+        geneNames.append(curedFile[i].split(" - ",1)[0])
+        geneNames[i]=geneNames[i].replace('TRINITY_','')
+        geneNames[i]=geneNames[i].split('_i',1)[0]
+        pfamAnnot.append(curedFile[i].split(" - ",1)[1])
+    dic={'genes':geneNames,'pfam_annotation':pfamAnnot}
+    annotDf=pd.DataFrame(dic)
+    annotDf=annotDf.drop_duplicates(subset=['genes'])
+    annotDf=annotDf.reset_index(drop=True)
+    #annotDf.to_csv('test_annotation_file',encoding='utf-8')
+    return annotDf
 
 def getFilenames(experiment):
     os.chdir('../data/net/6_deseq2/adult') # Changing working directory to DESeq2 results
@@ -97,7 +117,17 @@ def compareGenes(filenames,experiment):
     outputDf = pd.DataFrame(dic)
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file1-1],ascending=False)
     outputDf = outputDf.reset_index(drop=True)
-    print(outputDf)
+    annotDf = getAnnotationFile()
+    pfamList = []
+    for i in range(len(outputDf)):
+        for j in range(len(annotDf)):
+            if outputDf['genes'][i]==annotDf['genes'][j]:
+                pfamList.append(annotDf['pfam_annotation'][j])
+        try:
+            dummy=pfamList[i]
+        except IndexError:
+            pfamList.append('NA')
+    outputDf['pfam_annotation'] = pfamList ; print(outputDf)
     outputDf.to_csv(filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_comparison.csv',encoding='utf-8')
     
 
@@ -136,3 +166,5 @@ def menu_app():
 
 
 menu_app()
+
+     
