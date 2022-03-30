@@ -20,7 +20,34 @@ from functools import reduce
 #                              Files management                                #
 #------------------------------------------------------------------------------#
 
+
+def getProteinSequences():
+    with open('../../7_functionnalAnnotation/ast_aa') as f:
+        contents = f.readlines()
+    geneNames = []
+    proteinSequences = []
+    concatProt = []
+    for i in contents:
+        if 'TRINITY' not in i:
+            concatProt.append(i)
+        else:
+            geneNames.append(i)
+            sequenceProt = ''
+            for j in concatProt:
+                sequenceProt += ''.join(j)
+            proteinSequences.append(sequenceProt) 
+            concatProt = []
+    for i in range(len(geneNames)):
+        geneNames[i]=geneNames[i].replace('>TRINITY_','')
+        geneNames[i]=geneNames[i].split(' ',1)[0] 
+    for i in range(len(proteinSequences)):
+        proteinSequences[i] = proteinSequences[i].replace('\n','')
+    dic = {'genes':geneNames,'protein_sequence':proteinSequences}
+    sequencesDf = pd.DataFrame(dic)
+    return sequencesDf
+
 def getAnnotationFile():
+    sequencesDf = getProteinSequences()
     curedFile = []
     with open('../../7_functionnalAnnotation/ast_aa_domtbl.out') as f:
         contents = f.readlines()
@@ -31,14 +58,13 @@ def getAnnotationFile():
     for i in range(len(curedFile)):
         geneNames.append(curedFile[i].split(" - ",1)[0])
         geneNames[i]=geneNames[i].replace('TRINITY_','')
-        geneNames[i]=geneNames[i].split('_i',1)[0]
         pfamAnnot.append(curedFile[i].split(" - ",1)[1])
     dic={'genes':geneNames,'pfam_annotation':pfamAnnot}
     annotDf=pd.DataFrame(dic)
-    annotDf=annotDf.drop_duplicates(subset=['genes'])
-    annotDf=annotDf.reset_index(drop=True)
-    #annotDf.to_csv('test_annotation_file',encoding='utf-8')
-    return annotDf
+    mergeDf = annotDf.merge(sequencesDf,how='inner')
+    mergeDf = mergeDf.replace(to_replace ='(_i).*', value = '', regex = True)
+    mergeDf = mergeDf.assign(count=(mergeDf["protein_sequence"].str.len())).groupby('genes').max().drop('count',axis=1)
+    return mergeDf
 
 def getFilenames(experiment):
     os.chdir('../data/net/6_deseq2/adult') # Changing working directory to DESeq2 results
@@ -115,10 +141,15 @@ def compareGenes(filenames,experiment):
     dic = {'genes':geneNames,'lfc_'+filesNamesClean2[file1-1]:lfcValuesFile1,'lfc_'+filesNamesClean2[file2-1]:lfcValuesFile2,
     'p-adj_'+filesNamesClean2[file1-1]:padjValuesFile1,'p-adj_'+filesNamesClean2[file2-1]:padjValuesFile2}
     outputDf = pd.DataFrame(dic)
+    sequenceAnnotDf = getAnnotationFile()
+    outputDf = outputDf.merge(sequenceAnnotDf,how='left',on='genes')
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file1-1],ascending=False)
     outputDf = outputDf.reset_index(drop=True)
-    annotDf = getAnnotationFile()
+    print(outputDf)
+    
+    """
     pfamList = []
+    sequenceList = []
     for i in range(len(outputDf)):
         for j in range(len(annotDf)):
             if outputDf['genes'][i]==annotDf['genes'][j]:
@@ -127,7 +158,18 @@ def compareGenes(filenames,experiment):
             dummy=pfamList[i]
         except IndexError:
             pfamList.append('NA')
-    outputDf['pfam_annotation'] = pfamList ; print(outputDf)
+            
+        for k in range(len(sequencesDf)):
+            if outputDf['genes'][i]==sequencesDf['genes'][k]:
+                sequenceList.append(sequencesDf['protein_sequence'][k])
+        try:
+            dummy=sequenceList[i]
+        except IndexError:
+            sequenceList.append('NA')
+    outputDf['pfam_annotation'] = pfamList 
+    outputDf['protein_sequence'] = sequenceList ; print(outputDf)
+    """
+
     outputDf.to_csv(filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_comparison.csv',encoding='utf-8')
     
 
