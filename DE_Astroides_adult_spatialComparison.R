@@ -33,10 +33,10 @@ scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(scriptPath)
 samplesSingle<-read.table('tximport_design_spatialComparisonSingle.txt',header=T)
 samplesPaired<-read.table('tximport_design_spatialComparisonPaired.txt',header=T)
-tx2gene<-read.table('tx2gene',header=T)
+tx2gene<-read.table('tx2gene_fullTranscriptome',header=T)
 scriptPath <- sub("/[^/]+$", "", scriptPath)
-dataPath<-'/data/net/5_kallisto/adult/2_spatialComparison'
-outputPath<-paste(scriptPath,'/output/DESeq2/2_spatialComparison/',sep='')
+dataPath<-'/data/net/5_kallisto/larvaeJuvenileAdultTranscriptome/adult/2_spatialComparison'
+outputPath<-paste(scriptPath,'/output/DESeq2/larvaeJuvenileAdultTranscriptome/adult/2_spatialComparison/',sep='')
 wdPath<-paste(scriptPath,dataPath,sep='')
 setwd(wdPath)
 
@@ -334,7 +334,7 @@ head(resOrdered_gm_sa)
 
 resOrderedDF_gm_pv <- as.data.frame(resOrdered_gm_pv)
 resOrderedDF_gm_sa <- as.data.frame(resOrdered_gm_sa)
-write.csv(resOrderedDF_gm_pv, file = paste(scriptPath,'/data/net/6_deseq2/adult/1_preliminarySamples/DESeq2_results_adult_preliminarySamples_gm_VS_pv.csv',sep=''))
-write.csv(resOrderedDF_gm_sa, file = paste(scriptPath,'/data/net/6_deseq2/adult/1_preliminarySamples/DESeq2_results_adult_preliminarySamples_gm_VS_sa.csv',sep=''))
+write.csv(resOrderedDF_gm_pv, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/DESeq2_results_adult_preliminarySamples_gm_VS_pv.csv',sep=''))
+write.csv(resOrderedDF_gm_sa, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/DESeq2_results_adult_preliminarySamples_gm_VS_sa.csv',sep=''))
 
 sessionInfo()

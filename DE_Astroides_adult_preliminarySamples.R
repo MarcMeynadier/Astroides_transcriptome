@@ -143,7 +143,7 @@ head(resOrdered_gm_sa)
 
 resOrderedDF_gm_pv <- as.data.frame(resOrdered_gm_pv)
 resOrderedDF_gm_sa <- as.data.frame(resOrdered_gm_sa)
-write.csv(resOrderedDF_gm_pv, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/1_preliminarySamples/DESeq2_results_adult_preliminarySamples_gm_VS_pv.csv',sep=''))
-write.csv(resOrderedDF_gm_sa, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/1_preliminarySamples/DESeq2_results_adult_preliminarySamples_gm_VS_sa.csv',sep=''))
+write.csv(resOrderedDF_gm_pv, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/DESeq2_results_adult_preliminarySamples_gm_VS_pv.csv',sep=''))
+write.csv(resOrderedDF_gm_sa, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/DESeq2_results_adult_preliminarySamples_gm_VS_sa.csv',sep=''))
 
 sessionInfo()

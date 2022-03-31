@@ -32,10 +32,10 @@ library('limma')
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(scriptPath)
 samples<-read.table('tximport_design_trueTransplant.txt',header=T)
-tx2gene<-read.table('tx2gene',header=T)
+tx2gene<-read.table('tx2gene_fullTranscriptome',header=T)
 scriptPath <- sub("/[^/]+$", "", scriptPath)
-dataPath<-'/data/net/5_kallisto/adult/4_trueTransplant'
-outputPath<-paste(scriptPath,'/output/DESeq2/4_trueTransplant/',sep='')
+dataPath<-'/data/net/5_kallisto/larvaeJuvenileAdultTranscriptome/adult/4_trueTransplant'
+outputPath<-paste(scriptPath,'/output/DESeq2/larvaeJuvenileAdultTranscriptome/adult/4_trueTransplant/',sep='')
 wdPath<-paste(scriptPath,dataPath,sep='')
 setwd(wdPath)
 
@@ -256,12 +256,12 @@ resOrderedDF_sp_gm_trt_VS_sp_sp_bck <- as.data.frame(resOrdered_sp_gm_trt_VS_sp_
 resOrderedDF_sp_sp_tro_VS_sp_gm_trt <- as.data.frame(resOrdered_sp_sp_tro_VS_sp_gm_trt)
 resOrderedDF_pv_pv_tro_VS_pv_gm_trt <- as.data.frame(resOrdered_pv_pv_tro_VS_pv_gm_trt)
 
-write.csv(resOrderedDF_gm_gm_tro_VS_gm_gm_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_gm_gm_tro_VS_gm_gm_bck.csv',sep=''))
-write.csv(resOrderedDF_pv_pv_tro_VS_pv_pv_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_pv_pv_tro_VS_pv_pv_bck.csv',sep=''))
-write.csv(resOrderedDF_sp_sp_tro_VS_sp_sp_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_sp_sp_tro_VS_sp_sp_bck.csv',sep=''))
-write.csv(resOrderedDF_pv_gm_trt_VS_pv_pv_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_pv_gm_trt_VS_pv_pv_bck.csv',sep=''))
-write.csv(resOrderedDF_sp_gm_trt_VS_sp_sp_bck, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_sp_gm_trt_VS_sp_sp_bck.csv',sep=''))
-write.csv(resOrderedDF_sp_sp_tro_VS_sp_gm_trt, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_sp_sp_tro_VS_sp_gm_trt.csv',sep=''))
-write.csv(resOrderedDF_pv_pv_tro_VS_pv_gm_trt, file = paste(scriptPath,'/data/net/6_deseq2/adult/DESeq2_results_adult_trueTransplant_pv_pv_tro_VS_pv_gm_trt.csv',sep=''))
+write.csv(resOrderedDF_gm_gm_tro_VS_gm_gm_bck, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/DESeq2_results_adult_trueTransplant_gm_gm_tro_VS_gm_gm_bck.csv',sep=''))
+write.csv(resOrderedDF_pv_pv_tro_VS_pv_pv_bck, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/DESeq2_results_adult_trueTransplant_pv_pv_tro_VS_pv_pv_bck.csv',sep=''))
+write.csv(resOrderedDF_sp_sp_tro_VS_sp_sp_bck, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/DESeq2_results_adult_trueTransplant_sp_sp_tro_VS_sp_sp_bck.csv',sep=''))
+write.csv(resOrderedDF_pv_gm_trt_VS_pv_pv_bck, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/DESeq2_results_adult_trueTransplant_pv_gm_trt_VS_pv_pv_bck.csv',sep=''))
+write.csv(resOrderedDF_sp_gm_trt_VS_sp_sp_bck, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/DESeq2_results_adult_trueTransplant_sp_gm_trt_VS_sp_sp_bck.csv',sep=''))
+write.csv(resOrderedDF_sp_sp_tro_VS_sp_gm_trt, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/DESeq2_results_adult_trueTransplant_sp_sp_tro_VS_sp_gm_trt.csv',sep=''))
+write.csv(resOrderedDF_pv_pv_tro_VS_pv_gm_trt, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/DESeq2_results_adult_trueTransplant_pv_pv_tro_VS_pv_gm_trt.csv',sep=''))
 
 sessionInfo()
