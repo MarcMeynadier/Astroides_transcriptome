@@ -22,7 +22,7 @@ from functools import reduce
 
 
 def getProteinSequences():
-    with open('../../7_functionnalAnnotation/ast_aa') as f:
+    with open('../../../7_functionnalAnnotation/ast_aa') as f:
         contents = f.readlines()
     geneNames = []
     proteinSequences = []
@@ -49,7 +49,7 @@ def getProteinSequences():
 def getAnnotationFile():
     sequencesDf = getProteinSequences()
     curedFile = []
-    with open('../../7_functionnalAnnotation/ast_aa_domtbl.out') as f:
+    with open('../../../7_functionnalAnnotation/ast_aa_domtbl.out') as f:
         contents = f.readlines()
     for i in contents:
         if 'TRINITY' in i:
@@ -60,14 +60,15 @@ def getAnnotationFile():
         geneNames[i]=geneNames[i].replace('TRINITY_','')
         pfamAnnot.append(curedFile[i].split(" - ",1)[1])
     dic={'genes':geneNames,'pfam_annotation':pfamAnnot}
-    annotDf=pd.DataFrame(dic)
-    mergeDf = annotDf.merge(sequencesDf,how='inner')
+    mergeDf=pd.DataFrame(dic)
+    mergeDf = mergeDf.merge(sequencesDf,how='inner')
     mergeDf = mergeDf.replace(to_replace ='(_i).*', value = '', regex = True)
     mergeDf = mergeDf.assign(count=(mergeDf["protein_sequence"].str.len())).groupby('genes').max().drop('count',axis=1)
+    mergeDf.to_csv('mergeDataframe.csv',encoding='utf-8')
     return mergeDf
 
 def getFilenames(experiment):
-    os.chdir('../data/net/6_deseq2/adult') # Changing working directory to DESeq2 results
+    os.chdir('../data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult') # Changing working directory to DESeq2 results
     path=os.getcwd()
     filenames = glob.glob(path + "/*"+experiment+"*.csv")
     return filenames

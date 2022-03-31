@@ -29,10 +29,10 @@ library('EnhancedVolcano')
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(scriptPath)
 samples<-read.table('tximport_design_preliminarySamples.txt',header=T)
-tx2gene<-read.table('tx2gene',header=T)
+tx2gene<-read.table('tx2gene_fullTranscriptome',header=T)
 scriptPath <- sub("/[^/]+$", "", scriptPath)
-dataPath<-'/data/net/5_kallisto/adult/1_preliminarySamples'
-outputPath<-paste(scriptPath,'/output/DESeq2/1_preliminarySamples/',sep='')
+dataPath<-'/data/net/5_kallisto/larvaeJuvenileAdultTranscriptome/adult/1_preliminarySamples'
+outputPath<-paste(scriptPath,'/output/DESeq2/larvaeJuvenileAdultTranscriptome/adult/1_preliminarySamples/',sep='')
 wdPath<-paste(scriptPath,dataPath,sep='')
 setwd(wdPath)
 
@@ -51,8 +51,8 @@ dds <- dds[keep,]
 # Differential expression analysis
 dds<-DESeq(dds)
 cbind(resultsNames(dds))
-res_gm_pv<-results(dds, contrast=c("site","gm","pv"), alpha = 0.05)
-res_gm_sa<-results(dds, contrast=c("site","gm","sa"), alpha = 0.05)
+res_gm_pv<-results(dds, contrast=c("site","pv","gm"), alpha = 0.05)
+res_gm_sa<-results(dds, contrast=c("site","sa","gm"), alpha = 0.05)
 summary(res_gm_pv)
 summary(res_gm_sa)
 
@@ -143,7 +143,7 @@ head(resOrdered_gm_sa)
 
 resOrderedDF_gm_pv <- as.data.frame(resOrdered_gm_pv)
 resOrderedDF_gm_sa <- as.data.frame(resOrdered_gm_sa)
-write.csv(resOrderedDF_gm_pv, file = paste(scriptPath,'/data/net/6_deseq2/adult/1_preliminarySamples/DESeq2_results_adult_preliminarySamples_gm_VS_pv.csv',sep=''))
-write.csv(resOrderedDF_gm_sa, file = paste(scriptPath,'/data/net/6_deseq2/adult/1_preliminarySamples/DESeq2_results_adult_preliminarySamples_gm_VS_sa.csv',sep=''))
+write.csv(resOrderedDF_gm_pv, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/1_preliminarySamples/DESeq2_results_adult_preliminarySamples_gm_VS_pv.csv',sep=''))
+write.csv(resOrderedDF_gm_sa, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/1_preliminarySamples/DESeq2_results_adult_preliminarySamples_gm_VS_sa.csv',sep=''))
 
 sessionInfo()
