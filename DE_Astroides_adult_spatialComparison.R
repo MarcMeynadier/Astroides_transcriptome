@@ -31,6 +31,7 @@ library(heatmap.plus)
 # Working environment 
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(scriptPath)
+samples <- read.table('tximport_design_spatialComparison.txt',header=T)
 samplesSingle<-read.table('tximport_design_spatialComparisonSingle.txt',header=T)
 samplesPaired<-read.table('tximport_design_spatialComparisonPaired.txt',header=T)
 tx2gene<-read.table('tx2gene_fullTranscriptome',header=T)
@@ -41,16 +42,22 @@ wdPath<-paste(scriptPath,dataPath,sep='')
 setwd(wdPath)
 
 # Data importation - txImport
+files<-paste0(samples$sample,'.tsv')
 filesPaired<-paste0(samplesPaired$sample,'.tsv')
 filesSingle<-paste0(samplesSingle$sample,'.tsv')
-names(filesPaired)<-samplesPaired$sample
-names(filesSingle)<-samplesSingle$sample
+names(files)<-samples$samples
+names(filesPaired)<-samplesPaired$samples
+names(filesSingle)<-samplesSingle$samples
+txi<-tximport(files = files,type='kallisto',tx2gene = tx2gene)
 txiPaired<-tximport(files = filesPaired,type='kallisto',tx2gene = tx2gene)
 txiSingle<-tximport(files = filesSingle,type='kallisto',tx2gene = tx2gene)
+names(txi)
+head(txi)
 names(txiPaired)
 head(txiPaired$counts)
 names(txiSingle)
 head(txiSingle$counts)
+dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~site + experiment)
 ddsPaired<-DESeqDataSetFromTximport(txiPaired,colData=samplesPaired,design= ~site + experiment)
 ddsSingle<-DESeqDataSetFromTximport(txiSingle,colData=samplesSingle,design= ~site + experiment)
 
@@ -83,6 +90,8 @@ res_tro_bck_single<-results(ddsSingle, contrast=c("experiment","tro","bck"), alp
 summary(res_pv_gm_single)
 summary(res_sp_gm_single)
 summary(res_tro_bck_single)
+
+# Both paired end & single end sequences
 
 # Exploring the results
 
