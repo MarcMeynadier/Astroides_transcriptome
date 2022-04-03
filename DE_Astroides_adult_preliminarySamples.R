@@ -64,7 +64,7 @@ summary(res_gm_sa)
 png(paste(outputPath,'DGE_MA-plot_adult_preliminarySamples_gm_VS_pv.png',sep=''), width=7, height=5, units = "in", res = 300)
 resLFC = lfcShrink(dds, contrast=c("site","gm","pv"), 
                    type="ashr")
-plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes")
+plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes\nPreliminary samples : pv VS gm")
 dev.off()
 
 # Volcano plot
@@ -74,7 +74,7 @@ png(paste(outputPath,'DGE_volcanoPlot_adult_preliminarySamples_gm_VS_pv.png',sep
 EnhancedVolcano(data.frame(res_gm_pv), lab = rownames(data.frame(res_gm_pv)), x = 'log2FoldChange', y = 'padj',
                     xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                     pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
-                    title = "Volcano plot", subtitle = "Contrast between gm and pv",
+                    title = "Volcano plot", subtitle = "Preliminary samples : pv VS gm",
                     caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_gm_pv), ' variables'),
                     legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
                     legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
@@ -87,7 +87,7 @@ png(paste(outputPath,'DGE_MA-plot_adult_preliminarySamples_gm_VS_sa.png',sep='')
 resLFC = lfcShrink(dds, contrast=c("site","gm","sa"), 
                    type="ashr")
 plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), 
-       main = "MA-plot for the shrunken log2 fold changes")
+       main = "MA-plot for the shrunken log2 fold changes\nPreliminary samples : sa VS gm")
 dev.off()
 
 # Volcano plot
@@ -95,7 +95,7 @@ png(paste(outputPath,'DGE_volcanoPlot_adult_preliminarySamples_gm_VS_sa.png',sep
 EnhancedVolcano(data.frame(res_gm_sa), lab = rownames(data.frame(res_gm_sa)), x = 'log2FoldChange', y = 'padj',
                     xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                     pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
-                    title = "Volcano plot", subtitle = "Contrast between gm and sa",
+                    title = "Volcano plot", subtitle = "Preliminary samples : sa VS gm",
                     caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_gm_sa), ' variables'),
                     legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
                     legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
@@ -104,7 +104,7 @@ dev.off()
 # Principal Component Analysis
 
 # vst transformation
-vsd = vst(dds,blind=F)
+vsd = vst(dds,blind=T)
 
 pcaData = plotPCA(vsd, intgroup="site", 
                   returnData=TRUE)
@@ -115,7 +115,7 @@ ggplot(pcaData, aes(PC1, PC2, colour = site)) +
   geom_point(size = 2) + theme_bw() + 
   scale_color_manual(values = c("#ff4040", "#6699cc","#9bddff")) +
   geom_text_repel(aes(label = site), nudge_x = -1, nudge_y = 0.2, size = 3) +
-  ggtitle("Principal Component Analysis (PCA)", subtitle = "vst transformation") +
+  ggtitle("Principal Component Analysis (PCA)", subtitle = "VST transformation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance"))
 dev.off()
@@ -127,7 +127,7 @@ topVarGenesVsd <- head(order(rowVars(assay(vsd)), decreasing=TRUE), 50)
 png(paste(outputPath,'DGE_heatmap_vst_adult_preliminarySamples.png',sep=''), width=7, height=7, units = "in", res = 300)
 heatmap.2(assay(vsd)[topVarGenesVsd,], Rowv=T,trace="none",scale="row",keysize=1, key.par = list(mar=c(3,4,3,0)),
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.5, cexCol=0.7, labCol=F,
-          main = "Differentially expressed genes\nin preliminary samples (vst transformation)",
+          main = "Differentially expressed genes\nin preliminary samples (VST transformation)",
           ColSideColors=c(gm="#ff4040",pv="#6699cc",sa="#9bddff")
           [colData(vsd)$site],xlab="sampling sites", density.info="none",
           ylab="genes",margins=c(2,8))

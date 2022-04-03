@@ -31,13 +31,13 @@ library(heatmap.plus)
 # Working environment 
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(scriptPath)
-samples <- read.table('tximport_design_spatialComparison.txt',header=T)
-samplesSingle<-read.table('tximport_design_spatialComparisonSingle.txt',header=T)
-samplesPaired<-read.table('tximport_design_spatialComparisonPaired.txt',header=T)
+samples <- read.table('tximport_design_temporalComparison.txt',header=T)
+samplesSingle<-read.table('tximport_design_temporalComparisonSingle.txt',header=T)
+samplesPaired<-read.table('tximport_design_temporalComparisonPaired.txt',header=T)
 tx2gene<-read.table('tx2gene_fullTranscriptome',header=T)
 scriptPath <- sub("/[^/]+$", "", scriptPath)
-dataPath<-'/data/net/5_kallisto/larvaeJuvenileAdultTranscriptome/adult/2_spatialComparison'
-outputPath<-paste(scriptPath,'/output/DESeq2/larvaeJuvenileAdultTranscriptome/adult/2_spatialComparison/',sep='')
+dataPath<-'/data/net/5_kallisto/larvaeJuvenileAdultTranscriptome/adult/3_temporalComparison'
+outputPath<-paste(scriptPath,'/output/DESeq2/larvaeJuvenileAdultTranscriptome/adult/3_temporalComparison/',sep='')
 wdPath<-paste(scriptPath,dataPath,sep='')
 setwd(wdPath)
 
@@ -57,9 +57,9 @@ names(txiPaired)
 head(txiPaired$counts)
 names(txiSingle)
 head(txiSingle$counts)
-dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~site + experiment)
-ddsPaired<-DESeqDataSetFromTximport(txiPaired,colData=samplesPaired,design= ~site + experiment)
-ddsSingle<-DESeqDataSetFromTximport(txiSingle,colData=samplesSingle,design= ~site + experiment)
+dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~site + experiment + date)
+ddsPaired<-DESeqDataSetFromTximport(txiPaired,colData=samplesPaired,design= ~site + experiment + date)
+ddsSingle<-DESeqDataSetFromTximport(txiSingle,colData=samplesSingle,design= ~site + experiment + date)
 
 # pre-filtering
 keepPaired <- rowSums(counts(ddsPaired)) >= 10 

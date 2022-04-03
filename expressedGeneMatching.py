@@ -117,6 +117,15 @@ def experimentChoice():
 #                         Shared genes computation                             #
 #------------------------------------------------------------------------------#
 
+def genesAnnotation(filenames,experiment):
+    filesNamesClean = listOfFiles(filenames,experiment)
+    for i in range(len(filesNamesClean)):
+        filesNamesClean[i] = str(i+1) + " : " + filesNamesClean[i]
+        print(filesNamesClean[i])
+    print("\nWhich file do you want to annotate ? (select one)")
+    file = int(input())
+    df = filenamesToDataframe(filenames)
+    print(df)
 
 def compareGenes(filenames,experiment):
     filesNamesClean1 = listOfFiles(filenames,experiment)
@@ -183,9 +192,11 @@ def menu_display():
     print("\n")
     print("--------------------------------------------")
     print("|                                          |")
-    print("|          Genes shared : 1                |")
+    print("|       Genes annotation : 1               |")
     print("|                                          |")
-    print("|                  Exit : 2                |")
+    print("|           Genes shared : 2               |")
+    print("|                                          |")
+    print("|                   Exit : 3               |")
     print("|                                          |")
     print("--------------------------------------------")
     print("\n")
@@ -198,8 +209,10 @@ def menu_app():
         menu_display()
         answer = int(input())
         if answer==1:
-            compareGenes(filenames,experiment)
+            genesAnnotation(filenames,experiment)
         elif answer==2:
+            compareGenes(filenames,experiment)
+        elif answer==3:
             sys.exit(0)
 
 
