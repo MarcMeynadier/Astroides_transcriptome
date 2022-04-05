@@ -15,7 +15,7 @@ packageCheckClassic <- function(x){
   }
 }
 
-packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown','RColorBrewer','genefilter','gplots'))
+packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown','RColorBrewer','genefilter','gplots','vegan'))
 #BiocManager::install('tximport', force = TRUE)
 #BiocManager::install('apeglm')
 #BiocManager::install('ashr')
@@ -52,7 +52,6 @@ keep <- rowSums(counts(dds)) >= 10
 dds <- dds[keep,]
 
 # Differential expression analysis
-dds$originSite_finalSite_experiment <- dds$originSite_finalSite_experiment
 dds<-DESeq(dds)
 cbind(resultsNames(dds))
 gm_gm_gas_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_gm_gas","gm_gm_bck"), alpha = 0.05)
@@ -196,7 +195,7 @@ dev.off()
 # Principal Component Analysis
 
 # vst transformation
-vsd = vst(ddsGmRef,blind=F)
+vsd = vst(dds,blind=F)
 
 pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment", 
                   returnData=TRUE)
@@ -206,7 +205,7 @@ png(paste(outputPath,'DGE_PCA_vst_adult_gardenShort.png',sep=''), width=7, heigh
 ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
   geom_point(size = 2) + theme_bw() + 
   #scale_color_manual(values = c("#ff0040", "#a40000","#9bddff")) +
-  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3) +
+  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3,max.overlaps = Inf) +
   ggtitle("Principal Component Analysis (PCA)", subtitle = "vst transformation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance"))
@@ -228,9 +227,16 @@ legend(0.93,1.08,title = "originSite_finalSite",legend=c("gm_pv","gm_sp","pv_gm"
        fill=c("#ff0040","#a40000","#6699cc","#9bddff"), cex=0.5, box.lty=1,xpd=T)
 dev.off()
 
+# Inferences statistics
+
+count_tab_assay <- assay(vsd)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+adonis(data=samples,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+anova(betadisper(dist_tab_assay,samples$originSite_finalSite_experiment))
+
 # Exporting results
 resOrdered_gm_gm_gas_VS_gm_gm_bck <- gm_gm_gas_VS_gm_gm_bck[order(gm_gm_gas_VS_gm_gm_bck$pvalue),]
-resOrdered_pv_pv_gas_VS_pv_pv_bck <- pv_pv_gas_VS_pv_pv_bck[order(pv_pv_gas_VS_pv_pv_bckk$pvalue),]
+resOrdered_pv_pv_gas_VS_pv_pv_bck <- pv_pv_gas_VS_pv_pv_bck[order(pv_pv_gas_VS_pv_pv_bck$pvalue),]
 resOrdered_sp_sp_gas_VS_sp_sp_bck <- sp_sp_gas_VS_sp_sp_bck[order(sp_sp_gas_VS_sp_sp_bck$pvalue),]
 resOrdered_pv_gm_gas_VS_pv_pv_bck <- pv_gm_gas_VS_pv_pv_bck[order(pv_gm_gas_VS_pv_pv_bck$pvalue),]
 resOrdered_sp_gm_gas_VS_sp_sp_bck <- sp_gm_gas_VS_sp_sp_bck[order(sp_gm_gas_VS_sp_sp_bck$pvalue),]

@@ -15,7 +15,7 @@ packageCheckClassic <- function(x){
   }
 }
 
-packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown','pheatmap','RColorBrewer','genefilter','gplots'))
+packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown','pheatmap','RColorBrewer','genefilter','gplots','vegan'))
 #BiocManager::install('tximport', force = TRUE)
 #BiocManager::install('apeglm')
 #BiocManager::install('ashr')
@@ -104,6 +104,7 @@ dev.off()
 # Principal Component Analysis
 
 # vst transformation
+
 vsd = vst(dds,blind=T)
 
 pcaData = plotPCA(vsd, intgroup="site", 
@@ -134,6 +135,13 @@ heatmap.2(assay(vsd)[topVarGenesVsd,], Rowv=T,trace="none",scale="row",keysize=1
 legend(0.93,1.08,title = "sampling site",legend=c("gm","pv","sa"), 
        fill=c("#ff4040","#6699cc","#9bddff"), cex=0.5, box.lty=1,xpd=T)
 dev.off()
+
+# Inferences statistics
+
+count_tab_assay <- assay(vsd)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+adonis(data=samples,dist_tab_assay ~ site, method="euclidian")
+anova(betadisper(dist_tab_assay,samples$site))
 
 # Exporting results
 resOrdered_gm_pv <- res_gm_pv[order(res_gm_pv$pvalue),]

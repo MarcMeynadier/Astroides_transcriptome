@@ -15,7 +15,7 @@ packageCheckClassic <- function(x){
   }
 }
 
-packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown','RColorBrewer','genefilter','gplots'))
+packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown','RColorBrewer','genefilter','gplots','vegan'))
 #BiocManager::install('tximport', force = TRUE)
 #BiocManager::install('apeglm')
 #BiocManager::install('ashr')
@@ -346,6 +346,15 @@ heatmap.3(assay(vsdSingle)[topVarGenesVsdSingle,], trace="none",scale="row",keys
 legend(0.95,0.98,legend=c("gm","pv","sp"),fill=c("#ff4040","#6699cc","#000080"),cex=0.5,xpd=T)
 legend(0.95,0.91,legend=c("bck","tro"),fill=c('#FFC0CB','#808080'),cex=0.5,xpd=T)
 dev.off()
+
+# Inferences statistics
+
+vsd = vst(dds,blind=F)
+count_tab_assay <- assay(vsd)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+adonis(data=samples,dist_tab_assay ~ site + experiment, method="euclidian")
+anova(betadisper(dist_tab_assay,samples$site))
+anova(betadisper(dist_tab_assay,samples$experiment))
 
 # Exporting results
 

@@ -15,7 +15,7 @@ packageCheckClassic <- function(x){
   }
 }
 
-packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown','RColorBrewer','genefilter','gplots'))
+packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown','RColorBrewer','genefilter','gplots','vegan'))
 #BiocManager::install('tximport', force = TRUE)
 #BiocManager::install('apeglm')
 #BiocManager::install('ashr')
@@ -209,8 +209,8 @@ percentVar = round(100 * attr(pcaData, "percentVar"))
 png(paste(outputPath,'DGE_PCA_adult_trueTransplant.png',sep=''), width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
   geom_point(size = 2) + theme_bw() + 
-  scale_color_manual(values = c("#ff0040", "#a40000","#9bddff")) +
-  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3) +
+  #scale_color_manual(values = c("#ff0040", "#a40000","#9bddff")) +
+  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3,max.overlaps = Inf) +
   ggtitle("Principal Component Analysis (PCA)", subtitle = "VST transformation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance"))
@@ -224,12 +224,18 @@ png(paste(outputPath,'DGE_heatmap_adult_trueTransplant.png',sep=''), width=7, he
 heatmap.2(assay(vsd)[topVarGenesVsd,], Rowv=T,trace="none",scale="row",keysize=1, key.par = list(mar=c(3,4,3,0)),
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.5, cexCol=0.7, labCol=F,
           main = "Differentially expressed genes\nin true transplant experiment",
-          ColSideColors=c(gm_pv="#ff0040", gm_sp="#a40000", pv_gm="#6699cc",sp_gm="#9bddff")
-          [colData(vsd)$originSite_finalSite],xlab="sampling sites after transplantation", density.info="none",
+          xlab="sampling sites after transplantation", density.info="none",
           ylab="genes",margins=c(2,8))
-legend(0.93,1.08,title = "originSite_finalSite",legend=c("gm_pv","gm_sp","pv_gm","sp_gm"), 
-       fill=c("#ff0040","#a40000","#6699cc","#9bddff"), cex=0.5, box.lty=1,xpd=T)
+#legend(0.93,1.08,title = "originSite_finalSite",legend=c("gm_pv","gm_sp","pv_gm","sp_gm"), 
+#       fill=c("#ff0040","#a40000","#6699cc","#9bddff"), cex=0.5, box.lty=1,xpd=T)
 dev.off()
+
+# Inferences statistics
+
+count_tab_assay <- assay(vsd)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+adonis(data=samples,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+anova(betadisper(dist_tab_assay,samples$originSite_finalSite_experiment))
 
 # Exporting results
 resOrdered_gm_gm_tro_VS_gm_gm_bck <- gm_gm_tro_VS_gm_gm_bck[order(gm_gm_tro_VS_gm_gm_bck$pvalue),]

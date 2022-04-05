@@ -347,6 +347,15 @@ legend(0.95,0.98,legend=c("gm","pv","sp"),fill=c("#ff4040","#6699cc","#000080"),
 legend(0.95,0.91,legend=c("bck","tro"),fill=c('#FFC0CB','#808080'),cex=0.5,xpd=T)
 dev.off()
 
+# Inferences statistics
+
+vsd = vst(dds,blind=T)
+count_tab_assay <- assay(vsd)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+adonis(data=samples,dist_tab_assay ~ site + experiment, method="euclidian")
+anova(betadisper(dist_tab_assay,samples$site))
+anova(betadisper(dist_tab_assay,samples$experiment))
+
 # Exporting results
 
 resOrdered_pv_VS_gm_paired <- res_pv_VS_gm_paired[order(res_pv_VS_gm_paired$pvalue),]
