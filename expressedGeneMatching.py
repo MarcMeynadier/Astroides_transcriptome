@@ -21,6 +21,7 @@ from functools import reduce
 #------------------------------------------------------------------------------#
 
 
+
 def getProteinSequences():
     with open('../../../7_functionnalAnnotation/ast_aa') as f:
         contents = f.readlines()
@@ -58,7 +59,10 @@ def getAnnotationFile():
     for i in range(len(curedFile)):
         geneNames.append(curedFile[i].split(" - ",1)[0])
         geneNames[i]=geneNames[i].replace('TRINITY_','')
-        pfamAnnot.append(curedFile[i].split(" - ",1)[1])
+        splitDash = curedFile[i].split(" - ",1)[1]
+        splitPF = splitDash.split("PF",1)[0] ; splitPF = splitPF.strip()
+        #splitSpace = splitPF.split() ; print(splitSpace)
+        pfamAnnot.append(splitPF)
     dic={'genes':geneNames,'pfam_annotation':pfamAnnot}
     mergeDf=pd.DataFrame(dic)
     mergeDf = mergeDf.merge(sequencesDf,how='inner')
@@ -113,21 +117,49 @@ def experimentChoice():
        print("Select your type of experiment :\n\n1 : Replica 1") 
     return experiment
 
+
 #------------------------------------------------------------------------------#
 #                         Shared genes computation                             #
 #------------------------------------------------------------------------------#
 
-def genesAnnotation(filenames,experiment):
+
+def genesUnshared(filenames,experiment):
     filesNamesClean = listOfFiles(filenames,experiment)
     for i in range(len(filesNamesClean)):
         filesNamesClean[i] = str(i+1) + " : " + filesNamesClean[i]
         print(filesNamesClean[i])
-    print("\nWhich file do you want to annotate ? (select one)")
-    file = int(input())
-    df = filenamesToDataframe(filenames)
-    print(df)
+    print("\nWhich file do you want to compare ?\n(First choice : expressed genes)")
+    file1=int(input()) ; file2=int(input())
+    df = filenamesToDataframe(filenames) 
+    geneNames = list(df[file1-1].gene) ; geneNames2 = list(df[file2-1].gene)
+    for i in geneNames:
+        flag = 0
+        for j in geneNames2:
+            if i == j:
+                flag = 1
+        if flag == 0:
+            geneNames.remove(i)
+    lfcValuesFile = [] 
+    padjValuesFile = [] 
+    dfFile1 = df[file1-1] 
+    for i in range(len(geneNames)):
+        lfcValuesFile.append(dfFile1['log2FoldChange'][dfFile1['gene']==geneNames[i]].values[0])
+        padjValuesFile.append(dfFile1['padj'][dfFile1['gene']==geneNames[i]].values[0])
+    for i in range(len(geneNames)):
+        geneNames[i]=geneNames[i].replace('TRINITY_','')
+    filesNamesClean2 = listOfFiles(filenames,experiment)
+    dic = {'genes':geneNames,'lfc_'+filesNamesClean2[file1-1]:lfcValuesFile,
+    'p-adj_'+filesNamesClean2[file1-1]:padjValuesFile}
+    outputDf = pd.DataFrame(dic)
+    sequenceAnnotDf = getAnnotationFile()
+    outputDf = outputDf.merge(sequenceAnnotDf,how='left',on='genes')
+    outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file1-1],ascending=False)
+    outputDf = outputDf.reset_index(drop=True)
+    print(outputDf)
+    pathFunctionnalAnnotation='../../../7_functionnalAnnotation/' 
+    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_unshared_genes_comparison.csv',encoding='utf-8')
 
-def compareGenes(filenames,experiment):
+def genesShared(filenames,experiment):
     filesNamesClean1 = listOfFiles(filenames,experiment)
     print("\nList of output files from DESeq2 \n")
     for i in range(len(filesNamesClean1)):
@@ -179,8 +211,8 @@ def compareGenes(filenames,experiment):
     outputDf['pfam_annotation'] = pfamList 
     outputDf['protein_sequence'] = sequenceList ; print(outputDf)
     """
-
-    outputDf.to_csv(filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_comparison.csv',encoding='utf-8')
+    pathFunctionnalAnnotation='../../../7_functionnalAnnotation/'
+    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'shared_genes_comparison.csv',encoding='utf-8')
     
 
 #------------------------------------------------------------------------------#
@@ -192,7 +224,7 @@ def menu_display():
     print("\n")
     print("--------------------------------------------")
     print("|                                          |")
-    print("|       Genes annotation : 1               |")
+    print("|         Genes unshared : 1               |")
     print("|                                          |")
     print("|           Genes shared : 2               |")
     print("|                                          |")
@@ -209,9 +241,9 @@ def menu_app():
         menu_display()
         answer = int(input())
         if answer==1:
-            genesAnnotation(filenames,experiment)
+            genesUnshared(filenames,experiment)
         elif answer==2:
-            compareGenes(filenames,experiment)
+            genesShared(filenames,experiment)
         elif answer==3:
             sys.exit(0)
 
