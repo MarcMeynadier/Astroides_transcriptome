@@ -48,9 +48,9 @@ def getProteinSequences():
     return sequencesDf
 
 def getAnnotationFile():
-    sequencesDf = getProteinSequences()
+    #sequencesDf = getProteinSequences()
     curedFile = []
-    with open('../../../7_functionnalAnnotation/ast_aa_domtbl.out') as f:
+    with open('../../../7_functionnalAnnotation/hmmsearchOutput.out') as f:
         contents = f.readlines()
     for i in contents:
         if 'TRINITY' in i:
@@ -65,10 +65,9 @@ def getAnnotationFile():
         pfamAnnot.append(splitPF)
     dic={'genes':geneNames,'pfam_annotation':pfamAnnot}
     mergeDf=pd.DataFrame(dic)
-    mergeDf = mergeDf.merge(sequencesDf,how='inner')
+    #mergeDf = mergeDf.merge(sequencesDf,how='inner')
     mergeDf = mergeDf.replace(to_replace ='(_i).*', value = '', regex = True)
-    mergeDf = mergeDf.assign(count=(mergeDf["protein_sequence"].str.len())).groupby('genes').max().drop('count',axis=1)
-    mergeDf.to_csv('mergeDataframe.csv',encoding='utf-8')
+    #mergeDf = mergeDf.assign(count=(mergeDf["protein_sequence"].str.len())).groupby('genes').max().drop('count',axis=1) 
     return mergeDf
 
 def getFilenames(experiment):
@@ -121,6 +120,36 @@ def experimentChoice():
 #------------------------------------------------------------------------------#
 #                         Shared genes computation                             #
 #------------------------------------------------------------------------------#
+
+
+def singleFile(filenames,experiment):
+    filesNamesClean = listOfFiles(filenames,experiment)
+    for i in range(len(filesNamesClean)):
+        filesNamesClean[i] = str(i+1) + " : " + filesNamesClean[i]
+        print(filesNamesClean[i])
+    print("\nWhich file do you want to annotate ?\n")
+    file=int(input())
+    df = filenamesToDataframe(filenames) 
+    geneNames = list(df[file-1].gene) 
+    lfcValuesFile = [] 
+    padjValuesFile = [] 
+    dfFile = df[file-1] 
+    for i in range(len(geneNames)):
+        lfcValuesFile.append(dfFile['log2FoldChange'][dfFile['gene']==geneNames[i]].values[0])
+        padjValuesFile.append(dfFile['padj'][dfFile['gene']==geneNames[i]].values[0])
+    for i in range(len(geneNames)):
+        geneNames[i]=geneNames[i].replace('TRINITY_','')
+    filesNamesClean2 = listOfFiles(filenames,experiment)
+    dic = {'genes':geneNames,'lfc_'+filesNamesClean2[file-1]:lfcValuesFile,
+    'p-adj_'+filesNamesClean2[file-1]:padjValuesFile}
+    outputDf = pd.DataFrame(dic)
+    sequenceAnnotDf = getAnnotationFile()
+    outputDf = outputDf.merge(sequenceAnnotDf,how='left',on='genes')
+    outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file-1],ascending=False)
+    outputDf = outputDf.reset_index(drop=True)
+    print(outputDf)
+    pathFunctionnalAnnotation='../../../7_functionnalAnnotation/' 
+    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file-1]+'_single_file_annotation.csv',encoding='utf-8')
 
 
 def genesUnshared(filenames,experiment):
@@ -224,11 +253,13 @@ def menu_display():
     print("\n")
     print("--------------------------------------------")
     print("|                                          |")
-    print("|         Genes unshared : 1               |")
+    print("|    Single file annotation : 1            |")
     print("|                                          |")
-    print("|           Genes shared : 2               |")
+    print("|            Genes unshared : 2            |")
     print("|                                          |")
-    print("|                   Exit : 3               |")
+    print("|              Genes shared : 3            |")
+    print("|                                          |")
+    print("|                      Exit : 4            |")
     print("|                                          |")
     print("--------------------------------------------")
     print("\n")
@@ -241,10 +272,12 @@ def menu_app():
         menu_display()
         answer = int(input())
         if answer==1:
-            genesUnshared(filenames,experiment)
+            singleFile(filenames,experiment)
         elif answer==2:
-            genesShared(filenames,experiment)
+            genesUnshared(filenames,experiment)
         elif answer==3:
+            genesShared(filenames,experiment)
+        elif answer==4:
             sys.exit(0)
 
 
