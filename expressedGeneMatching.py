@@ -241,7 +241,7 @@ def genesShared(filenames,experiment):
     outputDf['protein_sequence'] = sequenceList ; print(outputDf)
     """
     pathFunctionnalAnnotation='../../../7_functionnalAnnotation/'
-    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'shared_genes_comparison.csv',encoding='utf-8')
+    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_shared_genes_comparison.csv',encoding='utf-8')
     
 
 #------------------------------------------------------------------------------#
