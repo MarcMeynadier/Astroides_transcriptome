@@ -13,6 +13,8 @@ import os
 import sys
 import glob
 import pandas as pd
+from urllib.request import urlopen
+import regex as re
 from functools import reduce
 
 
@@ -21,9 +23,8 @@ from functools import reduce
 #------------------------------------------------------------------------------#
 
 
-
 def getProteinSequences():
-    with open('../../../7_functionnalAnnotation/ast_aa') as f:
+    with open('../data/net/7_functionnalAnnotation/transdecoderOutput.pep') as f:
         contents = f.readlines()
     geneNames = []
     proteinSequences = []
@@ -45,30 +46,88 @@ def getProteinSequences():
         proteinSequences[i] = proteinSequences[i].replace('\n','')
     dic = {'genes':geneNames,'protein_sequence':proteinSequences}
     sequencesDf = pd.DataFrame(dic)
+    sequencesDf.to_csv('proteinDf.csv')
     return sequencesDf
 
 def getAnnotationFile():
-    #sequencesDf = getProteinSequences()
+    sequencesDf = getProteinSequences()
     curedFile = []
-    with open('../../../7_functionnalAnnotation/hmmsearchOutput.out') as f:
+    with open('../data/net/7_functionnalAnnotation/hmmsearchOutput.out') as f:
         contents = f.readlines()
     for i in contents:
         if 'TRINITY' in i:
             curedFile.append(i)
-    geneNames=[] ; pfamAnnot= []
+    geneNames=[] ; pfamAnnot= [] ; pfamCode = []
+    separator = "PF"
     for i in range(len(curedFile)):
         geneNames.append(curedFile[i].split(" - ",1)[0])
         geneNames[i]=geneNames[i].replace('TRINITY_','')
         splitDash = curedFile[i].split(" - ",1)[1]
-        splitPF = splitDash.split("PF",1)[0] ; splitPF = splitPF.strip()
+        splitAnnot = splitDash.split(separator,1)[0] ; splitAnnot = splitAnnot.strip()
+        splitCode = splitDash.split(separator,1)[1] ; splitCode = splitCode.split(".",1)[0] ; splitCode = separator + splitCode
         #splitSpace = splitPF.split() ; print(splitSpace)
-        pfamAnnot.append(splitPF)
-    dic={'genes':geneNames,'pfam_annotation':pfamAnnot}
+        pfamAnnot.append(splitAnnot) ; pfamCode.append(splitCode)
+    dic={'genes':geneNames,'pfam_annotation':pfamAnnot,'pfam_code':pfamCode}
     mergeDf=pd.DataFrame(dic)
-    #mergeDf = mergeDf.merge(sequencesDf,how='inner')
+    mergeDf = mergeDf.merge(sequencesDf,how='left')
     mergeDf = mergeDf.replace(to_replace ='(_i).*', value = '', regex = True)
     #mergeDf = mergeDf.assign(count=(mergeDf["protein_sequence"].str.len())).groupby('genes').max().drop('count',axis=1) 
+    #print(mergeDf)
     return mergeDf
+
+
+def pfam2goFile(): 
+    url = 'http://current.geneontology.org/ontology/external2go/pfam2go'
+    pfam2go = urlopen(url).read().decode('utf-8') 
+    pfam2goList = pfam2go.split("\n")
+    curedList = []
+    for i in pfam2goList:
+        if "Pfam:" in i:
+            curedList.append(i)
+    pfamCodeList = [] ; goAnnotList = [] ; goCodeList = []
+    for i in curedList:
+        pfamCode = i.split()[0] ; pfamCode = pfamCode.split("Pfam:",1)[1]
+        goAnnot = i.split("> ",1)[1] ; goAnnot = goAnnot.split(" ;",1)[0]
+        goCode = i.rsplit("; ",1)[1] 
+        pfamCodeList.append(pfamCode) ; goAnnotList.append(goAnnot) ; goCodeList.append(goCode)
+    gatherGoAnnot = [] ; gatherGoCode = []
+    tempGoAnnot = [] ; tempGoCode = []
+    for i in range(len(pfamCodeList)):
+        if pfamCodeList[i] == pfamCodeList[i-1]:
+            tempGoAnnot.append(goAnnotList[i-1]) ; 
+            tempGoCode.append(goCodeList[i-1])
+        else:
+            tempGoAnnot.append(goAnnotList[i-1]) ; tempGoCode.append(goCodeList[i-1]) 
+            gatherGoAnnot.append(tempGoAnnot) ; gatherGoCode.append(tempGoCode)
+            tempGoAnnot = [] ; tempGoCode = []
+    gatherGoAnnot.pop(0) ; gatherGoCode.pop(0)
+    manualLastGoAnnot = [] ; manualLastGoAnnot.append(goAnnotList[-2]) 
+    manualLastGoAnnot.append(goAnnotList[-1]) ; gatherGoAnnot.append(manualLastGoAnnot)
+    manualLastGoCode = [] ; manualLastGoCode.append(goCodeList[-2])  
+    manualLastGoCode.append(goCodeList[-1]) ; gatherGoCode.append(manualLastGoCode)
+    tempGoAnnot = [] ; tempGoCode = []
+    finalGoAnnot = [] ; finalGoCode = []
+    count = 0
+    for i in range(len(pfamCodeList)):
+        try:
+            if pfamCodeList[i] == pfamCodeList[i+1]:
+                finalGoAnnot.append(gatherGoAnnot[count]) ; 
+                finalGoCode.append(gatherGoCode[count])
+            else:
+                finalGoAnnot.append(gatherGoAnnot[count]) ; finalGoCode.append(gatherGoCode[count]) 
+                count += 1
+                #pass
+        except IndexError:
+            pass           
+    finalGoAnnot.append(gatherGoAnnot[-1]) ; finalGoCode.append(gatherGoCode[-1]) 
+    dic = {'pfam_code':pfamCodeList,'GO_annotation':finalGoAnnot,'GO_code':finalGoCode} 
+    annotSequenceDf = getAnnotationFile()
+    mergeDf = pd.DataFrame(dic)
+    mergeDf = mergeDf.merge(annotSequenceDf,how='inner')
+    #mergeDf.to_csv("bigFile.csv")
+    print(mergeDf)
+    
+pfam2goFile()
 
 def getFilenames(experiment):
     os.chdir('../data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult') # Changing working directory to DESeq2 results
@@ -241,7 +300,7 @@ def genesShared(filenames,experiment):
     outputDf['protein_sequence'] = sequenceList ; print(outputDf)
     """
     pathFunctionnalAnnotation='../../../7_functionnalAnnotation/'
-    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_shared_genes_comparison.csv',encoding='utf-8')
+    #outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_shared_genes_comparison.csv',encoding='utf-8')
     
 
 #------------------------------------------------------------------------------#
@@ -286,6 +345,6 @@ def menu_app():
 #------------------------------------------------------------------------------#
 
 
-menu_app()
+#menu_app()
 
      
