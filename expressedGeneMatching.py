@@ -24,7 +24,7 @@ from functools import reduce
 
 
 def getProteinSequences():
-    with open('../data/net/7_functionnalAnnotation/transdecoderOutput.pep') as f:
+    with open('../../../7_functionnalAnnotation/transdecoderOutput.pep') as f:
         contents = f.readlines()
     geneNames = []
     proteinSequences = []
@@ -52,7 +52,7 @@ def getProteinSequences():
 def getAnnotationFile():
     sequencesDf = getProteinSequences()
     curedFile = []
-    with open('../data/net/7_functionnalAnnotation/hmmsearchOutput.out') as f:
+    with open('../../../7_functionnalAnnotation/hmmsearchOutput.out') as f:
         contents = f.readlines()
     for i in contents:
         if 'TRINITY' in i:
@@ -124,10 +124,7 @@ def pfam2goFile():
     annotSequenceDf = getAnnotationFile()
     mergeDf = pd.DataFrame(dic)
     mergeDf = mergeDf.merge(annotSequenceDf,how='inner')
-    #mergeDf.to_csv("bigFile.csv")
-    print(mergeDf)
-    
-pfam2goFile()
+    return mergeDf
 
 def getFilenames(experiment):
     os.chdir('../data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult') # Changing working directory to DESeq2 results
@@ -202,7 +199,7 @@ def singleFile(filenames,experiment):
     dic = {'genes':geneNames,'lfc_'+filesNamesClean2[file-1]:lfcValuesFile,
     'p-adj_'+filesNamesClean2[file-1]:padjValuesFile}
     outputDf = pd.DataFrame(dic)
-    sequenceAnnotDf = getAnnotationFile()
+    sequenceAnnotDf = pfam2goFile()
     outputDf = outputDf.merge(sequenceAnnotDf,how='left',on='genes')
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file-1],ascending=False)
     outputDf = outputDf.reset_index(drop=True)
@@ -239,7 +236,7 @@ def genesUnshared(filenames,experiment):
     dic = {'genes':geneNames,'lfc_'+filesNamesClean2[file1-1]:lfcValuesFile,
     'p-adj_'+filesNamesClean2[file1-1]:padjValuesFile}
     outputDf = pd.DataFrame(dic)
-    sequenceAnnotDf = getAnnotationFile()
+    sequenceAnnotDf = pfam2goFile()
     outputDf = outputDf.merge(sequenceAnnotDf,how='left',on='genes')
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file1-1],ascending=False)
     outputDf = outputDf.reset_index(drop=True)
@@ -271,7 +268,7 @@ def genesShared(filenames,experiment):
     dic = {'genes':geneNames,'lfc_'+filesNamesClean2[file1-1]:lfcValuesFile1,'lfc_'+filesNamesClean2[file2-1]:lfcValuesFile2,
     'p-adj_'+filesNamesClean2[file1-1]:padjValuesFile1,'p-adj_'+filesNamesClean2[file2-1]:padjValuesFile2}
     outputDf = pd.DataFrame(dic)
-    sequenceAnnotDf = getAnnotationFile()
+    sequenceAnnotDf = pfam2goFile()
     outputDf = outputDf.merge(sequenceAnnotDf,how='left',on='genes')
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file1-1],ascending=False)
     outputDf = outputDf.reset_index(drop=True)
@@ -300,7 +297,7 @@ def genesShared(filenames,experiment):
     outputDf['protein_sequence'] = sequenceList ; print(outputDf)
     """
     pathFunctionnalAnnotation='../../../7_functionnalAnnotation/'
-    #outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_shared_genes_comparison.csv',encoding='utf-8')
+    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_shared_genes_comparison.csv',encoding='utf-8')
     
 
 #------------------------------------------------------------------------------#
@@ -345,6 +342,6 @@ def menu_app():
 #------------------------------------------------------------------------------#
 
 
-#menu_app()
+menu_app()
 
      
