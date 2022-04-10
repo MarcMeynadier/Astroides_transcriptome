@@ -202,7 +202,8 @@ def singleFile(filenames,experiment):
     sequenceAnnotDf = pfam2goFile()
     outputDf = outputDf.merge(sequenceAnnotDf,how='left',on='genes')
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file-1],ascending=False)
-    outputDf = outputDf.reset_index(drop=True)
+    outputDf = outputDf.dropna(subset=['pfam_code'])
+    outputDf = outputDf.reset_index(drop=True) 
     print(outputDf)
     pathFunctionnalAnnotation='../../../7_functionnalAnnotation/' 
     outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file-1]+'_single_file_annotation.csv',encoding='utf-8')
@@ -239,6 +240,7 @@ def genesUnshared(filenames,experiment):
     sequenceAnnotDf = pfam2goFile()
     outputDf = outputDf.merge(sequenceAnnotDf,how='left',on='genes')
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file1-1],ascending=False)
+    outputDf = outputDf.dropna(subset=['pfam_code'])
     outputDf = outputDf.reset_index(drop=True)
     print(outputDf)
     pathFunctionnalAnnotation='../../../7_functionnalAnnotation/' 
@@ -271,31 +273,9 @@ def genesShared(filenames,experiment):
     sequenceAnnotDf = pfam2goFile()
     outputDf = outputDf.merge(sequenceAnnotDf,how='left',on='genes')
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file1-1],ascending=False)
+    outputDf = outputDf.dropna(subset=['pfam_code'])
     outputDf = outputDf.reset_index(drop=True)
     print(outputDf)
-    
-    """
-    pfamList = []
-    sequenceList = []
-    for i in range(len(outputDf)):
-        for j in range(len(annotDf)):
-            if outputDf['genes'][i]==annotDf['genes'][j]:
-                pfamList.append(annotDf['pfam_annotation'][j])
-        try:
-            dummy=pfamList[i]
-        except IndexError:
-            pfamList.append('NA')
-            
-        for k in range(len(sequencesDf)):
-            if outputDf['genes'][i]==sequencesDf['genes'][k]:
-                sequenceList.append(sequencesDf['protein_sequence'][k])
-        try:
-            dummy=sequenceList[i]
-        except IndexError:
-            sequenceList.append('NA')
-    outputDf['pfam_annotation'] = pfamList 
-    outputDf['protein_sequence'] = sequenceList ; print(outputDf)
-    """
     pathFunctionnalAnnotation='../../../7_functionnalAnnotation/'
     outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_shared_genes_comparison.csv',encoding='utf-8')
     
