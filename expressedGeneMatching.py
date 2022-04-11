@@ -8,13 +8,11 @@ Marc Meynadier
 #------------------------------------------------------------------------------#
 
 
-from importlib.resources import contents
 import os
 import sys
 import glob
 import pandas as pd
 from urllib.request import urlopen
-import regex as re
 from functools import reduce
 
 
@@ -207,6 +205,7 @@ def singleFile(filenames,experiment):
     outputDf = outputDf.merge(sequenceAnnotDf,how='left',on='genes')
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file-1],ascending=False)
     outputDf = outputDf.dropna(subset=['pfam_code'])
+    outputDf = outputDf.drop_duplicates(subset=['pfam_code'])
     outputDf = outputDf.reset_index(drop=True) 
     print(outputDf)
     pathFunctionnalAnnotation='../../../7_functionnalAnnotation/' 
@@ -245,6 +244,7 @@ def genesUnshared(filenames,experiment):
     outputDf = outputDf.merge(sequenceAnnotDf,how='left',on='genes')
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file1-1],ascending=False)
     outputDf = outputDf.dropna(subset=['pfam_code'])
+    outputDf = outputDf.drop_duplicates(subset=['pfam_code'])
     outputDf = outputDf.reset_index(drop=True)
     print(outputDf)
     pathFunctionnalAnnotation='../../../7_functionnalAnnotation/' 
@@ -278,6 +278,7 @@ def genesShared(filenames,experiment):
     outputDf = outputDf.merge(sequenceAnnotDf,how='left',on='genes')
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file1-1],ascending=False)
     outputDf = outputDf.dropna(subset=['pfam_code'])
+    outputDf = outputDf.drop_duplicates(subset=['pfam_code'])
     outputDf = outputDf.reset_index(drop=True)
     print(outputDf)
     pathFunctionnalAnnotation='../../../7_functionnalAnnotation/'
