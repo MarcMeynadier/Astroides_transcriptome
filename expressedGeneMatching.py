@@ -126,8 +126,12 @@ def pfam2goFile():
     mergeDf = mergeDf.merge(annotSequenceDf,how='inner')
     return mergeDf
 
-def getFilenames(experiment):
-    os.chdir('../data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult') # Changing working directory to DESeq2 results
+def getFilenames(typeOrg,experiment):
+    if typeOrg == 1:
+        folderOrg = "/adult"
+    elif typeOrg == 2:
+        folderOrg = "/juvenile"
+    os.chdir('../data/net/6_deseq2/larvaeJuvenileAdultTranscriptome'+folderOrg) # Changing working directory to DESeq2 results
     path=os.getcwd()
     filenames = glob.glob(path + "/*"+experiment+"*.csv")
     return filenames
@@ -169,8 +173,8 @@ def experimentChoice():
         elif expType == 5:
             experiment = "gardenShort"
     elif typeOrg == 2:
-       print("Select your type of experiment :\n\n1 : Replica 1") 
-    return experiment
+            experiment = "juvenile" 
+    return typeOrg, experiment
 
 
 #------------------------------------------------------------------------------#
@@ -302,8 +306,8 @@ def menu_display():
     return
 
 def menu_app():
-    experiment = experimentChoice()
-    filenames = getFilenames(experiment)
+    typeOrg, experiment = experimentChoice()
+    filenames = getFilenames(typeOrg,experiment)
     while True:
         menu_display()
         answer = int(input())
