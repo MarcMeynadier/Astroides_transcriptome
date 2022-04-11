@@ -1,0 +1,25 @@
+dir samples site pH
+juvenile abundance_juvenile_rep1_gm_amb_R1CA1_ gm amb
+juvenile abundance_juvenile_rep1_gm_ext_R1EA7_ gm ext
+juvenile abundance_juvenile_rep1_gm_low_R1BA8_ gm low
+juvenile abundance_juvenile_rep1_sp_amb_R1AA8_ sp amb
+juvenile abundance_juvenile_rep1_sp_low_R1DA1_ sp low
+juvenile abundance_juvenile_rep2_gm_amb_R2DA8_ gm amb
+juvenile abundance_juvenile_rep2_gm_ext_R2AA2_ gm ext
+juvenile abundance_juvenile_rep2_gm_low_R2EA3_ gm low
+juvenile abundance_juvenile_rep2_sp_amb_R2BA7_ sp amb
+juvenile abundance_juvenile_rep2_sp_low_R2CA9_ sp low 
+juvenile abundance_juvenile_rep3_gm_amb_R3AA9_ gm amb
+juvenile abundance_juvenile_rep3_gm_ext_R3CA1_ gm ext
+juvenile abundance_juvenile_rep3_gm_low_R3DA1_ gm low
+juvenile abundance_juvenile_rep3_sp_amb_R3EA10_ sp amb
+juvenile abundance_juvenile_rep3_sp_low_R3BA6_ sp low
+juvenile abundance_juvenile_rep4_gm_amb_R4BA4_ gm amb
+juvenile abundance_juvenile_rep4_gm_ext_R4BA15_ gm ext
+juvenile abundance_juvenile_rep4_gm_low_R4EA1_ gm low
+juvenile abundance_juvenile_rep4_sp_amb_R4AA12_ sp amb
+juvenile abundance_juvenile_rep4_sp_low_R4CA7_ sp low
+
+
+
+

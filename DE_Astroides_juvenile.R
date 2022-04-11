@@ -1,0 +1,214 @@
+# Differential expression on Kallisto data 
+
+# Juveniles
+
+# Packages and dependence
+packageCheckClassic <- function(x){
+  for( i in x ){
+    #  require returns TRUE invisibly if it was able to load package
+    if( ! require( i , character.only = TRUE ) ){
+      #  If package was not able to be loaded then re-install
+      install.packages( i , dependencies = TRUE )
+      #  Load package after installing
+      require( i , character.only = TRUE )
+    }
+  }
+}
+
+packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown','RColorBrewer','genefilter','gplots','vegan'))
+#BiocManager::install('tximport', force = TRUE)
+#BiocManager::install('apeglm')
+#BiocManager::install('ashr')
+#BiocManager::install("EnhancedVolcano")
+#BiocManager::install('limma')
+#devtools::install_github('cran/GMD')
+library('tximport')
+library('apeglm')
+library('ashr')
+library('EnhancedVolcano')
+library('limma')
+source_url("https://raw.githubusercontent.com/obigriffith/biostar-tutorials/master/Heatmaps/heatmap.3.R")
+
+# Working environment 
+scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
+setwd(scriptPath)
+samples<-read.table('tximport_design_juvenile.txt',header=T)
+tx2gene<-read.table('tx2gene_fullTranscriptome',header=T)
+scriptPath <- sub("/[^/]+$", "", scriptPath)
+dataPath<-'/data/net/5_kallisto/larvaeJuvenileAdultTranscriptome/juvenile'
+outputPath<-paste(scriptPath,'/output/DESeq2/larvaeJuvenileAdultTranscriptome/juvenile/',sep='')
+wdPath<-paste(scriptPath,dataPath,sep='')
+setwd(wdPath)
+
+# Data importation - txImport
+files<-paste0(samples$samples,'.tsv')
+names(files)<-samples$samples
+txi<-tximport(files = files,type='kallisto',tx2gene = tx2gene)
+names(txi)
+head(txi$counts)
+dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~site + pH)
+
+# pre-filtering
+keep <- rowSums(counts(dds)) >= 10 
+dds <- dds[keep,]
+
+# Differential expression analysis
+dds<-DESeq(dds)
+write.table(counts(dds,normalized=TRUE),file='normalized_count_table_juvenileReplica1.txt',quote=F)
+cbind(resultsNames(dds))
+sp_VS_gm<-results(dds, contrast=c("site","sp","gm"), alpha = 0.05)
+ext_VS_amb<-results(dds, contrast=c("pH","ext","amb"), alpha = 0.05)
+low_VS_amb<-results(dds, contrast=c("pH","low","amb"), alpha = 0.05)
+low_VS_ext<-results(dds, contrast=c("pH","low","ext"), alpha = 0.05)
+summary(sp_VS_gm)
+summary(ext_VS_amb)
+summary(low_VS_amb)
+summary(low_VS_ext)
+
+# Exploring the results
+
+# Results sp VS gm
+
+#MA-plot
+png(paste(outputPath,'DGE_MA-plot_juvenile_sp_VS_gm.png',sep=''), width=7, height=5, units = "in", res = 300)
+DESeq2::plotMA(sp_VS_gm,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\nsp_VS_gm")
+dev.off()
+# Volcano plot
+pCutoff = 0.05
+FCcutoff = 1.0
+png(paste(outputPath,'DGE_volcanoPlot_juvenile_sp_VS_gm.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(sp_VS_gm), lab = rownames(data.frame(sp_VS_gm)), x = 'log2FoldChange', y = 'padj',
+                xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
+                title = "Volcano plot", subtitle = "Contrast between sp and gm",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(sp_VS_gm), ' variables'),
+                legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
+                legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
+dev.off()
+
+# Results ext VS amb
+
+#MA-plot
+png(paste(outputPath,'DGE_MA-plot_juvenile_ext_VS_amb.png',sep=''), width=7, height=5, units = "in", res = 300)
+DESeq2::plotMA(ext_VS_amb,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\next_VS_amb")
+dev.off()
+
+# Volcano plot
+png(paste(outputPath,'DGE_volcanoPlot_juvenile_ext_VS_amb.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(ext_VS_amb), lab = rownames(data.frame(ext_VS_amb)), x = 'log2FoldChange', y = 'padj',
+                xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
+                title = "Volcano plot", subtitle = "Contrast between ext and amb",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(ext_VS_amb), ' variables'),
+                legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
+                legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
+dev.off()
+
+# Results low VS amb
+
+#MA-plot
+png(paste(outputPath,'DGE_MA-plot_juvenile_low_VS_amb.png',sep=''), width=7, height=5, units = "in", res = 300)
+DESeq2::plotMA(low_VS_amb,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\nlow_VS_amb")
+dev.off()
+# Volcano plot
+png(paste(outputPath,'DGE_volcanoPlot_juvenile_low_VS_amb.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(low_VS_amb), lab = rownames(data.frame(low_VS_amb)), x = 'log2FoldChange', y = 'padj',
+                xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
+                title = "Volcano plot", subtitle = "Contrast between low and amb",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(low_VS_amb), ' variables'),
+                legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
+                legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
+dev.off()
+
+
+# Results low VS ext
+
+#MA-plot
+png(paste(outputPath,'DGE_MA-plot_juvenile_low_VS_ext.png',sep=''), width=7, height=5, units = "in", res = 300)
+DESeq2::plotMA(low_VS_ext,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\nlow_VS_ext")
+dev.off()
+
+# Volcano plot
+png(paste(outputPath,'DGE_volcanoPlot_juvenile_low_VS_ext.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(low_VS_ext), lab = rownames(data.frame(low_VS_ext)), x = 'log2FoldChange', y = 'padj',
+                xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
+                title = "Volcano plot", subtitle = "Contrast between low and ext",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(low_VS_ext), ' variables'),
+                legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
+                legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
+dev.off()
+
+# Principal Component Analysis
+vsd = vst(dds,blind=F)
+
+pcaData = plotPCA(vsd, intgroup=c("site","pH"), 
+                  returnData=TRUE)
+percentVar = round(100 * attr(pcaData, "percentVar"))
+
+png(paste(outputPath,'DGE_PCA_juvenile.png',sep=''), width=7, height=7, units = "in", res = 300)
+ggplot(pcaData, aes(PC1, PC2, colour = site, shape = pH)) + 
+  geom_point(size = 2) + theme_bw() + 
+  scale_color_manual(values = c("#ff4040","#000080")) +
+  scale_shape_manual(values = c("triangle","circle","square")) +
+  geom_text_repel(aes(label = site), nudge_x = -1, nudge_y = 0.2, size = 3, max.overlaps = Inf) +
+  ggtitle("Principal Component Analysis (PCA) of juvenile corals", subtitle = "VST transformation") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  stat_ellipse(level = 0.95)
+dev.off()
+
+# heatmap
+pH_colors <- unlist(lapply(samples$pH,function(x){
+  if(grepl('amb',x)) '#ffebcd' # blanchedalmond
+  else if(grepl('low',x)) 'grey' 
+  else if(grepl('ext',x)) 'black'
+}))
+
+site_colors <- unlist(lapply(samples$site,function(x){
+  if(grepl('gm',x)) '#ff4040' #red
+  else if(grepl('sp',x)) '#000080' #blue
+}))
+
+myCols <- cbind(pH_colors,site_colors)
+
+topVarGenesVsd <- head(order(rowVars(assay(vsd)), decreasing=TRUE), 50 )
+png(paste(outputPath,'DGE_heatmap_juvenile.png',sep=''), width=7, height=7, units = "in", res = 300)
+heatmap.3(assay(vsd)[topVarGenesVsd,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
+          col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7, labCol=F,density.info="none",
+          ColSideColors=myCols,xlab="sampling sites & pH conditions",ylab="genes",margins = c(2,8))
+legend(0.95,1,legend=c("gm","sp"),fill=c("#ff4040","#000080"),cex=0.5,xpd=T)
+legend(0.95,0.91,legend=c("amb","low","ext"),fill=c('#ffebcd','grey','black'),cex=0.5,xpd=T)
+dev.off()
+
+# Inferences statistics
+
+count_tab_assay <- assay(vsd)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+adonis(data=samples,dist_tab_assay ~ site + pH, method="euclidian")
+anova(betadisper(dist_tab_assay,samples$site))
+anova(betadisper(dist_tab_assay,samples$pH))
+
+# Exporting results
+resOrdered_sp_VS_gm <- sp_VS_gm[order(sp_VS_gm$pvalue),]
+resOrdered_ext_VS_amb <- ext_VS_amb[order(ext_VS_amb$pvalue),]
+resOrdered_low_VS_amb <- low_VS_amb[order(low_VS_amb$pvalue),]
+resOrdered_low_VS_ext <- low_VS_ext[order(low_VS_ext$pvalue),]
+
+head(resOrdered_sp_VS_gm)
+head(resOrdered_ext_VS_amb)
+head(resOrdered_low_VS_amb)
+head(resOrdered_low_VS_ext)
+
+resOrderedDF_sp_VS_gm <- as.data.frame(resOrdered_sp_VS_gm)
+resOrderedDF_ext_VS_amb <- as.data.frame(resOrdered_ext_VS_amb)
+resOrderedDF_low_VS_amb <- as.data.frame(resOrdered_low_VS_amb)
+resOrderedDF_low_VS_ext <- as.data.frame(resOrdered_low_VS_ext)
+
+write.csv(resOrderedDF_sp_VS_gm, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/juvenile/DESeq2_results_juvenile_sp_VS_gm.csv',sep=''))
+write.csv(resOrderedDF_ext_VS_amb, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/juvenile/DESeq2_results_juvenile_ext_VS_amb.csv',sep=''))
+write.csv(resOrderedDF_low_VS_amb, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/juvenile/DESeq2_results_juvenile_low_VS_amb.csv',sep=''))
+write.csv(resOrderedDF_low_VS_ext, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/juvenile/DESeq2_results_juvenile_low_VS_ext.csv',sep=''))
+
+sessionInfo()

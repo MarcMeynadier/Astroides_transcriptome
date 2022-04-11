@@ -51,18 +51,20 @@ dds <- dds[keep,]
 # Differential expression analysis
 dds<-DESeq(dds)
 cbind(resultsNames(dds))
-res_gm_pv<-results(dds, contrast=c("site","pv","gm"), alpha = 0.05)
-res_gm_sa<-results(dds, contrast=c("site","sa","gm"), alpha = 0.05)
-summary(res_gm_pv)
-summary(res_gm_sa)
+res_pv_gm<-results(dds, contrast=c("site","pv","gm"), alpha = 0.05)
+res_sa_gm<-results(dds, contrast=c("site","sa","gm"), alpha = 0.05)
+res_pv_sa<-results(dds, contrast=c("site","pv","sa"), alpha = 0.05)
+summary(res_pv_gm)
+summary(res_sa_gm)
+summary(res_pv_sa)
 
 # Exploring the results
 
-# Results gm VS pv
+# Results pv VS gm
 
 #MA-plot
-png(paste(outputPath,'DGE_MA-plot_adult_preliminarySamples_gm_VS_pv.png',sep=''), width=7, height=5, units = "in", res = 300)
-resLFC = lfcShrink(dds, contrast=c("site","gm","pv"), 
+png(paste(outputPath,'DGE_MA-plot_adult_preliminarySamples_pv_VS_gm.png',sep=''), width=7, height=5, units = "in", res = 300)
+resLFC = lfcShrink(dds, contrast=c("site","pv","gm"), 
                    type="ashr")
 plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes\nPreliminary samples : pv VS gm")
 dev.off()
@@ -70,35 +72,56 @@ dev.off()
 # Volcano plot
 pCutoff = 0.05
 FCcutoff = 1.0
-png(paste(outputPath,'DGE_volcanoPlot_adult_preliminarySamples_gm_VS_pv.png',sep=''), width=7, height=7, units = "in", res = 300)
-EnhancedVolcano(data.frame(res_gm_pv), lab = rownames(data.frame(res_gm_pv)), x = 'log2FoldChange', y = 'padj',
+png(paste(outputPath,'DGE_volcanoPlot_adult_preliminarySamples_pv_VS_gm.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(res_pv_gm), lab = rownames(data.frame(res_pv_gm)), x = 'log2FoldChange', y = 'padj',
                     xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                     pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
                     title = "Volcano plot", subtitle = "Preliminary samples : pv VS gm",
-                    caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_gm_pv), ' variables'),
+                    caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_pv_gm), ' variables'),
                     legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
                     legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
 dev.off()
 
-# Results gm VS sa
+# Results sa VS gm
 
 #MA-plot
-png(paste(outputPath,'DGE_MA-plot_adult_preliminarySamples_gm_VS_sa.png',sep=''), width=7, height=5, units = "in", res = 300)
-resLFC = lfcShrink(dds, contrast=c("site","gm","sa"), 
+png(paste(outputPath,'DGE_MA-plot_adult_preliminarySamples_sa_VS_gm.png',sep=''), width=7, height=5, units = "in", res = 300)
+resLFC = lfcShrink(dds, contrast=c("site","sa","gm"), 
                    type="ashr")
 plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), 
        main = "MA-plot for the shrunken log2 fold changes\nPreliminary samples : sa VS gm")
 dev.off()
 
 # Volcano plot
-png(paste(outputPath,'DGE_volcanoPlot_adult_preliminarySamples_gm_VS_sa.png',sep=''), width=7, height=7, units = "in", res = 300)
-EnhancedVolcano(data.frame(res_gm_sa), lab = rownames(data.frame(res_gm_sa)), x = 'log2FoldChange', y = 'padj',
+png(paste(outputPath,'DGE_volcanoPlot_adult_preliminarySamples_sa_VS_gm.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(res_sa_gm), lab = rownames(data.frame(res_sa_gm)), x = 'log2FoldChange', y = 'padj',
                     xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                     pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
                     title = "Volcano plot", subtitle = "Preliminary samples : sa VS gm",
-                    caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_gm_sa), ' variables'),
+                    caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_sa_gm), ' variables'),
                     legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
                     legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
+dev.off()
+
+# Results pv VS sa
+
+#MA-plot
+png(paste(outputPath,'DGE_MA-plot_adult_preliminarySamples_pv_VS_sa.png',sep=''), width=7, height=5, units = "in", res = 300)
+resLFC = lfcShrink(dds, contrast=c("site","pv","sa"), 
+                   type="ashr")
+plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), 
+       main = "MA-plot for the shrunken log2 fold changes\nPreliminary samples : pv VS sa")
+dev.off()
+
+# Volcano plot
+png(paste(outputPath,'DGE_volcanoPlot_adult_preliminarySamples_pv_VS_sa.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(res_pv_sa), lab = rownames(data.frame(res_pv_sa)), x = 'log2FoldChange', y = 'padj',
+                xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
+                pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
+                title = "Volcano plot", subtitle = "Preliminary samples : pv VS sa",
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(res_pv_sa), ' variables'),
+                legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
+                legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
 dev.off()
 
 # Principal Component Analysis
@@ -144,14 +167,20 @@ adonis(data=samples,dist_tab_assay ~ site, method="euclidian")
 anova(betadisper(dist_tab_assay,samples$site))
 
 # Exporting results
-resOrdered_gm_pv <- res_gm_pv[order(res_gm_pv$pvalue),]
-resOrdered_gm_sa <- res_gm_sa[order(res_gm_sa$pvalue),]
-head(resOrdered_gm_pv)
-head(resOrdered_gm_sa)
+resOrdered_pv_gm <- res_pv_gm[order(res_pv_gm$pvalue),]
+resOrdered_sa_gm <- res_sa_gm[order(res_sa_gm$pvalue),]
+resOrdered_pv_sa <- res_sa_gm[order(res_pv_sa$pvalue),]
 
-resOrderedDF_gm_pv <- as.data.frame(resOrdered_gm_pv)
-resOrderedDF_gm_sa <- as.data.frame(resOrdered_gm_sa)
-write.csv(resOrderedDF_gm_pv, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/DESeq2_results_adult_preliminarySamples_gm_VS_pv.csv',sep=''))
-write.csv(resOrderedDF_gm_sa, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/DESeq2_results_adult_preliminarySamples_gm_VS_sa.csv',sep=''))
+head(resOrdered_pv_gm)
+head(resOrdered_sa_gm)
+head(resOrdered_pv_sa)
+
+resOrderedDF_pv_gm <- as.data.frame(resOrdered_pv_gm)
+resOrderedDF_sa_gm <- as.data.frame(resOrdered_sa_gm)
+resOrderedDF_pv_sa <- as.data.frame(resOrdered_pv_sa)
+
+write.csv(resOrderedDF_pv_gm, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/DESeq2_results_adult_preliminarySamples_pv_VS_gm.csv',sep=''))
+write.csv(resOrderedDF_sa_gm, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/DESeq2_results_adult_preliminarySamples_sa_VS_gm.csv',sep=''))
+write.csv(resOrderedDF_pv_sa, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/adult/DESeq2_results_adult_preliminarySamples_pv_VS_sa.csv',sep=''))
 
 sessionInfo()
