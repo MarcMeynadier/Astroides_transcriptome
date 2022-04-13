@@ -1,0 +1,174 @@
+"""
+Preparing files for Ontologizer input 
+Marc Meynadier
+"""
+
+
+#------------------------------------------------------------------------------#
+#                       Importation of external libraries                      #
+#------------------------------------------------------------------------------#
+
+
+import os
+import sys
+import wget
+import pandas as pd
+import csv
+from urllib.request import urlopen
+
+
+#------------------------------------------------------------------------------#
+#                              Files management                                #
+#------------------------------------------------------------------------------#
+
+
+def getOntologyFile():
+    url = 'http://purl.obolibrary.org/obo/go.obo'
+    wget.download(url)
+
+
+def swap_columns(df, col1, col2):
+    col_list = list(df.columns)
+    x, y = col_list.index(col1), col_list.index(col2)
+    col_list[y], col_list[x] = col_list[x], col_list[y]
+    df = df[col_list]
+    return df
+
+
+def getAnnotationFile():
+    curedFile = []
+    with open('../data/net/7_functionnalAnnotation/hmmsearchOutput.out') as f:
+        contents = f.readlines()
+    for i in contents:
+        if 'TRINITY' in i:
+            curedFile.append(i)
+    geneNames=[] ; pfamAnnot= [] ; pfamCode = []
+    separator = "PF"
+    for i in range(len(curedFile)):
+        geneNames.append(curedFile[i].split(" - ",1)[0])
+        geneNames[i]=geneNames[i].replace('TRINITY_','')
+        splitDash = curedFile[i].split(" - ",1)[1]
+        splitAnnot = splitDash.split(separator,1)[0] ; splitAnnot = splitAnnot.strip()
+        splitCode = splitDash.split(separator,1)[1] ; splitCode = splitCode.split(".",1)[0] ; splitCode = separator + splitCode
+        pfamAnnot.append(splitAnnot) ; pfamCode.append(splitCode)
+    dic={'genes':geneNames,'pfam_annotation':pfamAnnot,'pfam_code':pfamCode}
+    annotDf=pd.DataFrame(dic)
+    annotDf = annotDf.replace(to_replace ='(_i).*', value = '', regex = True)
+    return annotDf
+
+def getAssociationFile(): 
+    url = 'http://current.geneontology.org/ontology/external2go/pfam2go'
+    pfam2go = urlopen(url).read().decode('utf-8') 
+    pfam2goList = pfam2go.split("\n")
+    curedList = []
+    for i in pfam2goList:
+        if "Pfam:" in i:
+            curedList.append(i)
+    pfamCodeList = [] ; goAnnotList = [] ; goCodeList = []
+    for i in curedList:
+        pfamCode = i.split()[0] ; pfamCode = pfamCode.split("Pfam:",1)[1]
+        goAnnot = i.split("> ",1)[1] ; goAnnot = goAnnot.split(" ;",1)[0]
+        goCode = i.rsplit("; ",1)[1] 
+        pfamCodeList.append(pfamCode) ; goAnnotList.append(goAnnot) ; goCodeList.append(goCode)
+    gatherGoAnnot = [] ; gatherGoCode = []
+    tempGoAnnot = [] ; tempGoCode = []
+    for i in range(len(pfamCodeList)):
+        if pfamCodeList[i] == pfamCodeList[i-1]:
+            tempGoAnnot.append(goAnnotList[i-1]) ; 
+            tempGoCode.append(goCodeList[i-1])
+        else:
+            tempGoAnnot.append(goAnnotList[i-1]) ; tempGoCode.append(goCodeList[i-1]) 
+            gatherGoAnnot.append(tempGoAnnot) ; gatherGoCode.append(tempGoCode)
+            tempGoAnnot = [] ; tempGoCode = []
+    gatherGoAnnot.pop(0) ; gatherGoCode.pop(0)
+    manualLastGoAnnot = [] ; manualLastGoAnnot.append(goAnnotList[-2]) 
+    manualLastGoAnnot.append(goAnnotList[-1]) ; gatherGoAnnot.append(manualLastGoAnnot)
+    manualLastGoCode = [] ; manualLastGoCode.append(goCodeList[-2])  
+    manualLastGoCode.append(goCodeList[-1]) ; gatherGoCode.append(manualLastGoCode)
+    tempGoAnnot = [] ; tempGoCode = []
+    finalGoAnnot = [] ; finalGoCode = []
+    count = 0
+    for i in range(len(pfamCodeList)):
+        try:
+            if pfamCodeList[i] == pfamCodeList[i+1]:
+                finalGoAnnot.append(gatherGoAnnot[count]) ; 
+                finalGoCode.append(gatherGoCode[count])
+            else:
+                finalGoAnnot.append(gatherGoAnnot[count]) ; finalGoCode.append(gatherGoCode[count]) 
+                count += 1
+                #pass
+        except IndexError:
+            pass           
+    finalGoAnnot.append(gatherGoAnnot[-1]) ; finalGoCode.append(gatherGoCode[-1]) 
+    finalGoCode2 = []
+    for i in finalGoCode:
+        i = ",".join(map(str,i))
+        finalGoCode2.append(i)
+    dic = {'pfam_code':pfamCodeList,'GO_annotation':finalGoAnnot,'GO_code':finalGoCode2} 
+    annotSequenceDf = getAnnotationFile()
+    mergeDf = pd.DataFrame(dic)
+    mergeDf = mergeDf.merge(annotSequenceDf,how='inner')
+    mergeDf.drop(['GO_annotation', 'pfam_annotation','pfam_code'], axis=1, inplace=True)
+    mergeDf = swap_columns(mergeDf,'GO_code','genes') 
+    mergeDf.to_csv('associationFile.ids', sep='\t', header=False, index=False)
+
+
+def getPopulationFile():
+    curedFile = []
+    with open('../data/net/ontologizer/fullTranscriptome.Trinity.longest.fasta') as f:
+        contents = f.readlines()
+    for i in contents:
+        if 'TRINITY' in i:
+            i = i.split("TRINITY_",1)[1]
+            i = i.split("_i",1)[0]
+            curedFile.append(i)
+    f=open('populationFile.txt', 'a')
+    f.writelines("%s\n" % i for i in curedFile)
+    f.close()
+
+def getStudysetFile():
+    threshold_pvalue=0.05
+    folderOrg = 'adult'
+    os.chdir('../data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/'+folderOrg) # Changing working directory to DESeq2 results
+    path=os.getcwd()
+    for file in os.listdir(path):
+        if file.endswith(".csv"):
+            curedFile = []
+            txtName=file.replace(".csv",".txt")
+            csvFile = pd.read_csv(file)
+            csvFile = csvFile[csvFile.padj<threshold_pvalue]
+            csvFile = csvFile[csvFile['padj'].notna()]
+            geneNames = csvFile.iloc[:,0].tolist()
+            for i in geneNames:
+                if 'TRINITY' in i:
+                    i = i.split("TRINITY_",1)[1]
+                    curedFile.append(i)
+            f=open(txtName,'a')
+            f.writelines("%s\n" % i for i in curedFile)
+            f.close()
+    folderOrg = 'juvenile'
+    os.chdir('../'+folderOrg) # Changing working directory to DESeq2 results
+    path=os.getcwd()
+    for file in os.listdir(path):
+        if file.endswith(".csv"):
+            curedFile = []
+            txtName=file.replace(".csv",".txt")
+            csvFile = pd.read_csv(file)
+            csvFile = csvFile[csvFile.padj<threshold_pvalue]
+            csvFile = csvFile[csvFile['padj'].notna()]
+            geneNames = csvFile.iloc[:,0].tolist()
+            for i in geneNames:
+                if 'TRINITY' in i:
+                    i = i.split("TRINITY_",1)[1]
+                    curedFile.append(i)
+            f=open(txtName,'a')
+            f.writelines("%s\n" % i for i in curedFile)
+            f.close()
+
+def main():
+    getOntologyFile()
+    getAssociationFile()
+    getPopulationFile()
+    getStudysetFile()
+
+main()
