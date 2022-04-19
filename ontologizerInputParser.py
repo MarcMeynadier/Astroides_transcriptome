@@ -11,6 +11,7 @@ Marc Meynadier
 
 import os
 import sys
+from regex import F
 import wget
 import pandas as pd
 import csv
@@ -115,7 +116,7 @@ def getAssociationFile():
 
 def getPopulationFile():
     curedFile = []
-    with open('../data/net/ontologizer/fullTranscriptome.Trinity.longest.fasta') as f:
+    with open('../data/net/7_functionnalAnnotation/ontologizer/fullTranscriptome.Trinity.longest.fasta') as f:
         contents = f.readlines()
     for i in contents:
         if 'TRINITY' in i:
@@ -126,8 +127,35 @@ def getPopulationFile():
     f.writelines("%s\n" % i for i in curedFile)
     f.close()
 
-def getStudysetFile():
+def getProteinSequences():
+    with open('../data/net/7_functionnalAnnotation/transdecoderOutput.pep') as f:
+        contents = f.readlines()
+    geneNames = []
+    proteinSequences = []
+    concatProt = []
+    for i in contents:
+        if 'TRINITY' not in i:
+            concatProt.append(i)
+        else:
+            geneNames.append(i)
+            sequenceProt = ''
+            for j in concatProt:
+                sequenceProt += ''.join(j)
+            proteinSequences.append(sequenceProt) 
+            concatProt = []
+    for i in range(len(geneNames)):
+        geneNames[i]=geneNames[i].replace('>','')
+        geneNames[i]=geneNames[i].split(' ',1)[0]
+        geneNames[i]=geneNames[i].split('_i',1)[0]  
+    for i in range(len(proteinSequences)):
+        proteinSequences[i] = proteinSequences[i].replace('\n','')
+    dic = {'genes':geneNames,'protein_sequence':proteinSequences}
+    sequencesDf = pd.DataFrame(dic)
+    return sequencesDf
+
+def getStudysetFileOntologizer():
     threshold_pvalue=0.05
+    protDf = getProteinSequences() 
     folderOrg = 'adult'
     os.chdir('../data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/'+folderOrg) # Changing working directory to DESeq2 results
     path=os.getcwd()
@@ -136,8 +164,10 @@ def getStudysetFile():
             curedFile = []
             txtName=file.replace(".csv",".txt")
             csvFile = pd.read_csv(file)
-            csvFile = csvFile[csvFile.padj<threshold_pvalue]
-            csvFile = csvFile[csvFile['padj'].notna()]
+            csvFile.rename(columns={ csvFile.columns[0]: "genes" }, inplace = True)
+            csvFile = csvFile[csvFile.padj<threshold_pvalue] 
+            csvFile = csvFile[csvFile['padj'].notna()]  
+            csvFile = csvFile.merge(protDf,how='inner',on='genes') 
             geneNames = csvFile.iloc[:,0].tolist()
             for i in geneNames:
                 if 'TRINITY' in i:
@@ -154,8 +184,10 @@ def getStudysetFile():
             curedFile = []
             txtName=file.replace(".csv",".txt")
             csvFile = pd.read_csv(file)
-            csvFile = csvFile[csvFile.padj<threshold_pvalue]
-            csvFile = csvFile[csvFile['padj'].notna()]
+            csvFile.rename(columns={ csvFile.columns[0]: "genes" }, inplace = True)
+            csvFile = csvFile[csvFile.padj<threshold_pvalue] 
+            csvFile = csvFile[csvFile['padj'].notna()]  
+            csvFile = csvFile.merge(protDf,how='inner',on='genes') 
             geneNames = csvFile.iloc[:,0].tolist()
             for i in geneNames:
                 if 'TRINITY' in i:
@@ -165,10 +197,55 @@ def getStudysetFile():
             f.writelines("%s\n" % i for i in curedFile)
             f.close()
 
+getStudysetFileOntologizer()
+
+def getStudysetFileGOMWU():
+    threshold_pvalue=0.05
+    folderOrg = 'adult'
+    os.chdir('../data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/'+folderOrg) # Changing working directory to DESeq2 results
+    path=os.getcwd()
+    for file in os.listdir(path):
+        if file.endswith(".csv"):
+            curedFile = []
+            fileName = file.replace('.csv','')
+            csvFile = pd.read_csv(file)
+            csvFile = csvFile[csvFile.padj<threshold_pvalue]
+            csvFile = csvFile[csvFile['padj'].notna()]
+            geneNames = csvFile.iloc[:,0].tolist()
+            lfcValues = csvFile.iloc[:,2].tolist() 
+            for i in geneNames:
+                if 'TRINITY' in i:
+                    i = i.split("TRINITY_",1)[1]
+                    curedFile.append(i)
+            dic = {'genes':curedFile,'lfc':lfcValues}
+            outputDf = pd.DataFrame(dic) 
+            outputDf.to_csv(fileName+'_GOMWU.csv',encoding='utf-8',index=False)
+    folderOrg = 'juvenile'
+    os.chdir('../'+folderOrg) # Changing working directory to DESeq2 results
+    path=os.getcwd()
+    for file in os.listdir(path):
+        if file.endswith(".csv"):
+            curedFile = []
+            fileName = file.replace('.csv','')
+            csvFile = pd.read_csv(file)
+            csvFile = csvFile[csvFile.padj<threshold_pvalue]
+            csvFile = csvFile[csvFile['padj'].notna()]
+            geneNames = csvFile.iloc[:,0].tolist()
+            lfcValues = csvFile.iloc[:,2].tolist() 
+            for i in geneNames:
+                if 'TRINITY' in i:
+                    i = i.split("TRINITY_",1)[1]
+                    curedFile.append(i)
+            dic = {'genes':curedFile,'lfc':lfcValues}
+            outputDf = pd.DataFrame(dic) 
+            outputDf.to_csv(fileName+'_GOMWU.csv',encoding='utf-8',index=False)
+
+#getStudysetFileGOMWU()
+
 def main():
     getOntologyFile()
     getAssociationFile()
     getPopulationFile()
-    getStudysetFile()
+    getStudysetFileOntologizer()
 
-main()
+#main()

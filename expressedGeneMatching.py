@@ -44,7 +44,6 @@ def getProteinSequences():
         proteinSequences[i] = proteinSequences[i].replace('\n','')
     dic = {'genes':geneNames,'protein_sequence':proteinSequences}
     sequencesDf = pd.DataFrame(dic)
-    sequencesDf.to_csv('proteinDf.csv')
     return sequencesDf
 
 def getAnnotationFile():
@@ -208,8 +207,8 @@ def singleFile(filenames,experiment):
     outputDf = outputDf.drop_duplicates(subset=['pfam_code'])
     outputDf = outputDf.reset_index(drop=True) 
     print(outputDf)
-    pathFunctionnalAnnotation='../../../7_functionnalAnnotation/' 
-    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file-1]+'_single_file_annotation.csv',encoding='utf-8')
+    pathFunctionnalAnnotation='../../../7_functionnalAnnotation/expressedGeneMatching/' 
+    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file-1]+'_'+experiment+'_single_file_annotation.csv',encoding='utf-8')
 
 
 def genesUnshared(filenames,experiment):
@@ -247,8 +246,8 @@ def genesUnshared(filenames,experiment):
     outputDf = outputDf.drop_duplicates(subset=['pfam_code'])
     outputDf = outputDf.reset_index(drop=True)
     print(outputDf)
-    pathFunctionnalAnnotation='../../../7_functionnalAnnotation/' 
-    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_unshared_genes_comparison.csv',encoding='utf-8')
+    pathFunctionnalAnnotation='../../../7_functionnalAnnotation/expressedGeneMatching/' 
+    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_'+experiment+'_unshared_genes_comparison.csv',encoding='utf-8')
 
 def genesShared(filenames,experiment):
     filesNamesClean1 = listOfFiles(filenames,experiment)
@@ -281,8 +280,8 @@ def genesShared(filenames,experiment):
     outputDf = outputDf.drop_duplicates(subset=['pfam_code'])
     outputDf = outputDf.reset_index(drop=True)
     print(outputDf)
-    pathFunctionnalAnnotation='../../../7_functionnalAnnotation/'
-    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_shared_genes_comparison.csv',encoding='utf-8')
+    pathFunctionnalAnnotation='../../../7_functionnalAnnotation/expressedGeneMatching/'
+    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_'+experiment+'_shared_genes_comparison.csv',encoding='utf-8')
     
 
 #------------------------------------------------------------------------------#
