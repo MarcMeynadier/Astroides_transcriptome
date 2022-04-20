@@ -9,7 +9,6 @@ Marc Meynadier
 
 
 import os
-import sys
 import glob
 import pandas as pd
 from urllib.request import urlopen
@@ -62,14 +61,11 @@ def getAnnotationFile():
         splitDash = curedFile[i].split(" - ",1)[1]
         splitAnnot = splitDash.split(separator,1)[0] ; splitAnnot = splitAnnot.strip()
         splitCode = splitDash.split(separator,1)[1] ; splitCode = splitCode.split(".",1)[0] ; splitCode = separator + splitCode
-        #splitSpace = splitPF.split() ; print(splitSpace)
         pfamAnnot.append(splitAnnot) ; pfamCode.append(splitCode)
     dic={'genes':geneNames,'pfam_annotation':pfamAnnot,'pfam_code':pfamCode}
     mergeDf=pd.DataFrame(dic)
     mergeDf = mergeDf.merge(sequencesDf,how='left')
     mergeDf = mergeDf.replace(to_replace ='(_i).*', value = '', regex = True)
-    #mergeDf = mergeDf.assign(count=(mergeDf["protein_sequence"].str.len())).groupby('genes').max().drop('count',axis=1) 
-    #print(mergeDf)
     return mergeDf
 
 
@@ -113,7 +109,6 @@ def pfam2goFile():
             else:
                 finalGoAnnot.append(gatherGoAnnot[count]) ; finalGoCode.append(gatherGoCode[count]) 
                 count += 1
-                #pass
         except IndexError:
             pass           
     finalGoAnnot.append(gatherGoAnnot[-1]) ; finalGoCode.append(gatherGoCode[-1]) 
@@ -143,7 +138,14 @@ def listOfFiles(filenames,experiment):
     return filesNamesClean
 
 def filenamesToDataframe(filenames):
-    threshold_pvalue=0.05
+    print("\nDefine your threshold value (usually 0.05)\n")
+    while True:
+        try:
+            threshold_pvalue=float(input())
+        except ValueError:
+            print("\nYou must indicate a valid float ranging from 0 to 1\n")
+            continue
+        break
     dfs = [pd.read_csv(filename) for filename in filenames]
     for i in range(len(dfs)):
         dfs[i].rename(columns={ dfs[i].columns[0]: "gene" }, inplace = True)
@@ -152,13 +154,25 @@ def filenamesToDataframe(filenames):
     return dfs
 
 def experimentChoice():
-    print("Select your type of organisms :\n\n1 : Adult\n2 : Juvenile")
-    typeOrg = int(input())
+    print("\nSelect your type of organisms :\n\n1 : Adult\n2 : Juvenile\n")
+    while True:
+        try:
+            typeOrg = int(input())
+        except ValueError:
+            print("\nYou must indicate an integer value ranging from 1 to 2\n")
+            continue
+        break
     experiment = ""
     if typeOrg == 1:
-        print("Select your type of experiment :\n\n1 : Preliminary samples")
-        print("2 : Spatial comparison\n3 : Temporal comparison \n4 : True transplant\n5 : Garden short")
-        expType = int(input())
+        print("\nSelect your type of experiment :\n\n1 : Preliminary samples")
+        print("2 : Spatial comparison\n3 : Temporal comparison \n4 : True transplant\n5 : Garden short\n")
+        while True:
+            try:
+                expType= int(input())
+            except ValueError:
+                print("\nYou must indicate an integer value ranging from 1 to 5\n")
+                continue
+            break 
         if expType == 1:
             experiment = "preliminarySamples"
         elif expType == 2:
@@ -185,7 +199,17 @@ def singleFile(filenames,experiment):
         filesNamesClean[i] = str(i+1) + " : " + filesNamesClean[i]
         print(filesNamesClean[i])
     print("\nWhich file do you want to annotate ?\n")
-    file=int(input())
+    while True:
+            try:
+                file=int(input())
+                print(range(len(filesNamesClean)))
+                if file not in range(len(filesNamesClean)):
+                    print("\nYou must indicate an integer value corresponding to the file you want to analyse\n")
+                    file=int(input())
+            except ValueError:
+                print("\nYou must indicate an integer value corresponding to the file you want to analyse\n")
+                continue
+            break 
     df = filenamesToDataframe(filenames) 
     geneNames = list(df[file-1].gene) 
     lfcValuesFile = [] 
@@ -207,7 +231,7 @@ def singleFile(filenames,experiment):
     outputDf = outputDf.drop_duplicates(subset=['pfam_code'])
     outputDf = outputDf.reset_index(drop=True) 
     print(outputDf)
-    pathFunctionnalAnnotation='../../../7_functionnalAnnotation/expressedGeneMatching/' 
+    pathFunctionnalAnnotation='../../../7_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis/' 
     outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file-1]+'_'+experiment+'_single_file_annotation.csv',encoding='utf-8')
 
 
@@ -216,8 +240,14 @@ def genesUnshared(filenames,experiment):
     for i in range(len(filesNamesClean)):
         filesNamesClean[i] = str(i+1) + " : " + filesNamesClean[i]
         print(filesNamesClean[i])
-    print("\nWhich file do you want to compare ?\n(First choice : expressed genes)")
-    file1=int(input()) ; file2=int(input())
+    print("\nWhich file do you want to compare ?\n(First choice is the comparison benchmark)")
+    while True:
+            try:
+                file1=int(input()) ; file2=int(input())
+            except ValueError:
+                print("\nYou must indicate an integer value corresponding to the files you want to analyse\n")
+                continue
+            break 
     df = filenamesToDataframe(filenames) 
     geneNames = list(df[file1-1].gene) ; geneNames2 = list(df[file2-1].gene)
     for i in geneNames:
@@ -246,7 +276,7 @@ def genesUnshared(filenames,experiment):
     outputDf = outputDf.drop_duplicates(subset=['pfam_code'])
     outputDf = outputDf.reset_index(drop=True)
     print(outputDf)
-    pathFunctionnalAnnotation='../../../7_functionnalAnnotation/expressedGeneMatching/' 
+    pathFunctionnalAnnotation='../../../7_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis/' 
     outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_'+experiment+'_unshared_genes_comparison.csv',encoding='utf-8')
 
 def genesShared(filenames,experiment):
@@ -256,7 +286,13 @@ def genesShared(filenames,experiment):
         filesNamesClean1[i] = str(i+1) + " : " + filesNamesClean1[i]
         print(filesNamesClean1[i])
     print("\nWhich files do you want to compare ? (select two)\n")
-    file1=int(input()) ; file2=int(input())
+    while True:
+            try:
+                file1=int(input()) ; file2=int(input())
+            except ValueError:
+                print("\nYou must indicate an integer value corresponding to the files you want to analyse\n")
+                continue
+            break 
     df = filenamesToDataframe(filenames) 
     geneNames=list(reduce(set.intersection, map(set, [df[file1-1].gene, df[file2-1].gene])))
     lfcValuesFile1 = [] ; lfcValuesFile2 = []
@@ -280,52 +316,7 @@ def genesShared(filenames,experiment):
     outputDf = outputDf.drop_duplicates(subset=['pfam_code'])
     outputDf = outputDf.reset_index(drop=True)
     print(outputDf)
-    pathFunctionnalAnnotation='../../../7_functionnalAnnotation/expressedGeneMatching/'
+    pathFunctionnalAnnotation='../../../7_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis/'
     outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_'+experiment+'_shared_genes_comparison.csv',encoding='utf-8')
     
 
-#------------------------------------------------------------------------------#
-#                              Menu functions                                  #
-#------------------------------------------------------------------------------#
-
-
-def menu_display():
-    print("\n")
-    print("--------------------------------------------")
-    print("|                                          |")
-    print("|    Single file annotation : 1            |")
-    print("|                                          |")
-    print("|            Genes unshared : 2            |")
-    print("|                                          |")
-    print("|              Genes shared : 3            |")
-    print("|                                          |")
-    print("|                      Exit : 4            |")
-    print("|                                          |")
-    print("--------------------------------------------")
-    print("\n")
-    return
-
-def menu_app():
-    typeOrg, experiment = experimentChoice()
-    filenames = getFilenames(typeOrg,experiment)
-    while True:
-        menu_display()
-        answer = int(input())
-        if answer==1:
-            singleFile(filenames,experiment)
-        elif answer==2:
-            genesUnshared(filenames,experiment)
-        elif answer==3:
-            genesShared(filenames,experiment)
-        elif answer==4:
-            sys.exit(0)
-
-
-#------------------------------------------------------------------------------#
-#                                    Main                                      #
-#------------------------------------------------------------------------------#
-
-
-menu_app()
-
-     

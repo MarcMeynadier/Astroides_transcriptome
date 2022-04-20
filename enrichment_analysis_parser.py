@@ -10,11 +10,9 @@ Marc Meynadier
 
 
 import os
-import sys
-from regex import F
 import wget
+import shutil
 import pandas as pd
-import csv
 from urllib.request import urlopen
 
 
@@ -23,9 +21,15 @@ from urllib.request import urlopen
 #------------------------------------------------------------------------------#
 
 
-def getOntologyFile():
+def getOntologyFileOntologizer():
     url = 'http://purl.obolibrary.org/obo/go.obo'
     wget.download(url)
+    shutil.move('go.obo', '../data/net/7_functionnalAnnotation/ontologizer')
+
+def getOntologyFileGOMWU():
+    url = 'http://purl.obolibrary.org/obo/go.obo'
+    wget.download(url)
+    shutil.move('go.obo', '../data/net/7_functionnalAnnotation/GO_MWU')
 
 
 def swap_columns(df, col1, col2):
@@ -97,7 +101,6 @@ def getAssociationFile():
             else:
                 finalGoAnnot.append(gatherGoAnnot[count]) ; finalGoCode.append(gatherGoCode[count]) 
                 count += 1
-                #pass
         except IndexError:
             pass           
     finalGoAnnot.append(gatherGoAnnot[-1]) ; finalGoCode.append(gatherGoCode[-1]) 
@@ -111,8 +114,8 @@ def getAssociationFile():
     mergeDf = mergeDf.merge(annotSequenceDf,how='inner')
     mergeDf.drop(['GO_annotation', 'pfam_annotation','pfam_code'], axis=1, inplace=True)
     mergeDf = swap_columns(mergeDf,'GO_code','genes') 
-    mergeDf.to_csv('associationFile.ids', sep='\t', header=False, index=False)
-
+    pathOntologizer = '../data/net/7_functionnalAnnotation/ontologizer/'
+    mergeDf.to_csv(pathOntologizer+'associationFile.ids', sep='\t', header=False, index=False)
 
 def getPopulationFile():
     curedFile = []
@@ -126,6 +129,7 @@ def getPopulationFile():
     f=open('populationFile.txt', 'a')
     f.writelines("%s\n" % i for i in curedFile)
     f.close()
+    shutil.move('populationFile.txt', '../data/net/7_functionnalAnnotation/ontologizer')
 
 def getProteinSequences():
     with open('../data/net/7_functionnalAnnotation/transdecoderOutput.pep') as f:
@@ -154,7 +158,14 @@ def getProteinSequences():
     return sequencesDf
 
 def getStudysetFileOntologizer():
-    threshold_pvalue=0.05
+    print("\nDefine your threshold value (usually 0.05)\n")
+    while True:
+        try:
+            threshold_pvalue=float(input())
+        except ValueError:
+            print("\nYou must indicate a valid float ranging from 0 to 1\n")
+            continue
+        break
     protDf = getProteinSequences() 
     folderOrg = 'adult'
     os.chdir('../data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/'+folderOrg) # Changing working directory to DESeq2 results
@@ -176,6 +187,7 @@ def getStudysetFileOntologizer():
             f=open(txtName,'a')
             f.writelines("%s\n" % i for i in curedFile)
             f.close()
+            shutil.move(txtName, '../../../7_functionnalAnnotation/ontologizer/studySamples') 
     folderOrg = 'juvenile'
     os.chdir('../'+folderOrg) # Changing working directory to DESeq2 results
     path=os.getcwd()
@@ -196,14 +208,21 @@ def getStudysetFileOntologizer():
             f=open(txtName,'a')
             f.writelines("%s\n" % i for i in curedFile)
             f.close()
-
-getStudysetFileOntologizer()
+            shutil.move(txtName, '../../../7_functionnalAnnotation/ontologizer/studySamples')
 
 def getStudysetFileGOMWU():
-    threshold_pvalue=0.05
+    print("\nDefine your threshold value (usually 0.05)\n")
+    while True:
+        try:
+            threshold_pvalue=float(input())
+        except ValueError:
+            print("\nYou must indicate a valid float ranging from 0 to 1\n")
+            continue
+        break 
     folderOrg = 'adult'
     os.chdir('../data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/'+folderOrg) # Changing working directory to DESeq2 results
     path=os.getcwd()
+    pathGOMWU='../../../7_functionnalAnnotation/GO_MWU/'
     for file in os.listdir(path):
         if file.endswith(".csv"):
             curedFile = []
@@ -219,7 +238,7 @@ def getStudysetFileGOMWU():
                     curedFile.append(i)
             dic = {'genes':curedFile,'lfc':lfcValues}
             outputDf = pd.DataFrame(dic) 
-            outputDf.to_csv(fileName+'_GOMWU.csv',encoding='utf-8',index=False)
+            outputDf.to_csv(pathGOMWU+fileName+'_GOMWU.csv',encoding='utf-8',index=False)
     folderOrg = 'juvenile'
     os.chdir('../'+folderOrg) # Changing working directory to DESeq2 results
     path=os.getcwd()
@@ -238,14 +257,4 @@ def getStudysetFileGOMWU():
                     curedFile.append(i)
             dic = {'genes':curedFile,'lfc':lfcValues}
             outputDf = pd.DataFrame(dic) 
-            outputDf.to_csv(fileName+'_GOMWU.csv',encoding='utf-8',index=False)
-
-#getStudysetFileGOMWU()
-
-def main():
-    getOntologyFile()
-    getAssociationFile()
-    getPopulationFile()
-    getStudysetFileOntologizer()
-
-#main()
+            outputDf.to_csv(pathGOMWU+fileName+'_GOMWU.csv',encoding='utf-8',index=False)
