@@ -202,7 +202,6 @@ def singleFile(filenames,experiment):
     while True:
             try:
                 file=int(input())
-                print(range(len(filesNamesClean)))
                 if file not in range(len(filesNamesClean)):
                     print("\nYou must indicate an integer value corresponding to the file you want to analyse\n")
                     file=int(input())
@@ -232,11 +231,12 @@ def singleFile(filenames,experiment):
     outputDf = outputDf.reset_index(drop=True) 
     print(outputDf)
     pathFunctionnalAnnotation='../../../7_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis/' 
-    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file-1]+'_'+experiment+'_single_file_annotation.csv',encoding='utf-8')
-
+    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file-1]+'_'+experiment+'_single_file.csv',encoding='utf-8')
+    return outputDf
 
 def genesUnshared(filenames,experiment):
     filesNamesClean = listOfFiles(filenames,experiment)
+    filesNamesClean2=filesNamesClean.copy()
     for i in range(len(filesNamesClean)):
         filesNamesClean[i] = str(i+1) + " : " + filesNamesClean[i]
         print(filesNamesClean[i])
@@ -265,7 +265,6 @@ def genesUnshared(filenames,experiment):
         padjValuesFile.append(dfFile1['padj'][dfFile1['gene']==geneNames[i]].values[0])
     for i in range(len(geneNames)):
         geneNames[i]=geneNames[i].replace('TRINITY_','')
-    filesNamesClean2 = listOfFiles(filenames,experiment)
     dic = {'genes':geneNames,'lfc_'+filesNamesClean2[file1-1]:lfcValuesFile,
     'p-adj_'+filesNamesClean2[file1-1]:padjValuesFile}
     outputDf = pd.DataFrame(dic)
@@ -277,10 +276,11 @@ def genesUnshared(filenames,experiment):
     outputDf = outputDf.reset_index(drop=True)
     print(outputDf)
     pathFunctionnalAnnotation='../../../7_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis/' 
-    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_'+experiment+'_unshared_genes_comparison.csv',encoding='utf-8')
+    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_'+experiment+'_unshared.csv',encoding='utf-8')
 
 def genesShared(filenames,experiment):
     filesNamesClean1 = listOfFiles(filenames,experiment)
+    filesNamesClean2=filesNamesClean1.copy()
     print("\nList of output files from DESeq2 \n")
     for i in range(len(filesNamesClean1)):
         filesNamesClean1[i] = str(i+1) + " : " + filesNamesClean1[i]
@@ -305,7 +305,6 @@ def genesShared(filenames,experiment):
         padjValuesFile2.append(dfFile2['padj'][dfFile2['gene']==geneNames[i]].values[0])
     for i in range(len(geneNames)):
         geneNames[i]=geneNames[i].replace('TRINITY_','')
-    filesNamesClean2 = listOfFiles(filenames,experiment)
     dic = {'genes':geneNames,'lfc_'+filesNamesClean2[file1-1]:lfcValuesFile1,'lfc_'+filesNamesClean2[file2-1]:lfcValuesFile2,
     'p-adj_'+filesNamesClean2[file1-1]:padjValuesFile1,'p-adj_'+filesNamesClean2[file2-1]:padjValuesFile2}
     outputDf = pd.DataFrame(dic)
@@ -317,6 +316,6 @@ def genesShared(filenames,experiment):
     outputDf = outputDf.reset_index(drop=True)
     print(outputDf)
     pathFunctionnalAnnotation='../../../7_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis/'
-    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_'+experiment+'_shared_genes_comparison.csv',encoding='utf-8')
+    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_'+experiment+'_shared.csv',encoding='utf-8')
     
 
