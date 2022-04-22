@@ -164,6 +164,7 @@ def experimentChoice():
         break
     experiment = ""
     if typeOrg == 1:
+        org = 'adult'
         print("\nSelect your type of experiment :\n\n1 : Preliminary samples")
         print("2 : Spatial comparison\n3 : Temporal comparison \n4 : True transplant\n5 : Garden short\n")
         while True:
@@ -185,7 +186,8 @@ def experimentChoice():
             experiment = "gardenShort"
     elif typeOrg == 2:
             experiment = "juvenile" 
-    return typeOrg, experiment
+            org = "juvenile" 
+    return typeOrg, experiment, org
 
 
 #------------------------------------------------------------------------------#
@@ -193,7 +195,7 @@ def experimentChoice():
 #------------------------------------------------------------------------------#
 
 
-def singleFile(filenames,experiment):
+def singleFile(filenames,experiment,org):
     filesNamesClean = listOfFiles(filenames,experiment)
     for i in range(len(filesNamesClean)):
         filesNamesClean[i] = str(i+1) + " : " + filesNamesClean[i]
@@ -231,10 +233,10 @@ def singleFile(filenames,experiment):
     outputDf = outputDf.reset_index(drop=True) 
     print(outputDf)
     pathFunctionnalAnnotation='../../../7_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis/' 
-    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file-1]+'_'+experiment+'_single_file.csv',encoding='utf-8')
+    outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+experiment+'_'+filesNamesClean2[file-1]+'_single_file.csv',encoding='utf-8')
     return outputDf
 
-def genesUnshared(filenames,experiment):
+def genesUnshared(filenames,experiment,org):
     filesNamesClean = listOfFiles(filenames,experiment)
     filesNamesClean2=filesNamesClean.copy()
     for i in range(len(filesNamesClean)):
@@ -276,9 +278,9 @@ def genesUnshared(filenames,experiment):
     outputDf = outputDf.reset_index(drop=True)
     print(outputDf)
     pathFunctionnalAnnotation='../../../7_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis/' 
-    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_'+experiment+'_unshared.csv',encoding='utf-8')
+    outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+experiment+'_'+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_unshared.csv',encoding='utf-8')
 
-def genesShared(filenames,experiment):
+def genesShared(filenames,experiment,org):
     filesNamesClean1 = listOfFiles(filenames,experiment)
     filesNamesClean2=filesNamesClean1.copy()
     print("\nList of output files from DESeq2 \n")
@@ -316,6 +318,6 @@ def genesShared(filenames,experiment):
     outputDf = outputDf.reset_index(drop=True)
     print(outputDf)
     pathFunctionnalAnnotation='../../../7_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis/'
-    outputDf.to_csv(pathFunctionnalAnnotation+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_'+experiment+'_shared.csv',encoding='utf-8')
+    outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+experiment+'_'+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_shared.csv',encoding='utf-8')
     
 

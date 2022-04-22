@@ -19,6 +19,7 @@ import sys
 from DESeq2_analysis import *
 from enrichment_analysis_parser import *
 from ontologizer_analysis import *
+from DESeq2_X_ontologizer import *
 
 
 #------------------------------------------------------------------------------#
@@ -36,9 +37,11 @@ def main_menu_display():
     print("|                                                      |")
     print("|      Ontologizer output files analysis : 2           |")
     print("|                                                      |")
-    print("|      Enrichment analysis input files parsing : 3     |") 
+    print("|      DESeq2 output filtering after enrichment : 3    |")
     print("|                                                      |")
-    print("|      Exit : 4                                        |")
+    print("|      Enrichment analysis input files parsing : 4     |") 
+    print("|                                                      |")
+    print("|      Exit : 5                                        |")
     print("|                                                      |")
     print("--------------------------------------------------------")
     print("\n")
@@ -72,9 +75,9 @@ def menu_display_ontologizer():
     print("|                                            |")
     print("|       Single file enrichment : 1           |")
     print("|                                            |")
-    print("|       GO terms unshared : 2                   |")
+    print("|       GO terms unshared : 2                |")
     print("|                                            |")
-    print("|       GO terms shared : 3                     |")
+    print("|       GO terms shared : 3                  |")
     print("|                                            |")
     print("|       Back to previous selection : 4       |")
     print("|                                            |")
@@ -108,7 +111,7 @@ def main_menu():
             try:
                 answer = int(input())
             except ValueError:
-                print("\nYou must indicate an integer value ranging from 1 to 4\n")
+                print("\nYou must indicate an integer value ranging from 1 to 5\n")
                 continue
             break
         if answer==1:
@@ -116,13 +119,14 @@ def main_menu():
         elif answer==2:
             menu_ontologizer_output()
         elif answer==3:
-            menu_enrichment_parsing()
+            matchingFiles()
         elif answer==4:
+            menu_enrichment_parsing()
+        elif answer==5:
             sys.exit(0)
-        
 
 def menu_DESeq2():
-    typeOrg, experiment = experimentChoice()
+    typeOrg, experiment, org = experimentChoice()
     filenames = getFilenames(typeOrg,experiment)
     while True:
         menu_display_DESeq2()
@@ -134,11 +138,11 @@ def menu_DESeq2():
                 continue
             break
         if answer==1:
-            singleFile(filenames,experiment)
+            singleFile(filenames,experiment,org)
         elif answer==2:
-            genesUnshared(filenames,experiment)
+            genesUnshared(filenames,experiment,org)
         elif answer==3:
-            genesShared(filenames,experiment)
+            genesShared(filenames,experiment,org)
         elif answer==4:
             main_menu()
 
