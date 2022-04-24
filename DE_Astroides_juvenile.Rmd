@@ -41,10 +41,10 @@ source_url("https://raw.githubusercontent.com/obigriffith/biostar-tutorials/mast
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(scriptPath)
 samples<-read.table('tximport_design_juvenile.txt',header=T)
-tx2gene<-read.table('tx2gene_fullTranscriptome',header=T)
+tx2gene<-read.table('tx2gene_adultTranscriptome',header=T)
 scriptPath <- sub("/[^/]+$", "", scriptPath)
-dataPath<-'/data/net/5_kallisto/larvaeJuvenileAdultTranscriptome/juvenile'
-outputPath<-paste(scriptPath,'/output/DESeq2/larvaeJuvenileAdultTranscriptome/juvenile/',sep='')
+dataPath<-'/data/net/5_kallisto/adultTranscriptome/juvenile'
+outputPath<-paste(scriptPath,'/output/DESeq2/adultTranscriptome/juvenile/',sep='')
 wdPath<-paste(scriptPath,dataPath,sep='')
 setwd(wdPath)
 
@@ -195,10 +195,10 @@ resOrderedDF_ext_VS_amb <- as.data.frame(resOrdered_ext_VS_amb)
 resOrderedDF_low_VS_amb <- as.data.frame(resOrdered_low_VS_amb)
 resOrderedDF_low_VS_ext <- as.data.frame(resOrdered_low_VS_ext)
 
-write.csv(resOrderedDF_sp_VS_gm, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/juvenile/DESeq2_results_juvenile_sp_VS_gm.csv',sep=''))
-write.csv(resOrderedDF_ext_VS_amb, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/juvenile/DESeq2_results_juvenile_ext_VS_amb.csv',sep=''))
-write.csv(resOrderedDF_low_VS_amb, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/juvenile/DESeq2_results_juvenile_low_VS_amb.csv',sep=''))
-write.csv(resOrderedDF_low_VS_ext, file = paste(scriptPath,'/data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/juvenile/DESeq2_results_juvenile_low_VS_ext.csv',sep=''))
+write.csv(resOrderedDF_sp_VS_gm, file = paste(scriptPath,'/data/net/6_deseq2/adultTranscriptome/juvenile/DESeq2_results_juvenile_sp_VS_gm.csv',sep=''))
+write.csv(resOrderedDF_ext_VS_amb, file = paste(scriptPath,'/data/net/6_deseq2/adultTranscriptome/juvenile/DESeq2_results_juvenile_ext_VS_amb.csv',sep=''))
+write.csv(resOrderedDF_low_VS_amb, file = paste(scriptPath,'/data/net/6_deseq2/adultTranscriptome/juvenile/DESeq2_results_juvenile_low_VS_amb.csv',sep=''))
+write.csv(resOrderedDF_low_VS_ext, file = paste(scriptPath,'/data/net/6_deseq2/adultTranscriptome/juvenile/DESeq2_results_juvenile_low_VS_ext.csv',sep=''))
 
 sessionInfo()
 ```

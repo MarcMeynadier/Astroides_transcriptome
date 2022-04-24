@@ -168,7 +168,7 @@ def getStudysetFileOntologizer():
         break
     protDf = getProteinSequences() 
     folderOrg = 'adult'
-    os.chdir('../data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/'+folderOrg) # Changing working directory to DESeq2 results
+    os.chdir('../data/net/6_deseq2/adultTranscriptome/'+folderOrg) # Changing working directory to DESeq2 results
     path=os.getcwd()
     for file in os.listdir(path):
         if file.endswith(".csv"):
@@ -220,7 +220,7 @@ def getStudysetFileGOMWU():
             continue
         break 
     folderOrg = 'adult'
-    os.chdir('../data/net/6_deseq2/larvaeJuvenileAdultTranscriptome/'+folderOrg) # Changing working directory to DESeq2 results
+    os.chdir('../data/net/6_deseq2/adultTranscriptome/'+folderOrg) # Changing working directory to DESeq2 results
     path=os.getcwd()
     pathGOMWU='../../../7_functionnalAnnotation/GO_MWU/'
     for file in os.listdir(path):

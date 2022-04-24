@@ -276,7 +276,8 @@ ggplot(pcaData, aes(PC1, PC2, colour = site, shape = experiment)) +
   geom_text_repel(aes(label = site), nudge_x = -1, nudge_y = 0.2, size = 3, max.overlaps = Inf) +
   ggtitle("Principal Component Analysis (PCA)", subtitle = "VST transformation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-  ylab(paste0("PC2: ",percentVar[2],"% variance"))
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  stat_ellipse(level = 0.95)
 dev.off()
 
 # Single
@@ -294,7 +295,8 @@ ggplot(pcaData, aes(PC1, PC2, colour = site, shape = experiment)) +
   geom_text_repel(aes(label = site), nudge_x = -1, nudge_y = 0.2, size = 3, max.overlaps = Inf) +
   ggtitle("Principal Component Analysis (PCA)", subtitle = "VST transformation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-  ylab(paste0("PC2: ",percentVar[2],"% variance"))
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  stat_ellipse(level = 0.95)
 dev.off()
 
 # heatmap

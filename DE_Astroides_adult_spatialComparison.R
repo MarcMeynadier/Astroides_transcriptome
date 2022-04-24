@@ -34,10 +34,10 @@ setwd(scriptPath)
 samples <- read.table('tximport_design_spatialComparison.txt',header=T)
 samplesSingle<-read.table('tximport_design_spatialComparisonSingle.txt',header=T)
 samplesPaired<-read.table('tximport_design_spatialComparisonPaired.txt',header=T)
-tx2gene<-read.table('tx2gene_fullTranscriptome',header=T)
+tx2gene<-read.table('tx2gene_adultTranscriptome',header=T)
 scriptPath <- sub("/[^/]+$", "", scriptPath)
-dataPath<-'/data/net/5_kallisto/larvaeJuvenileAdultTranscriptome/adult/2_spatialComparison'
-outputPath<-paste(scriptPath,'/output/DESeq2/larvaeJuvenileAdultTranscriptome/adult/2_spatialComparison/',sep='')
+dataPath<-'/data/net/5_kallisto/adultTranscriptome/adult/2_spatialComparison'
+outputPath<-paste(scriptPath,'/output/DESeq2/adultTranscriptome/adult/2_spatialComparison/',sep='')
 wdPath<-paste(scriptPath,dataPath,sep='')
 setwd(wdPath)
 
@@ -276,7 +276,8 @@ ggplot(pcaData, aes(PC1, PC2, colour = site, shape = experiment)) +
   geom_text_repel(aes(label = site), nudge_x = -1, nudge_y = 0.2, size = 3, max.overlaps = Inf) +
   ggtitle("Principal Component Analysis (PCA)", subtitle = "VST transformation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-  ylab(paste0("PC2: ",percentVar[2],"% variance"))
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  stat_ellipse(level = 0.95)
 dev.off()
 
 # Single
@@ -294,7 +295,8 @@ ggplot(pcaData, aes(PC1, PC2, colour = site, shape = experiment)) +
   geom_text_repel(aes(label = site), nudge_x = -1, nudge_y = 0.2, size = 3, max.overlaps = Inf) +
   ggtitle("Principal Component Analysis (PCA)", subtitle = "VST transformation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-  ylab(paste0("PC2: ",percentVar[2],"% variance"))
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  stat_ellipse(level = 0.95)
 dev.off()
 
 # heatmap

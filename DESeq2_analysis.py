@@ -123,7 +123,7 @@ def getFilenames(typeOrg,experiment):
         folderOrg = "/adult"
     elif typeOrg == 2:
         folderOrg = "/juvenile"
-    os.chdir('../data/net/6_deseq2/larvaeJuvenileAdultTranscriptome'+folderOrg) # Changing working directory to DESeq2 results
+    os.chdir('../data/net/6_deseq2/adultTranscriptome'+folderOrg) # Changing working directory to DESeq2 results
     path=os.getcwd()
     filenames = glob.glob(path + "/*"+experiment+"*.csv")
     return filenames
