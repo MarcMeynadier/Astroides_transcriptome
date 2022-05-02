@@ -13,21 +13,13 @@ import os
 import pandas as pd
 
 
-def filenamesToDataframe(filenames):
-    print("\nDefine your threshold value (usually 0.05)\n")
-    while True:
-        try:
-            threshold_pvalue=float(input())
-        except ValueError:
-            print("\nYou must indicate a valid float ranging from 0 to 1\n")
-            continue
-        break
+def filenamesToDataframe(filenames,threshold): 
     dfs = [pd.read_csv(filename,error_bad_lines=False,sep='\t') for filename in filenames]
     for i in range(len(dfs)):
-        dfs[i]=dfs[i].drop(dfs[i][dfs[i].p>threshold_pvalue].index)
+        dfs[i]=dfs[i].drop(dfs[i][dfs[i].p>threshold].index)
     return dfs
 
-def singleFileOntologizer():
+def singleFileOntologizer(threshold):
     os.chdir('../../data/net/8_functionnalAnnotation/ontologizer/outputResults/codingDEG') 
     path=os.getcwd()
     filesNamesClean1=[]
@@ -37,7 +29,7 @@ def singleFileOntologizer():
             filesNames.append(file)
             fileName = file.split("results_",1)[1] ; fileName = fileName.split("-Parent",1)[0]
             filesNamesClean1.append(fileName)
-    dfs = filenamesToDataframe(filesNames)
+    dfs = filenamesToDataframe(filesNames,threshold)
     print("\nList of output files from Ontologizer\n")
     filesNamesClean2 = filesNamesClean1.copy()
     for i in range(len(filesNamesClean1)):
@@ -77,7 +69,7 @@ def singleFileOntologizer():
         print("\nNo GO terms are available for this file\n")
    
 
-def genesUnsharedOntologizer():
+def genesUnsharedOntologizer(threshold):
     os.chdir('../../data/net/8_functionnalAnnotation/ontologizer/outputResults/codingDEG') 
     path=os.getcwd()
     filesNamesClean1=[]
@@ -87,7 +79,7 @@ def genesUnsharedOntologizer():
             filesNames.append(file)
             fileName = file.split("results_",1)[1] ; fileName = fileName.split("-Parent",1)[0]
             filesNamesClean1.append(fileName)
-    dfs = filenamesToDataframe(filesNames)
+    dfs = filenamesToDataframe(filesNames,threshold)
     print("\nList of output files from Ontologizer\n")
     filesNamesClean2 = filesNamesClean1.copy()
     for i in range(len(filesNamesClean1)):
@@ -148,7 +140,7 @@ def genesUnsharedOntologizer():
 
 
 
-def genesSharedOntologizer():
+def genesSharedOntologizer(threshold):
     os.chdir('../../data/net/8_functionnalAnnotation/ontologizer/outputResults/codingDEG') 
     path=os.getcwd()
     filesNamesClean1=[]
@@ -158,7 +150,7 @@ def genesSharedOntologizer():
             filesNames.append(file)
             fileName = file.split("results_",1)[1] ; fileName = fileName.split("-Parent",1)[0]
             filesNamesClean1.append(fileName)
-    dfs = filenamesToDataframe(filesNames)
+    dfs = filenamesToDataframe(filesNames,threshold)
     print("\nList of output files from Ontologizer\n")
     filesNamesClean2 = filesNamesClean1.copy()
     for i in range(len(filesNamesClean1)):

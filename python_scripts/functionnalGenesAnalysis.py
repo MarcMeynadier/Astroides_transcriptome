@@ -33,6 +33,8 @@ def main_menu_display():
     print("|             Functionnal Genes Analysis               |")
     print("|                                                      |")
     print("|                                                      |")
+    print("|      Select a p-value threshold : 0                  |")
+    print("|                                                      |")
     print("|      DESeq2 output files analysis : 1                |")
     print("|                                                      |")
     print("|      Ontologizer output files analysis : 2           |")
@@ -102,7 +104,9 @@ def menu_display_enrichment_parsing():
     print("\n")
     return
 
-def main_menu():
+default_threshold = 0.05
+
+def main_menu(threshold):
     while True:
         scriptDir = os.path.dirname(os.path.abspath(__file__))
         os.chdir(scriptDir) 
@@ -111,21 +115,23 @@ def main_menu():
             try:
                 answer = int(input())
             except ValueError:
-                print("\nYou must indicate an integer value ranging from 1 to 5\n")
+                print("\nYou must indicate an integer value ranging from 0 to 5\n")
                 continue
             break
-        if answer==1:
-            menu_DESeq2()
+        if answer==0:
+            threshold = setThreshold()
+        elif answer==1:
+            menu_DESeq2(threshold)
         elif answer==2:
-            menu_ontologizer_output()
+            menu_ontologizer_output(threshold)
         elif answer==3:
             matchingFiles()
         elif answer==4:
-            menu_enrichment_parsing()
+            menu_enrichment_parsing(threshold)
         elif answer==5:
             sys.exit(0)
 
-def menu_DESeq2():
+def menu_DESeq2(threshold):
     typeOrg, experiment, org = experimentChoice()
     filenames = getFilenames(typeOrg,experiment)
     while True:
@@ -138,15 +144,15 @@ def menu_DESeq2():
                 continue
             break
         if answer==1:
-            singleFile(filenames,experiment,org)
+            singleFile(filenames,experiment,org,threshold)
         elif answer==2:
-            genesUnshared(filenames,experiment,org)
+            genesUnshared(filenames,experiment,org,threshold)
         elif answer==3:
-            genesShared(filenames,experiment,org)
+            genesShared(filenames,experiment,org,threshold)
         elif answer==4:
-            main_menu()
+            main_menu(threshold)
 
-def menu_ontologizer_output():
+def menu_ontologizer_output(threshold):
     while True:
         menu_display_ontologizer() 
         while True:
@@ -159,15 +165,15 @@ def menu_ontologizer_output():
         scriptDir = os.path.dirname(os.path.abspath(__file__))
         os.chdir(scriptDir) 
         if answer==1:
-            singleFileOntologizer()
+            singleFileOntologizer(threshold)
         elif answer==2:
-            genesUnsharedOntologizer()
+            genesUnsharedOntologizer(threshold)
         elif answer==3:
-            genesSharedOntologizer()
+            genesSharedOntologizer(threshold)
         elif answer==4:
-            main_menu()
+            main_menu(threshold)
 
-def menu_enrichment_parsing():
+def menu_enrichment_parsing(threshold):
     while True:
         menu_display_enrichment_parsing()
         while True:
@@ -181,12 +187,12 @@ def menu_enrichment_parsing():
             getOntologyFileOntologizer()
             getAssociationFile()
             getPopulationFile()
-            getStudysetFileOntologizer()
+            getStudysetFileOntologizer(threshold)
         elif answer==2:
             getOntologyFileGOMWU()
-            getStudysetFileGOMWU()
+            getStudysetFileGOMWU(threshold)
         elif answer==3:
-            main_menu()
+            main_menu(threshold)
 
 
 #------------------------------------------------------------------------------#
@@ -194,4 +200,4 @@ def menu_enrichment_parsing():
 #------------------------------------------------------------------------------#
 
 
-main_menu()
+main_menu(default_threshold)

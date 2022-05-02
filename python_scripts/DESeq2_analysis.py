@@ -13,6 +13,7 @@ import glob
 import pandas as pd
 from urllib.request import urlopen
 from functools import reduce
+import pathlib
 
 
 #------------------------------------------------------------------------------#
@@ -68,7 +69,6 @@ def getAnnotationFile():
     mergeDf = mergeDf.replace(to_replace ='(_i).*', value = '', regex = True)
     return mergeDf
 
-
 def pfam2goFile(): 
     url = 'http://current.geneontology.org/ontology/external2go/pfam2go'
     pfam2go = urlopen(url).read().decode('utf-8') 
@@ -118,6 +118,28 @@ def pfam2goFile():
     mergeDf = mergeDf.merge(annotSequenceDf,how='inner')
     return mergeDf
 
+def getPantherFiles():
+    curedList = []
+    with open('../../../8_functionnalAnnotation/pantherOutput.out') as f:
+        contents = f.readlines() 
+    for i in contents:
+        if 'TRINITY' in i:
+            curedList.append(i)
+    geneList = [] ; pantherCode = [] ; pantherAnnot = []
+    for i in range(len(curedList)):
+        gene = curedList[i].split('\t',1)[0]
+        gene = gene.replace('TRINITY_','') ; gene = gene.split('_i',1)[0]
+        code = curedList[i].split('\t',1)[1] ; code = code.split('\t',1)[0]
+        annot = curedList[i].split('\t',2)[2] ; annot = annot.split('\t',1)[0]
+        geneList.append(gene)
+        pantherCode.append(code)
+        pantherAnnot.append(annot)
+    dic={'genes':geneList,'panther_annotation':pantherAnnot,'panther_code':pantherCode}
+    mergeDf=pd.DataFrame(dic)
+    annotSequenceDf = pfam2goFile()
+    mergeDf = mergeDf.merge(annotSequenceDf,how='inner')
+    return mergeDf
+
 def getFilenames(typeOrg,experiment):
     if typeOrg == 1:
         folderOrg = "/adult"
@@ -137,19 +159,11 @@ def listOfFiles(filenames,experiment):
          filesNamesClean.append(newName)
     return filesNamesClean
 
-def filenamesToDataframe(filenames):
-    print("\nDefine your threshold value (usually 0.05)\n")
-    while True:
-        try:
-            threshold_pvalue=float(input())
-        except ValueError:
-            print("\nYou must indicate a valid float ranging from 0 to 1\n")
-            continue
-        break
+def filenamesToDataframe(filenames,threshold):
     dfs = [pd.read_csv(filename) for filename in filenames]
     for i in range(len(dfs)):
         dfs[i].rename(columns={ dfs[i].columns[0]: "gene" }, inplace = True)
-        dfs[i]=dfs[i].drop(dfs[i][dfs[i].padj>threshold_pvalue].index)
+        dfs[i]=dfs[i].drop(dfs[i][dfs[i].padj>threshold].index)
         dfs[i]=dfs[i][dfs[i]['padj'].notna()]
     return dfs
 
@@ -191,11 +205,22 @@ def experimentChoice():
 
 
 #------------------------------------------------------------------------------#
-#                         Shared genes computation                             #
+#                            Analysis computation                              #
 #------------------------------------------------------------------------------#
 
 
-def singleFile(filenames,experiment,org):
+def setThreshold():
+    print("\nDefine your threshold value (usually 0.05)\n")
+    while True:
+        try:
+            threshold_pvalue=float(input())
+        except ValueError:
+            print("\nYou must indicate a valid float ranging from 0 to 1\n")
+            continue
+        break
+    return threshold_pvalue
+
+def singleFile(filenames,experiment,org,threshold):
     filesNamesClean = listOfFiles(filenames,experiment)
     for i in range(len(filesNamesClean)):
         filesNamesClean[i] = str(i+1) + " : " + filesNamesClean[i]
@@ -211,7 +236,7 @@ def singleFile(filenames,experiment,org):
                 print("\nYou must indicate an integer value corresponding to the file you want to analyse\n")
                 continue
             break 
-    df = filenamesToDataframe(filenames) 
+    df = filenamesToDataframe(filenames,threshold) 
     geneNames = list(df[file-1].gene) 
     lfcValuesFile = [] 
     padjValuesFile = [] 
@@ -225,21 +250,27 @@ def singleFile(filenames,experiment,org):
     dic = {'genes':geneNames,'lfc_'+filesNamesClean2[file-1]:lfcValuesFile,
     'p-adj_'+filesNamesClean2[file-1]:padjValuesFile}
     outputDf = pd.DataFrame(dic)
-    sequenceAnnotDf = pfam2goFile()
+    sequenceAnnotDf = getPantherFiles()
     outputDf = outputDf.merge(sequenceAnnotDf,how='left',on='genes')
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file-1],ascending=False)
     outputDf = outputDf.dropna(subset=['pfam_code'])
     outputDf = outputDf.drop_duplicates(subset=['pfam_code'])
+    s = outputDf.pop('panther_code') ; outputDf = pd.concat([outputDf,s],1)
+    s = outputDf.pop('pfam_code') ; outputDf = pd.concat([outputDf,s],1)
+    s = outputDf.pop('GO_code') ; outputDf = pd.concat([outputDf,s],1)
+    s = outputDf.pop('protein_sequence') ; outputDf = pd.concat([outputDf,s],1)
     outputDf = outputDf.reset_index(drop=True) 
-    print(outputDf)
     pathFunctionnalAnnotation='../../../8_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis/' 
     if org == 'adult':
         outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+experiment+'_'+filesNamesClean2[file-1]+'_single_file.csv',encoding='utf-8')
     elif org == 'juvenile':
         outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+filesNamesClean2[file-1]+'_single_file.csv',encoding='utf-8') 
+    print(outputDf)
     return outputDf
+    
 
-def genesUnshared(filenames,experiment,org):
+
+def genesUnshared(filenames,experiment,org,threshold):
     filesNamesClean = listOfFiles(filenames,experiment)
     filesNamesClean2=filesNamesClean.copy()
     for i in range(len(filesNamesClean)):
@@ -253,7 +284,7 @@ def genesUnshared(filenames,experiment,org):
                 print("\nYou must indicate an integer value corresponding to the files you want to analyse\n")
                 continue
             break 
-    df = filenamesToDataframe(filenames) 
+    df = filenamesToDataframe(filenames,threshold) 
     geneNames = list(df[file1-1].gene) ; geneNames2 = list(df[file2-1].gene)
     for i in geneNames:
         flag = 0
@@ -273,17 +304,21 @@ def genesUnshared(filenames,experiment,org):
     dic = {'genes':geneNames,'lfc_'+filesNamesClean2[file1-1]:lfcValuesFile,
     'p-adj_'+filesNamesClean2[file1-1]:padjValuesFile}
     outputDf = pd.DataFrame(dic)
-    sequenceAnnotDf = pfam2goFile()
+    sequenceAnnotDf = getPantherFiles()
     outputDf = outputDf.merge(sequenceAnnotDf,how='left',on='genes')
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file1-1],ascending=False)
     outputDf = outputDf.dropna(subset=['pfam_code'])
     outputDf = outputDf.drop_duplicates(subset=['pfam_code'])
+    s = outputDf.pop('panther_code') ; outputDf = pd.concat([outputDf,s],1)
+    s = outputDf.pop('pfam_code') ; outputDf = pd.concat([outputDf,s],1)
+    s = outputDf.pop('GO_code') ; outputDf = pd.concat([outputDf,s],1)
+    s = outputDf.pop('protein_sequence') ; outputDf = pd.concat([outputDf,s],1)
     outputDf = outputDf.reset_index(drop=True)
     print(outputDf)
     pathFunctionnalAnnotation='../../../8_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis/' 
     outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+experiment+'_'+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_unshared.csv',encoding='utf-8')
 
-def genesShared(filenames,experiment,org):
+def genesShared(filenames,experiment,org,threshold):
     filesNamesClean1 = listOfFiles(filenames,experiment)
     filesNamesClean2=filesNamesClean1.copy()
     print("\nList of output files from DESeq2 \n")
@@ -298,7 +333,7 @@ def genesShared(filenames,experiment,org):
                 print("\nYou must indicate an integer value corresponding to the files you want to analyse\n")
                 continue
             break 
-    df = filenamesToDataframe(filenames) 
+    df = filenamesToDataframe(filenames,threshold) 
     geneNames=list(reduce(set.intersection, map(set, [df[file1-1].gene, df[file2-1].gene])))
     lfcValuesFile1 = [] ; lfcValuesFile2 = []
     padjValuesFile1 = [] ; padjValuesFile2 = []
@@ -313,11 +348,15 @@ def genesShared(filenames,experiment,org):
     dic = {'genes':geneNames,'lfc_'+filesNamesClean2[file1-1]:lfcValuesFile1,'lfc_'+filesNamesClean2[file2-1]:lfcValuesFile2,
     'p-adj_'+filesNamesClean2[file1-1]:padjValuesFile1,'p-adj_'+filesNamesClean2[file2-1]:padjValuesFile2}
     outputDf = pd.DataFrame(dic)
-    sequenceAnnotDf = pfam2goFile()
+    sequenceAnnotDf = getPantherFiles()
     outputDf = outputDf.merge(sequenceAnnotDf,how='left',on='genes')
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file1-1],ascending=False)
     outputDf = outputDf.dropna(subset=['pfam_code'])
     outputDf = outputDf.drop_duplicates(subset=['pfam_code'])
+    s = outputDf.pop('panther_code') ; outputDf = pd.concat([outputDf,s],1)
+    s = outputDf.pop('pfam_code') ; outputDf = pd.concat([outputDf,s],1)
+    s = outputDf.pop('GO_code') ; outputDf = pd.concat([outputDf,s],1)
+    s = outputDf.pop('protein_sequence') ; outputDf = pd.concat([outputDf,s],1)
     outputDf = outputDf.reset_index(drop=True)
     print(outputDf)
     pathFunctionnalAnnotation='../../../8_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis/'

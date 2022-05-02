@@ -20,16 +20,15 @@ from urllib.request import urlopen
 #                              Files management                                #
 #------------------------------------------------------------------------------#
 
-
 def getOntologyFileOntologizer():
     url = 'http://purl.obolibrary.org/obo/go.obo'
     wget.download(url)
-    shutil.move('go.obo', '../data/net/8_functionnalAnnotation/ontologizer')
+    shutil.move('go.obo', '../../data/net/8_functionnalAnnotation/ontologizer')
 
 def getOntologyFileGOMWU():
     url = 'http://purl.obolibrary.org/obo/go.obo'
     wget.download(url)
-    shutil.move('go.obo', '../data/net/8_functionnalAnnotation/GO_MWU')
+    shutil.move('go.obo', '../../data/net/8_functionnalAnnotation/GO_MWU')
 
 
 def swap_columns(df, col1, col2):
@@ -114,7 +113,7 @@ def getAssociationFile():
     mergeDf = mergeDf.merge(annotSequenceDf,how='inner')
     mergeDf.drop(['GO_annotation', 'pfam_annotation','pfam_code'], axis=1, inplace=True)
     mergeDf = swap_columns(mergeDf,'GO_code','genes') 
-    pathOntologizer = '../data/net/8_functionnalAnnotation/ontologizer/'
+    pathOntologizer = '../../data/net/8_functionnalAnnotation/ontologizer/'
     mergeDf.to_csv(pathOntologizer+'associationFile.ids', sep='\t', header=False, index=False)
 
 def getPopulationFile():
@@ -129,7 +128,7 @@ def getPopulationFile():
     f=open('populationFile.txt', 'a')
     f.writelines("%s\n" % i for i in curedFile)
     f.close()
-    shutil.move('populationFile.txt', '../data/net/8_functionnalAnnotation/ontologizer')
+    shutil.move('populationFile.txt', '../../data/net/8_functionnalAnnotation/ontologizer')
 
 def getProteinSequences():
     with open('../../data/net/8_functionnalAnnotation/transdecoderOutput.pep') as f:
@@ -157,15 +156,7 @@ def getProteinSequences():
     sequencesDf = pd.DataFrame(dic)
     return sequencesDf
 
-def getStudysetFileOntologizer():
-    print("\nDefine your threshold value (usually 0.05)\n")
-    while True:
-        try:
-            threshold_pvalue=float(input())
-        except ValueError:
-            print("\nYou must indicate a valid float ranging from 0 to 1\n")
-            continue
-        break
+def getStudysetFileOntologizer(threshold):
     protDf = getProteinSequences() 
     folderOrg = 'adult'
     os.chdir('../../data/net/7_deseq2/adultTranscriptome/'+folderOrg) # Changing working directory to DESeq2 results
@@ -176,7 +167,7 @@ def getStudysetFileOntologizer():
             txtName=file.replace(".csv",".txt")
             csvFile = pd.read_csv(file)
             csvFile.rename(columns={ csvFile.columns[0]: "genes" }, inplace = True)
-            csvFile = csvFile[csvFile.padj<threshold_pvalue] 
+            csvFile = csvFile[csvFile.padj<threshold] 
             csvFile = csvFile[csvFile['padj'].notna()]  
             csvFile = csvFile.merge(protDf,how='inner',on='genes') 
             geneNames = csvFile.iloc[:,0].tolist()
@@ -197,7 +188,7 @@ def getStudysetFileOntologizer():
             txtName=file.replace(".csv",".txt")
             csvFile = pd.read_csv(file)
             csvFile.rename(columns={ csvFile.columns[0]: "genes" }, inplace = True)
-            csvFile = csvFile[csvFile.padj<threshold_pvalue] 
+            csvFile = csvFile[csvFile.padj<threshold] 
             csvFile = csvFile[csvFile['padj'].notna()]  
             csvFile = csvFile.merge(protDf,how='inner',on='genes') 
             geneNames = csvFile.iloc[:,0].tolist()
@@ -210,15 +201,7 @@ def getStudysetFileOntologizer():
             f.close()
             shutil.move(txtName, '../../../8_functionnalAnnotation/ontologizer/studySamples')
 
-def getStudysetFileGOMWU():
-    print("\nDefine your threshold value (usually 0.05)\n")
-    while True:
-        try:
-            threshold_pvalue=float(input())
-        except ValueError:
-            print("\nYou must indicate a valid float ranging from 0 to 1\n")
-            continue
-        break 
+def getStudysetFileGOMWU(threshold):
     folderOrg = 'adult'
     os.chdir('../../data/net/7_deseq2/adultTranscriptome/'+folderOrg) # Changing working directory to DESeq2 results
     path=os.getcwd()
@@ -228,7 +211,7 @@ def getStudysetFileGOMWU():
             curedFile = []
             fileName = file.replace('.csv','')
             csvFile = pd.read_csv(file)
-            csvFile = csvFile[csvFile.padj<threshold_pvalue]
+            csvFile = csvFile[csvFile.padj<threshold]
             csvFile = csvFile[csvFile['padj'].notna()]
             geneNames = csvFile.iloc[:,0].tolist()
             lfcValues = csvFile.iloc[:,2].tolist() 
@@ -247,7 +230,7 @@ def getStudysetFileGOMWU():
             curedFile = []
             fileName = file.replace('.csv','')
             csvFile = pd.read_csv(file)
-            csvFile = csvFile[csvFile.padj<threshold_pvalue]
+            csvFile = csvFile[csvFile.padj<threshold]
             csvFile = csvFile[csvFile['padj'].notna()]
             geneNames = csvFile.iloc[:,0].tolist()
             lfcValues = csvFile.iloc[:,2].tolist() 
