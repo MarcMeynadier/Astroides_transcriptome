@@ -29,13 +29,16 @@ library('tximport')
 library('apeglm')
 library('ashr')
 library('EnhancedVolcano')
-library('limma')
+source_url("https://raw.githubusercontent.com/obigriffith/biostar-tutorials/master/Heatmaps/heatmap.3.R")
 
 # Working environment 
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(scriptPath)
 samples<-read.table('tximport_design_trueTransplant.txt',header=T)
+samplesBckTro<-read.table('tximport_design_trueTransplant_tro_bck.txt',header=T)
+samplesTrt<-read.table('tximport_design_trueTransplant_trt.txt',header=T)
 tx2gene<-read.table('tx2gene_adultTranscriptome',header=T)
+candidateGenes<-read.csv('candidateGenes.csv',header=T,sep=',')
 scriptPath <- sub("/[^/]+$", "", scriptPath)
 scriptPath <- sub("/[^/]+$", "", scriptPath)
 dataPath<-'/data/net/6_kallisto/adultTranscriptome/adult/4_trueTransplant'
@@ -45,18 +48,32 @@ setwd(wdPath)
 
 # Data importation - txImport
 files<-paste0(samples$samples,'.tsv')
+filesBckTro<-paste0(samplesBckTro$samples,'.tsv')
+filesTrt<-paste0(samplesTrt$samples,'.tsv')
 names(files)<-samples$samples
+names(filesBckTro)<-samplesBckTro$samples
+names(filesTrt)<-samplesTrt$samples
 txi<-tximport(files = files,type='kallisto',tx2gene = tx2gene)
+txiBckTro<-tximport(files = filesBckTro,type='kallisto',tx2gene = tx2gene)
+txiTrt<-tximport(files = filesTrt,type='kallisto',tx2gene = tx2gene)
 names(txi)
 head(txi$counts)
 dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~originSite_finalSite_experiment)
+ddsBckTro<-DESeqDataSetFromTximport(txiBckTro,colData=samplesBckTro,design= ~originSite_finalSite_experiment)
+ddsTrt<-DESeqDataSetFromTximport(txiTrt,colData=samplesTrt,design= ~originSite_finalSite_experiment)
 
 # pre-filtering
 keep <- rowSums(counts(dds)) >= 10 
 dds <- dds[keep,]
+keep <- rowSums(counts(ddsBckTro)) >= 10 
+ddsBckTro <- ddsBckTro[keep,]
+keep <- rowSums(counts(ddsTrt)) >= 10 
+ddsTrt <- ddsTrt[keep,]
 
 # Differential expression analysis
 dds<-DESeq(dds)
+ddsBckTro<-DESeq(ddsBckTro)
+ddsTrt<-DESeq(ddsTrt)
 cbind(resultsNames(dds))
 gm_gm_tro_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_gm_tro","gm_gm_bck"), alpha = 0.05)
 pv_pv_tro_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_tro","pv_pv_bck"), alpha = 0.05)
@@ -279,7 +296,7 @@ dev.off()
 # Principal Component Analysis
 
 # vst transformation
-vsd = vst(dds,blind=F)
+vsd = vst(dds,blind=T)
 
 pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment", 
                   returnData=TRUE)
@@ -397,6 +414,73 @@ ggvenn(
   fill_color = c("#0073C2FF", "#EFC000FF", "#868686FF","#009E73"),
   stroke_size = 0.5, set_name_size = 4
 )
+dev.off()
+
+# Candidate genes heatmap
+
+#Global
+
+listGenes <- candidateGenes$genes
+
+listGenes <- which(rownames(vsd) %in% listGenes)
+vsdCandidate <- vsd[listGenes, ]
+
+labColName <- c('gm_gm_bck','gm_gm_bck','gm_gm_bck','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_pv_trt',
+                'gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_sp_trt','gm_sp_trt','gm_sp_trt','gm_sp_trt','gm_sp_trt',
+                'pv_gm_trt','pv_gm_trt','pv_gm_trt','pv_gm_trt','pv_gm_trt','pv_pv_bck','pv_pv_bck','pv_pv_bck','pv_pv_tro',
+                'pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro','sp_gm_trt','sp_gm_trt','sp_gm_trt','sp_gm_trt',
+                'sp_sp_bck','sp_sp_bck','sp_sp_bck','sp_sp_tro','sp_sp_tro','sp_sp_tro','sp_sp_tro','sp_sp_tro')
+colnames(vsdCandidate) <- labColName
+
+topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
+png(paste(outputPath,'candidateGenes_trueTransplant_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
+heatmap.3(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
+          col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
+          ColSideColors = ,xlab="sampling sites",ylab="genes",Colv=NA,margins = c(5, 9)) 
+dev.off()
+
+# Background & Transplant origin
+
+vsd = vst(ddsBckTro,blind=T)
+
+listGenes <- candidateGenes$genes
+
+listGenes <- which(rownames(vsd) %in% listGenes)
+vsdCandidate <- vsd[listGenes, ]
+
+labColName <- c('gm_gm_bck','gm_gm_bck','gm_gm_bck','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_gm_tro',
+                'pv_pv_bck','pv_pv_bck','pv_pv_bck','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro',
+                'sp_sp_bck','sp_sp_bck','sp_sp_bck','sp_sp_tro','sp_sp_tro','sp_sp_tro','sp_sp_tro','sp_sp_tro')
+
+colnames(vsdCandidate) <- labColName
+
+topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
+png(paste(outputPath,'candidateGenes_trueTransplant_bck_tro_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
+heatmap.3(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
+          col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
+          ColSideColors = ,xlab="sampling sites",ylab="genes",Colv=NA,margins = c(5, 9)) 
+dev.off()
+
+# True transplant
+
+vsd = vst(ddsTrt,blind=T)
+
+listGenes <- candidateGenes$genes
+
+listGenes <- which(rownames(vsd) %in% listGenes)
+vsdCandidate <- vsd[listGenes, ]
+
+labColName <- c('gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_sp_trt','gm_sp_trt',
+                'gm_sp_trt','gm_sp_trt','gm_sp_trt','pv_gm_trt','pv_gm_trt','pv_gm_trt','pv_gm_trt',
+                'pv_gm_trt','sp_gm_trt','sp_gm_trt','sp_gm_trt','sp_gm_trt')
+
+colnames(vsdCandidate) <- labColName
+
+topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
+png(paste(outputPath,'candidateGenes_trueTransplant_trt_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
+heatmap.3(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
+          col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
+          ColSideColors = ,xlab="sampling sites",ylab="genes",Colv=NA,margins = c(5, 9)) 
 dev.off()
 
 # Inferences statistics

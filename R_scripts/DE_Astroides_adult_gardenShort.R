@@ -29,13 +29,16 @@ library('tximport')
 library('apeglm')
 library('ashr')
 library('EnhancedVolcano')
-library('limma')
+source_url("https://raw.githubusercontent.com/obigriffith/biostar-tutorials/master/Heatmaps/heatmap.3.R")
 
 # Working environment 
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(scriptPath)
 samples<-read.table('tximport_design_gardenShort.txt',header=T)
+samplesBck<-read.table('tximport_design_gardenShort_bck.txt',header=T)
+samplesGas<-read.table('tximport_design_gardenShort_gas.txt',header=T)
 tx2gene<-read.table('tx2gene_adultTranscriptome',header=T)
+candidateGenes<-read.csv('candidateGenes.csv',header=T,sep=',')
 scriptPath <- sub("/[^/]+$", "", scriptPath)
 scriptPath <- sub("/[^/]+$", "", scriptPath)
 dataPath<-'/data/net/6_kallisto/adultTranscriptome/adult/5_gardenShort'
@@ -45,18 +48,32 @@ setwd(wdPath)
 
 # Data importation - txImport
 files<-paste0(samples$samples,'.tsv')
+filesBck<-paste0(samplesBck$samples,'.tsv')
+filesGas<-paste0(samplesGas$samples,'.tsv')
 names(files)<-samples$samples
+names(filesBck)<-samplesBck$samples
+names(filesGas)<-samplesGas$samples
 txi<-tximport(files = files,type='kallisto',tx2gene = tx2gene)
+txiBck<-tximport(files = filesBck,type='kallisto',tx2gene = tx2gene)
+txiGas<-tximport(files = filesGas,type='kallisto',tx2gene = tx2gene)
 names(txi)
 head(txi$counts)
 dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~originSite_finalSite_experiment)
+ddsBck<-DESeqDataSetFromTximport(txiBck,colData=samplesBck,design= ~originSite_finalSite_experiment)
+ddsGas<-DESeqDataSetFromTximport(txiGas,colData=samplesGas,design= ~originSite_finalSite_experiment)
 
 # pre-filtering
 keep <- rowSums(counts(dds)) >= 10 
 dds <- dds[keep,]
+keep <- rowSums(counts(ddsBck)) >= 10 
+ddsBck <- ddsBck[keep,]
+keep <- rowSums(counts(ddsGas)) >= 10 
+ddsGas <- ddsGas[keep,]
 
 # Differential expression analysis
 dds<-DESeq(dds)
+ddsBck<-DESeq(ddsBck)
+ddsGas<-DESeq(ddsGas)
 cbind(resultsNames(dds))
 gm_gm_gas_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_gm_gas","gm_gm_bck"), alpha = 0.05)
 pv_pv_gas_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_gas","pv_pv_bck"), alpha = 0.05)
@@ -275,7 +292,7 @@ dev.off()
 # Principal Component Analysis
 
 # vst transformation
-vsd = vst(dds,blind=F)
+vsd = vst(dds,blind=T)
 
 pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment", 
                   returnData=TRUE)
@@ -393,6 +410,78 @@ ggvenn(
   fill_color = c("#0073C2FF", "#EFC000FF", "#868686FF","#009E73"),
   stroke_size = 0.5, set_name_size = 4
 )
+dev.off()
+
+# Candidate genes heatmap
+
+# Global
+
+listGenes <- candidateGenes$genes
+
+listGenes <- which(rownames(vsd) %in% listGenes)
+vsdCandidate <- vsd[listGenes, ]
+
+labColName <- c('gm_gm_bck','gm_gm_bck','gm_gm_bck','gm_gm_gas','gm_gm_gas','gm_gm_gas','gm_gm_gas','gm_gm_gas','gm_gm_gas',
+                'gm_gm_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_sp_gas',
+                'gm_sp_gas','gm_sp_gas','gm_sp_gas','gm_sp_gas','gm_sp_gas','gm_sp_gas','pv_gm_gas','pv_gm_gas','pv_gm_gas',
+                'pv_gm_gas','pv_gm_gas','pv_gm_gas','pv_pv_bck','pv_pv_bck','pv_pv_bck','pv_pv_gas','pv_pv_gas','pv_pv_gas',
+                'pv_pv_gas','pv_pv_gas','pv_pv_gas','sp_gm_gas','sp_gm_gas','sp_gm_gas','sp_gm_gas','sp_gm_gas','sp_gm_gas',
+                'sp_gm_gas','sp_sp_bck','sp_sp_bck','sp_sp_bck','sp_sp_gas','sp_sp_gas','sp_sp_gas','sp_sp_gas','sp_sp_gas',
+                'sp_sp_gas')
+
+colnames(vsdCandidate) <- labColName
+
+topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
+png(paste(outputPath,'candidateGenes_gardenShort_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
+heatmap.3(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
+          col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
+          ColSideColors = ,xlab="sampling sites",ylab="genes",Colv=NA,margins = c(5, 9)) 
+dev.off()
+
+# Background
+
+vsd = vst(ddsBck,blind=T)
+
+listGenes <- candidateGenes$genes
+
+listGenes <- which(rownames(vsd) %in% listGenes)
+vsdCandidate <- vsd[listGenes, ]
+
+labColName <- c('gm','gm','gm','pv','pv','pv','sp','sp','sp')
+
+colnames(vsdCandidate) <- labColName
+
+topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
+png(paste(outputPath,'candidateGenes_gardenShort_bck_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
+heatmap.3(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
+          col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
+          ColSideColors = ,xlab="sampling sites",ylab="genes", Colv=NA,margins = c(5, 9)) 
+dev.off()
+
+# Garden short
+
+vsd = vst(ddsGas,blind=T)
+
+listGenes <- candidateGenes$genes
+
+listGenes <- which(rownames(vsd) %in% listGenes)
+vsdCandidate <- vsd[listGenes, ]
+
+labColName <- c('gm_gm_gas','gm_gm_gas','gm_gm_gas','gm_gm_gas','gm_gm_gas','gm_gm_gas',
+                'gm_gm_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_sp_gas',
+                'gm_sp_gas','gm_sp_gas','gm_sp_gas','gm_sp_gas','gm_sp_gas','gm_sp_gas','pv_gm_gas','pv_gm_gas','pv_gm_gas',
+                'pv_gm_gas','pv_gm_gas','pv_gm_gas','pv_pv_gas','pv_pv_gas','pv_pv_gas',
+                'pv_pv_gas','pv_pv_gas','pv_pv_gas','sp_gm_gas','sp_gm_gas','sp_gm_gas','sp_gm_gas','sp_gm_gas','sp_gm_gas',
+                'sp_gm_gas','sp_sp_gas','sp_sp_gas','sp_sp_gas','sp_sp_gas','sp_sp_gas',
+                'sp_sp_gas')
+
+colnames(vsdCandidate) <- labColName
+
+topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
+png(paste(outputPath,'candidateGenes_gardenShort_gas_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
+heatmap.3(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
+          col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
+          ColSideColors = ,xlab="sampling sites",ylab="genes",Colv=NA,margins = c(5, 9)) 
 dev.off()
 
 # Inferences statistics

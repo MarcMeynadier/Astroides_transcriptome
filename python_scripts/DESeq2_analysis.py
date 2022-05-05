@@ -8,6 +8,7 @@ Marc Meynadier
 #------------------------------------------------------------------------------#
 
 
+from operator import index
 import os
 import glob
 import pandas as pd
@@ -64,7 +65,7 @@ def getAnnotationFile():
         splitCode = splitDash.split(separator,1)[1] ; splitCode = splitCode.split(".",1)[0] ; splitCode = separator + splitCode
         pfamAnnot.append(splitAnnot) ; pfamCode.append(splitCode)
     dic={'genes':geneNames,'pfam_annotation':pfamAnnot,'pfam_code':pfamCode}
-    mergeDf=pd.DataFrame(dic)
+    mergeDf=pd.DataFrame(dic) 
     mergeDf = mergeDf.merge(sequencesDf,how='left')
     mergeDf = mergeDf.replace(to_replace ='(_i).*', value = '', regex = True)
     return mergeDf
@@ -251,10 +252,11 @@ def singleFile(filenames,experiment,org,threshold):
     'p-adj_'+filesNamesClean2[file-1]:padjValuesFile}
     outputDf = pd.DataFrame(dic)
     sequenceAnnotDf = getPantherFiles()
-    outputDf = outputDf.merge(sequenceAnnotDf,how='left',on='genes')
+    outputDf = outputDf.merge(sequenceAnnotDf,how='inner',on='genes')
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file-1],ascending=False)
     outputDf = outputDf.dropna(subset=['pfam_code'])
     outputDf = outputDf.drop_duplicates(subset=['pfam_code'])
+    outputDf = outputDf.drop_duplicates(subset=['genes']) 
     s = outputDf.pop('panther_code') ; outputDf = pd.concat([outputDf,s],1)
     s = outputDf.pop('pfam_code') ; outputDf = pd.concat([outputDf,s],1)
     s = outputDf.pop('GO_code') ; outputDf = pd.concat([outputDf,s],1)
@@ -309,6 +311,7 @@ def genesUnshared(filenames,experiment,org,threshold):
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file1-1],ascending=False)
     outputDf = outputDf.dropna(subset=['pfam_code'])
     outputDf = outputDf.drop_duplicates(subset=['pfam_code'])
+    outputDf = outputDf.drop_duplicates(subset=['genes']) 
     s = outputDf.pop('panther_code') ; outputDf = pd.concat([outputDf,s],1)
     s = outputDf.pop('pfam_code') ; outputDf = pd.concat([outputDf,s],1)
     s = outputDf.pop('GO_code') ; outputDf = pd.concat([outputDf,s],1)
@@ -353,6 +356,7 @@ def genesShared(filenames,experiment,org,threshold):
     outputDf = outputDf.sort_values(by='lfc_'+filesNamesClean2[file1-1],ascending=False)
     outputDf = outputDf.dropna(subset=['pfam_code'])
     outputDf = outputDf.drop_duplicates(subset=['pfam_code'])
+    outputDf = outputDf.drop_duplicates(subset=['genes']) 
     s = outputDf.pop('panther_code') ; outputDf = pd.concat([outputDf,s],1)
     s = outputDf.pop('pfam_code') ; outputDf = pd.concat([outputDf,s],1)
     s = outputDf.pop('GO_code') ; outputDf = pd.concat([outputDf,s],1)
@@ -363,3 +367,37 @@ def genesShared(filenames,experiment,org,threshold):
     outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+experiment+'_'+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_shared.csv',encoding='utf-8')
     
 
+def getAnnotation(): 
+    curedFile = []
+    with open('../../data/net/8_functionnalAnnotation/hmmsearchOutput.out') as f:
+        contents = f.readlines()
+    for i in contents:
+        if 'TRINITY' in i:
+            curedFile.append(i)
+    geneNames=[] ; pfamAnnot= [] ; pfamCode = []
+    separator = "PF"
+    for i in range(len(curedFile)):
+        geneNames.append(curedFile[i].split(" - ",1)[0])
+        splitDash = curedFile[i].split(" - ",1)[1]
+        splitAnnot = splitDash.split(separator,1)[0] ; splitAnnot = splitAnnot.strip()
+        splitCode = splitDash.split(separator,1)[1] ; splitCode = splitCode.split(".",1)[0] ; splitCode = separator + splitCode
+        pfamAnnot.append(splitAnnot) ; pfamCode.append(splitCode)
+    dic={'genes':geneNames,'pfam_annotation':pfamAnnot,'pfam_code':pfamCode}
+    mergeDf=pd.DataFrame(dic) 
+    mergeDf = mergeDf.replace(to_replace ='(_i).*', value = '', regex = True)
+    return mergeDf
+
+def filterCandidate():
+    annot = getAnnotation()
+    candidate=['ectin','sushi','galaxin','collagen','adhesin','cadherin','actin','HCO3','anhydrase','V_ATPase','calmodulin']
+    annotFilter = annot[annot.stack().str.contains('|'.join(candidate)).any(level=0)]
+    annotFilter = annotFilter.drop_duplicates(subset='genes', keep='first', inplace=False, ignore_index=False)
+    pfam = annotFilter['pfam_annotation'].tolist()
+    pfamFilter = []
+    for i in pfam:
+        newName = i.split(' ',1)[1]
+        pfamFilter.append(newName)
+    annotFilter['pfam_annotation'] = pfamFilter
+    annotFilter.to_csv('candidateGenes.csv',index=False,encoding='utf-8')
+    
+filterCandidate()

@@ -38,6 +38,7 @@ setwd(scriptPath)
 samples<-read.table('tximport_design_juvenile.txt',header=T)
 samplesNatSim<-read.table('tximport_design_juvenile_naturalSimulation.txt',header=T)
 tx2gene<-read.table('tx2gene_adultTranscriptome',header=T)
+candidateGenes<-read.csv('candidateGenes.csv',header=T,sep=',')
 scriptPath <- sub("/[^/]+$", "", scriptPath)
 scriptPath <- sub("/[^/]+$", "", scriptPath)
 dataPath<-'/data/net/6_kallisto/adultTranscriptome/juvenile'
@@ -56,7 +57,7 @@ names(txi)
 names(txiNatSim)
 head(txi$counts)
 head(txiNatSim$counts)
-dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~site + pH)
+dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~site_pH)
 ddsNatSim<-DESeqDataSetFromTximport(txiNatSim,colData=samplesNatSim,design= ~site_pH)
 
 # pre-filtering
@@ -179,16 +180,14 @@ dev.off()
 # Principal Component Analysis
 vsd = vst(dds,blind=T)
 
-pcaData = plotPCA(vsd, intgroup=c("site","pH"), 
+pcaData = plotPCA(vsd, intgroup="site_pH", 
                   returnData=TRUE)
 percentVar = round(100 * attr(pcaData, "percentVar"))
 
 png(paste(outputPath,'DGE_PCA_juvenile.png',sep=''), width=7, height=7, units = "in", res = 300)
-ggplot(pcaData, aes(PC1, PC2, colour = site, shape = pH)) + 
+ggplot(pcaData, aes(PC1, PC2, colour = site_pH,)) + 
   geom_point(size = 2) + theme_bw() + 
-  scale_color_manual(values = c("#ff4040","#000080")) +
-  scale_shape_manual(values = c("triangle","circle","square")) +
-  geom_text_repel(aes(label = site), nudge_x = -1, nudge_y = 0.2, size = 3, max.overlaps = Inf) +
+  geom_text_repel(aes(label = site_pH), nudge_x = -1, nudge_y = 0.2, size = 3, max.overlaps = Inf) +
   ggtitle("Principal Component Analysis (PCA) of juvenile corals", subtitle = "Consideration of two environmental factors: Site and pH") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) +
@@ -247,6 +246,25 @@ ggvenn(
   fill_color = c("#0073C2FF", "#EFC000FF", "#868686FF","#009E73"),
   stroke_size = 0.5, set_name_size = 4
 )
+dev.off()
+
+
+# Candidate genes heatmap
+
+listGenes <- candidateGenes$genes
+
+listGenes <- which(rownames(vsd) %in% listGenes)
+vsdCandidate <- vsd[listGenes, ]
+
+labColName <- c('gm_amb','gm_amb','gm_amb','gm_amb','gm_low','gm_low','gm_low','gm_low','gm_ext','gm_ext','gm_ext',
+                'gm_ext','sp_amb','sp_amb','sp_amb','sp_amb','sp_low','sp_low','sp_low','sp_low')
+colnames(vsdCandidate) <- labColName
+
+topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
+png(paste(outputPath,'candidateGenes_juveniles_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
+heatmap.3(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
+          col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
+          ColSideColors = ,xlab="sampling sites",ylab="genes",Colv=NA,margins = c(5, 9)) 
 dev.off()
 
 # Inferences statistics

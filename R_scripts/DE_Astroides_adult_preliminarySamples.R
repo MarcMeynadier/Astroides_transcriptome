@@ -27,12 +27,14 @@ library('tximport')
 library('apeglm')
 library('ashr')
 library('EnhancedVolcano')
+source_url("https://raw.githubusercontent.com/obigriffith/biostar-tutorials/master/Heatmaps/heatmap.3.R")
 
 # Working environment 
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(scriptPath)
 samples<-read.table('tximport_design_preliminarySamples.txt',header=T)
 tx2gene<-read.table('tx2gene_adultTranscriptome',header=T)
+candidateGenes<-read.csv('candidateGenes.csv',header=T,sep=',')
 scriptPath <- sub("/[^/]+$", "", scriptPath)
 scriptPath <- sub("/[^/]+$", "", scriptPath)
 dataPath<-'/data/net/6_kallisto/adultTranscriptome/adult/1_preliminarySamples'
@@ -173,6 +175,23 @@ ggvenn(
   fill_color = c("#0073C2FF", "#EFC000FF", "#868686FF"),
   stroke_size = 0.5, set_name_size = 4
 )
+dev.off()
+
+# Candidate genes heatmap
+
+listGenes <- candidateGenes$genes
+
+listGenes <- which(rownames(vsd) %in% listGenes)
+vsdCandidate <- vsd[listGenes, ]
+
+labColName <- c('gm','gm','gm','gm','pv','pv','pv','sa','sa','sa')
+colnames(vsdCandidate) <- labColName
+
+topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
+png(paste(outputPath,'candidateGenes_preliminarySamples_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
+heatmap.3(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
+          col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
+          ColSideColors = ,xlab="sampling sites",ylab="genes",Colv=NA,margins = c(4, 9)) 
 dev.off()
 
 
