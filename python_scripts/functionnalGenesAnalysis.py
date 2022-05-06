@@ -20,6 +20,8 @@ from DESeq2_analysis import *
 from enrichment_analysis_parser import *
 from ontologizer_analysis import *
 from DESeq2_X_ontologizer import *
+#from getCandidates import *
+from finalExpressionAnalyser import *
 
 
 #------------------------------------------------------------------------------#
@@ -43,7 +45,9 @@ def main_menu_display():
     print("|                                                      |")
     print("|      Enrichment analysis input files parsing : 4     |") 
     print("|                                                      |")
-    print("|      Exit : 5                                        |")
+    print("|      Filter DESeq2 results by candidates genes : 5   |")
+    print("|                                                      |")
+    print("|      Exit : 6                                        |")
     print("|                                                      |")
     print("--------------------------------------------------------")
     print("\n")
@@ -105,8 +109,9 @@ def menu_display_enrichment_parsing():
     return
 
 default_threshold = 0.05
+defaultFlagCandidate = 'N'
 
-def main_menu(threshold):
+def main_menu(threshold,flagCandidate):
     while True:
         scriptDir = os.path.dirname(os.path.abspath(__file__))
         os.chdir(scriptDir) 
@@ -121,17 +126,24 @@ def main_menu(threshold):
         if answer==0:
             threshold = setThreshold()
         elif answer==1:
-            menu_DESeq2(threshold)
+            menu_DESeq2(threshold,flagCandidate)
         elif answer==2:
-            menu_ontologizer_output(threshold)
+            menu_ontologizer_output(threshold,flagCandidate)
         elif answer==3:
             matchingFiles()
         elif answer==4:
-            menu_enrichment_parsing(threshold)
+            menu_enrichment_parsing(threshold,flagCandidate)
         elif answer==5:
+            flagCandidate = filterByCandidate()
+        elif answer==6:
+            typeOrg, experiment, org= experimentChoice() 
+            filenames = getFilenamesFinal(experiment,threshold,flagCandidate)
+            dfs,conditions,experiment = filenamesToDfFinal(filenames,experiment,flagCandidate)
+            exploitResults(dfs,conditions,experiment)
+        elif answer==7:
             sys.exit(0)
 
-def menu_DESeq2(threshold):
+def menu_DESeq2(threshold,flagCandidate):
     typeOrg, experiment, org = experimentChoice()
     filenames = getFilenames(typeOrg,experiment)
     while True:
@@ -144,15 +156,15 @@ def menu_DESeq2(threshold):
                 continue
             break
         if answer==1:
-            singleFile(filenames,experiment,org,threshold)
+            singleFile(filenames,experiment,org,threshold,flagCandidate)
         elif answer==2:
-            genesUnshared(filenames,experiment,org,threshold)
+            genesUnshared(filenames,experiment,org,threshold,flagCandidate)
         elif answer==3:
-            genesShared(filenames,experiment,org,threshold)
+            genesShared(filenames,experiment,org,threshold,flagCandidate)
         elif answer==4:
-            main_menu(threshold)
+            main_menu(threshold,flagCandidate)
 
-def menu_ontologizer_output(threshold):
+def menu_ontologizer_output(threshold,flagCandidate):
     while True:
         menu_display_ontologizer() 
         while True:
@@ -165,15 +177,15 @@ def menu_ontologizer_output(threshold):
         scriptDir = os.path.dirname(os.path.abspath(__file__))
         os.chdir(scriptDir) 
         if answer==1:
-            singleFileOntologizer(threshold)
+            singleFileOntologizer(threshold,flagCandidate)
         elif answer==2:
-            genesUnsharedOntologizer(threshold)
+            genesUnsharedOntologizer(threshold,flagCandidate)
         elif answer==3:
-            genesSharedOntologizer(threshold)
+            genesSharedOntologizer(threshold,flagCandidate)
         elif answer==4:
-            main_menu(threshold)
+            main_menu(threshold,flagCandidate)
 
-def menu_enrichment_parsing(threshold):
+def menu_enrichment_parsing(threshold,flagCandidate):
     while True:
         menu_display_enrichment_parsing()
         while True:
@@ -192,7 +204,7 @@ def menu_enrichment_parsing(threshold):
             getOntologyFileGOMWU()
             getStudysetFileGOMWU(threshold)
         elif answer==3:
-            main_menu(threshold)
+            main_menu(threshold,flagCandidate)
 
 
 #------------------------------------------------------------------------------#
@@ -200,4 +212,4 @@ def menu_enrichment_parsing(threshold):
 #------------------------------------------------------------------------------#
 
 
-main_menu(default_threshold)
+main_menu(default_threshold,defaultFlagCandidate)

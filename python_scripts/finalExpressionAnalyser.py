@@ -3,31 +3,47 @@ Final Expression Analyser
 
 Marc Meynadier
 """
+
 import os
 import pandas as pd
 import numpy as np
 import glob
-from DESeq2_analysis import experimentChoice 
-from DESeq2_analysis import listOfFiles
 import matplotlib.pyplot as plt
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
-def getFilenames(experiment):
+def getFilenamesFinal(experiment,threshold,flagCandidate):
     script_dir = os.path.dirname(__file__)
     path = os.path.join(script_dir, '../../data/net/8_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_X_ontologizer')
     os.chdir(path)
-    filenames = glob.glob(path + "/*"+experiment+"*.csv")
-    return filenames   
+    filenames = []
+    files = glob.glob('*'+experiment+'*.csv')
+    if flagCandidate == 'Y':
+        for f in files : 
+            if 'genesCandidates' in f : 
+                filenames.append(f)
+    else:
+        for f in files : 
+            if 'genesCandidates' not in f : 
+                filenames.append(f)
+    return filenames
 
 
-def filenamesToDf(filenames,experiment):
-    filenamesClean = listOfFiles(filenames,experiment) 
+def filenamesToDfFinal(filenames,experiment,flagCandidate):
+    filenamesClean = []
+    for i in filenames:
+        if flagCandidate == 'Y':
+           i = i.replace('_genesCandidates','')
+        i = i.split(experiment+'_',1)[1]
+        i = i.split('_filtered',1)[0]
+        filenamesClean.append(i.split('.csv',1)[0]) 
     for i in range(len(filenamesClean)):
         filenamesClean[i] = str(i+1) + " : " + filenamesClean[i]
         print(filenamesClean[i])
     dfs = [pd.read_csv(filename,error_bad_lines=False,sep=',') for filename in filenames]
+    if len(filenamesClean) == 0:
+        return dfs,filenamesClean
     print("\nHow many files do you want to compare ?\n")  
     nbrFiles = 3
     while nbrFiles!=0:
@@ -61,7 +77,7 @@ def filenamesToDf(filenames,experiment):
             conditions.append(i.split('_shared',1)[0])
         elif '_unshared' in i:
             conditions.append(i.split('_unshared',1)[0])
-    return comparedFiles,conditions
+    return comparedFiles,conditions,experiment
 
 
 def protFamilies():
@@ -77,17 +93,17 @@ def protFamilies():
     redox_regulation_l = ['oxydoreductase','oxygenase','antioxydant','redox homeostasis','NAD','NADH','dehydrogenase','FAD','FADH']
     immune_regulation_l = ['tumor','necrosis','apoptosis','immune']
     other_l = ['extracellular','signal transduction','vesicle','lipid transport']
-    protFam = {'catabolic_enzyme':catabolic_enzyme_l,'isomerase_enzyme':isomerase_enzyme_l,'binding_enzyme':binding_enzyme_l,
-    'ion_regulation':ion_regulation_l,'genetic_regulation':genetic_regulation_l,'translation_regulation':transcriptomic_regulation_l,
-    'cytoskeleton_regulation':cytoskeleton_regulation_l,'redox_regulation':redox_regulation_l,'immune_regulation':immune_regulation_l,'miscellaneous_functions':other_l}
+    protFam = {'catabolic enzyme':catabolic_enzyme_l,'isomerase enzyme':isomerase_enzyme_l,'binding enzyme':binding_enzyme_l,
+    'ion regulation':ion_regulation_l,'genetic regulation':genetic_regulation_l,'translation regulation':transcriptomic_regulation_l,
+    'cytoskeleton regulation':cytoskeleton_regulation_l,'redox regulation':redox_regulation_l,'immune regulation':immune_regulation_l,'miscellaneous functions':other_l}
     return protFam
 
 def protResults():
     catabolic_enzyme_l = [] ; isomerase_enzyme_l = [] ; binding_enzyme_l = [] ; ion_regulation_l = [] ; genetic_regulation_l = [] ; transcriptomic_regulation_l = []
     cytoskeleton_regulation_l = [] ; redox_regulation_l = [] ; immune_regulation_l = [] ; other_l = []
-    protRes = {'catabolic_enzyme':catabolic_enzyme_l,'isomerase_enzyme':isomerase_enzyme_l,'binding_enzyme':binding_enzyme_l,
-    'ion_regulation':ion_regulation_l,'genetic_regulation':genetic_regulation_l,'translation_regulation':transcriptomic_regulation_l,
-    'cytoskeleton_regulation':cytoskeleton_regulation_l,'redox_regulation':redox_regulation_l,'immune_regulation':immune_regulation_l,'miscellaneous_functions':other_l}
+    protRes = {'catabolic enzyme':catabolic_enzyme_l,'isomerase enzyme':isomerase_enzyme_l,'binding enzyme':binding_enzyme_l,
+    'ion regulation':ion_regulation_l,'genetic regulation':genetic_regulation_l,'translation regulation':transcriptomic_regulation_l,
+    'cytoskeleton regulation':cytoskeleton_regulation_l,'redox regulation':redox_regulation_l,'immune regulation':immune_regulation_l,'miscellaneous functions':other_l}
     return protRes
 
 def sortResults(df,conditions):
@@ -103,26 +119,38 @@ def sortResults(df,conditions):
                     protExpr[j].append(row['lfc_'+conditions])   
                     break
     for i in protExpr:
+        exprValue = 0
         if len(protExpr[i]) != 0:
-            averageExpr = np.mean(protExpr[i])
-            protExpr[i] = averageExpr
+            for j in range(len(protExpr[i])):
+                exprValue += protExpr[i][j] 
+        else:
+            exprValue = 0
+        protExpr[i] = exprValue 
     return protAnnot,protExpr 
 
-def exploitResults(dfs,conditions):
+def exploitResults(dfs,conditions,experiment):
+    print(dfs)
+    if len(conditions) == 0:
+        print('No results are available for this experiment condition')
+        return
     for i in range(len(dfs)):
         protAnnot,protExpr = sortResults(dfs[i],conditions[i])
-        print('\nProteins results :\n')
-        print(protAnnot)
-        print('\nExpression results :\n')
-        print(protExpr,'\n')
-        #names = list(protExpr.keys())
+        listProt = list(protExpr.keys()) 
+        listExpr = list(protExpr.values()) 
+        df = pd.DataFrame(list(zip(listProt, listExpr)),columns=['Proteins functions','Expression values'])
         
-        """
-        plt.bar(range(len(protExpr)),values,tick_label=names)
-        plt.show()
-        """
+        df['colors'] = 'r'
+        df.loc[df['Expression values']>=0,'colors'] = 'g'
+        #print(df)
+        
+        fig = plt.figure()
+        plt.bar(df['Proteins functions'], df['Expression values'], color=df['colors'],edgecolor='black')
+        plt.axhline(y=0,color='black')
+        plt.xticks(rotation=45,fontsize=10)
+        fig.suptitle('Expression values of genes associated to proteins functions\n\n'+experiment+'_'+conditions[i], fontsize=20)
+        plt.xlabel('Proteins functions', fontsize=16)
+        plt.ylabel('Expression values\nadditive log2 fold change', fontsize=16)
+        plt.subplots_adjust(bottom=0.3)
+        #plt.show()
+        
 
-typeOrg, experiment, org= experimentChoice()
-filenames = getFilenames(experiment)
-dfs,conditions = filenamesToDf(filenames,experiment)
-exploitResults(dfs,conditions)

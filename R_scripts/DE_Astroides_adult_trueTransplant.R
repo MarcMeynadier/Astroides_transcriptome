@@ -421,22 +421,32 @@ dev.off()
 #Global
 
 listGenes <- candidateGenes$genes
+listGenes2 <- which(rownames(vsd) %in% listGenes)
+index <- which(listGenes %in% rownames(vsd))
+candidateGenes2 <- candidateGenes[index, ] 
+listProt <- candidateGenes2$pfam_annotation
+listGenes3 <- candidateGenes2$genes
 
-listGenes <- which(rownames(vsd) %in% listGenes)
-vsdCandidate <- vsd[listGenes, ]
+vsdCandidate <- vsd[listGenes3, ]
 
 labColName <- c('gm_gm_bck','gm_gm_bck','gm_gm_bck','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_pv_trt',
                 'gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_sp_trt','gm_sp_trt','gm_sp_trt','gm_sp_trt','gm_sp_trt',
                 'pv_gm_trt','pv_gm_trt','pv_gm_trt','pv_gm_trt','pv_gm_trt','pv_pv_bck','pv_pv_bck','pv_pv_bck','pv_pv_tro',
                 'pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro','sp_gm_trt','sp_gm_trt','sp_gm_trt','sp_gm_trt',
                 'sp_sp_bck','sp_sp_bck','sp_sp_bck','sp_sp_tro','sp_sp_tro','sp_sp_tro','sp_sp_tro','sp_sp_tro')
+
 colnames(vsdCandidate) <- labColName
+rownames(vsdCandidate) <- listProt
 
 topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
 png(paste(outputPath,'candidateGenes_trueTransplant_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
-heatmap.3(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
+heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
+          key.title = "none",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
-          ColSideColors = ,xlab="sampling sites",ylab="genes",Colv=NA,margins = c(5, 9)) 
+          xlab="sampling sites",ylab="genes",Colv=NA,margins = c(6, 7))
+
+main='Differential expression of 50 most expressed candidates genes\n\nTrue transplant'
+title(main, cex.main = 0.7)
 dev.off()
 
 # Background & Transplant origin
@@ -444,21 +454,30 @@ dev.off()
 vsd = vst(ddsBckTro,blind=T)
 
 listGenes <- candidateGenes$genes
+listGenes2 <- which(rownames(vsd) %in% listGenes)
+index <- which(listGenes %in% rownames(vsd))
+candidateGenes2 <- candidateGenes[index, ] 
+listProt <- candidateGenes2$pfam_annotation
+listGenes3 <- candidateGenes2$genes
 
-listGenes <- which(rownames(vsd) %in% listGenes)
-vsdCandidate <- vsd[listGenes, ]
+vsdCandidate <- vsd[listGenes3, ]
 
 labColName <- c('gm_gm_bck','gm_gm_bck','gm_gm_bck','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_gm_tro',
                 'pv_pv_bck','pv_pv_bck','pv_pv_bck','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro',
                 'sp_sp_bck','sp_sp_bck','sp_sp_bck','sp_sp_tro','sp_sp_tro','sp_sp_tro','sp_sp_tro','sp_sp_tro')
 
 colnames(vsdCandidate) <- labColName
+rownames(vsdCandidate) <- listProt
 
 topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
 png(paste(outputPath,'candidateGenes_trueTransplant_bck_tro_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
-heatmap.3(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
+heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
+          key.title = "none",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
-          ColSideColors = ,xlab="sampling sites",ylab="genes",Colv=NA,margins = c(5, 9)) 
+          xlab="sampling sites",ylab="genes",Colv=NA,margins = c(6, 7))
+
+main='Differential expression of 50 most expressed candidates genes\n\nTrue transplant - Focus on bck and tro'
+title(main, cex.main = 0.7)
 dev.off()
 
 # True transplant
@@ -466,21 +485,30 @@ dev.off()
 vsd = vst(ddsTrt,blind=T)
 
 listGenes <- candidateGenes$genes
+listGenes2 <- which(rownames(vsd) %in% listGenes)
+index <- which(listGenes %in% rownames(vsd))
+candidateGenes2 <- candidateGenes[index, ] 
+listProt <- candidateGenes2$pfam_annotation
+listGenes3 <- candidateGenes2$genes
 
-listGenes <- which(rownames(vsd) %in% listGenes)
-vsdCandidate <- vsd[listGenes, ]
+vsdCandidate <- vsd[listGenes3, ]
 
 labColName <- c('gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_sp_trt','gm_sp_trt',
                 'gm_sp_trt','gm_sp_trt','gm_sp_trt','pv_gm_trt','pv_gm_trt','pv_gm_trt','pv_gm_trt',
                 'pv_gm_trt','sp_gm_trt','sp_gm_trt','sp_gm_trt','sp_gm_trt')
 
 colnames(vsdCandidate) <- labColName
+rownames(vsdCandidate) <- listProt
 
 topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
 png(paste(outputPath,'candidateGenes_trueTransplant_trt_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
-heatmap.3(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
+heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
+          key.title = "none",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
-          ColSideColors = ,xlab="sampling sites",ylab="genes",Colv=NA,margins = c(5, 9)) 
+          xlab="sampling sites",ylab="genes",Colv=NA,margins = c(6, 7))
+
+main='Differential expression of 50 most expressed candidates genes\n\nTrue transplant - Focus on trt'
+title(main, cex.main = 0.7)
 dev.off()
 
 # Inferences statistics

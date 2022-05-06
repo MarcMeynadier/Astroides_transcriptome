@@ -8,13 +8,13 @@ Marc Meynadier
 #------------------------------------------------------------------------------#
 
 
-from operator import index
 import os
 import glob
 import pandas as pd
 from urllib.request import urlopen
 from functools import reduce
-import pathlib
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 #------------------------------------------------------------------------------#
@@ -39,7 +39,7 @@ def getProteinSequences():
             proteinSequences.append(sequenceProt) 
             concatProt = []
     for i in range(len(geneNames)):
-        geneNames[i]=geneNames[i].replace('>TRINITY_','')
+        geneNames[i]=geneNames[i].replace('>TRINITY_','TRINITY_')
         geneNames[i]=geneNames[i].split(' ',1)[0] 
     for i in range(len(proteinSequences)):
         proteinSequences[i] = proteinSequences[i].replace('\n','')
@@ -59,7 +59,6 @@ def getAnnotationFile():
     separator = "PF"
     for i in range(len(curedFile)):
         geneNames.append(curedFile[i].split(" - ",1)[0])
-        geneNames[i]=geneNames[i].replace('TRINITY_','')
         splitDash = curedFile[i].split(" - ",1)[1]
         splitAnnot = splitDash.split(separator,1)[0] ; splitAnnot = splitAnnot.strip()
         splitCode = splitDash.split(separator,1)[1] ; splitCode = splitCode.split(".",1)[0] ; splitCode = separator + splitCode
@@ -129,7 +128,7 @@ def getPantherFiles():
     geneList = [] ; pantherCode = [] ; pantherAnnot = []
     for i in range(len(curedList)):
         gene = curedList[i].split('\t',1)[0]
-        gene = gene.replace('TRINITY_','') ; gene = gene.split('_i',1)[0]
+        gene = gene.split('_i',1)[0]
         code = curedList[i].split('\t',1)[1] ; code = code.split('\t',1)[0]
         annot = curedList[i].split('\t',2)[2] ; annot = annot.split('\t',1)[0]
         geneList.append(gene)
@@ -160,12 +159,16 @@ def listOfFiles(filenames,experiment):
          filesNamesClean.append(newName)
     return filesNamesClean
 
-def filenamesToDataframe(filenames,threshold):
+def filenamesToDataframe(filenames,threshold,flagCandidate):
     dfs = [pd.read_csv(filename) for filename in filenames]
+    if flagCandidate == 'Y':
+        candidateGenes = pd.read_csv('../../../../../Astroides_transcriptome/R_scripts/candidateGenes.csv')
     for i in range(len(dfs)):
-        dfs[i].rename(columns={ dfs[i].columns[0]: "gene" }, inplace = True)
+        dfs[i].rename(columns={ dfs[i].columns[0]: "genes" }, inplace = True)
         dfs[i]=dfs[i].drop(dfs[i][dfs[i].padj>threshold].index)
         dfs[i]=dfs[i][dfs[i]['padj'].notna()]
+        if flagCandidate == 'Y':
+            dfs[i]=dfs[i].merge(candidateGenes,on='genes',how='inner')
     return dfs
 
 def experimentChoice():
@@ -221,7 +224,22 @@ def setThreshold():
         break
     return threshold_pvalue
 
-def singleFile(filenames,experiment,org,threshold):
+
+def filterByCandidate():
+    print("\nDo you want to filter genes by candidate genes ? Y or N\n")
+    flagCandidate = input()
+    if flagCandidate == 'Y':
+        return flagCandidate
+    elif flagCandidate == 'N':
+        return flagCandidate
+    else:
+        print('\nYou did not choose a valid answer, no filtration by candidate genes will occur\n')
+        flagCandidate = 'N'
+        return flagCandidate
+
+
+
+def singleFile(filenames,experiment,org,threshold,flagCandidate):
     filesNamesClean = listOfFiles(filenames,experiment)
     for i in range(len(filesNamesClean)):
         filesNamesClean[i] = str(i+1) + " : " + filesNamesClean[i]
@@ -230,23 +248,21 @@ def singleFile(filenames,experiment,org,threshold):
     while True:
             try:
                 file=int(input())
-                if file not in range(len(filesNamesClean)):
+                if file not in range(len(filesNamesClean)+1):
                     print("\nYou must indicate an integer value corresponding to the file you want to analyse\n")
                     file=int(input())
             except ValueError:
                 print("\nYou must indicate an integer value corresponding to the file you want to analyse\n")
                 continue
             break 
-    df = filenamesToDataframe(filenames,threshold) 
-    geneNames = list(df[file-1].gene) 
+    df = filenamesToDataframe(filenames,threshold,flagCandidate) 
+    geneNames = list(df[file-1].genes) 
     lfcValuesFile = [] 
     padjValuesFile = [] 
     dfFile = df[file-1] 
     for i in range(len(geneNames)):
-        lfcValuesFile.append(dfFile['log2FoldChange'][dfFile['gene']==geneNames[i]].values[0])
-        padjValuesFile.append(dfFile['padj'][dfFile['gene']==geneNames[i]].values[0])
-    for i in range(len(geneNames)):
-        geneNames[i]=geneNames[i].replace('TRINITY_','')
+        lfcValuesFile.append(dfFile['log2FoldChange'][dfFile['genes']==geneNames[i]].values[0])
+        padjValuesFile.append(dfFile['padj'][dfFile['genes']==geneNames[i]].values[0])
     filesNamesClean2 = listOfFiles(filenames,experiment)
     dic = {'genes':geneNames,'lfc_'+filesNamesClean2[file-1]:lfcValuesFile,
     'p-adj_'+filesNamesClean2[file-1]:padjValuesFile}
@@ -263,16 +279,25 @@ def singleFile(filenames,experiment,org,threshold):
     s = outputDf.pop('protein_sequence') ; outputDf = pd.concat([outputDf,s],1)
     outputDf = outputDf.reset_index(drop=True) 
     pathFunctionnalAnnotation='../../../8_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis/' 
-    if org == 'adult':
-        outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+experiment+'_'+filesNamesClean2[file-1]+'_single_file.csv',encoding='utf-8')
-    elif org == 'juvenile':
-        outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+filesNamesClean2[file-1]+'_single_file.csv',encoding='utf-8') 
-    print(outputDf)
-    return outputDf
+    if not outputDf.empty:
+        if flagCandidate == 'Y':
+            if org == 'adult':
+                outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+experiment+'_'+filesNamesClean2[file-1]+'_genesCandidates'+'_singleFile.csv',encoding='utf-8')
+            elif org == 'juvenile':
+                outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+filesNamesClean2[file-1]+'_genesCandidates'+'_singleFile.csv',encoding='utf-8') 
+        else:
+            if org == 'adult':
+                outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+experiment+'_'+filesNamesClean2[file-1]+'_singleFile.csv',encoding='utf-8')
+            elif org == 'juvenile':
+                outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+filesNamesClean2[file-1]+'_singleFile.csv',encoding='utf-8') 
+        print(outputDf)
+        return outputDf
+    else:
+        print("\nNo results are available\n")
     
 
 
-def genesUnshared(filenames,experiment,org,threshold):
+def genesUnshared(filenames,experiment,org,threshold,flagCandidate):
     filesNamesClean = listOfFiles(filenames,experiment)
     filesNamesClean2=filesNamesClean.copy()
     for i in range(len(filesNamesClean)):
@@ -286,8 +311,8 @@ def genesUnshared(filenames,experiment,org,threshold):
                 print("\nYou must indicate an integer value corresponding to the files you want to analyse\n")
                 continue
             break 
-    df = filenamesToDataframe(filenames,threshold) 
-    geneNames = list(df[file1-1].gene) ; geneNames2 = list(df[file2-1].gene)
+    df = filenamesToDataframe(filenames,threshold,flagCandidate) 
+    geneNames = list(df[file1-1].genes) ; geneNames2 = list(df[file2-1].genes)
     for i in geneNames:
         flag = 0
         for j in geneNames2:
@@ -299,10 +324,8 @@ def genesUnshared(filenames,experiment,org,threshold):
     padjValuesFile = [] 
     dfFile1 = df[file1-1] 
     for i in range(len(geneNames)):
-        lfcValuesFile.append(dfFile1['log2FoldChange'][dfFile1['gene']==geneNames[i]].values[0])
-        padjValuesFile.append(dfFile1['padj'][dfFile1['gene']==geneNames[i]].values[0])
-    for i in range(len(geneNames)):
-        geneNames[i]=geneNames[i].replace('TRINITY_','')
+        lfcValuesFile.append(dfFile1['log2FoldChange'][dfFile1['genes']==geneNames[i]].values[0])
+        padjValuesFile.append(dfFile1['padj'][dfFile1['genes']==geneNames[i]].values[0])
     dic = {'genes':geneNames,'lfc_'+filesNamesClean2[file1-1]:lfcValuesFile,
     'p-adj_'+filesNamesClean2[file1-1]:padjValuesFile}
     outputDf = pd.DataFrame(dic)
@@ -317,11 +340,17 @@ def genesUnshared(filenames,experiment,org,threshold):
     s = outputDf.pop('GO_code') ; outputDf = pd.concat([outputDf,s],1)
     s = outputDf.pop('protein_sequence') ; outputDf = pd.concat([outputDf,s],1)
     outputDf = outputDf.reset_index(drop=True)
-    print(outputDf)
-    pathFunctionnalAnnotation='../../../8_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis/' 
-    outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+experiment+'_'+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_unshared.csv',encoding='utf-8')
+    if not outputDf.empty:
+        print(outputDf)
+        pathFunctionnalAnnotation='../../../8_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis/' 
+        if flagCandidate == 'Y':
+            outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+experiment+'_'+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_genesCandidates'+'_unshared.csv',encoding='utf-8')
+        else:
+            outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+experiment+'_'+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_unshared.csv',encoding='utf-8') 
+    else:
+        print("\nNo results are available\n")
 
-def genesShared(filenames,experiment,org,threshold):
+def genesShared(filenames,experiment,org,threshold,flagCandidate):
     filesNamesClean1 = listOfFiles(filenames,experiment)
     filesNamesClean2=filesNamesClean1.copy()
     print("\nList of output files from DESeq2 \n")
@@ -336,18 +365,16 @@ def genesShared(filenames,experiment,org,threshold):
                 print("\nYou must indicate an integer value corresponding to the files you want to analyse\n")
                 continue
             break 
-    df = filenamesToDataframe(filenames,threshold) 
-    geneNames=list(reduce(set.intersection, map(set, [df[file1-1].gene, df[file2-1].gene])))
+    df = filenamesToDataframe(filenames,threshold,flagCandidate) 
+    geneNames=list(reduce(set.intersection, map(set, [df[file1-1].genes, df[file2-1].genes])))
     lfcValuesFile1 = [] ; lfcValuesFile2 = []
     padjValuesFile1 = [] ; padjValuesFile2 = []
     dfFile1 = df[file1-1] ; dfFile2 = df[file2-1]
     for i in range(len(geneNames)):
-        lfcValuesFile1.append(dfFile1['log2FoldChange'][dfFile1['gene']==geneNames[i]].values[0])
-        lfcValuesFile2.append(dfFile2['log2FoldChange'][dfFile2['gene']==geneNames[i]].values[0])
-        padjValuesFile1.append(dfFile1['padj'][dfFile1['gene']==geneNames[i]].values[0])
-        padjValuesFile2.append(dfFile2['padj'][dfFile2['gene']==geneNames[i]].values[0])
-    for i in range(len(geneNames)):
-        geneNames[i]=geneNames[i].replace('TRINITY_','')
+        lfcValuesFile1.append(dfFile1['log2FoldChange'][dfFile1['genes']==geneNames[i]].values[0])
+        lfcValuesFile2.append(dfFile2['log2FoldChange'][dfFile2['genes']==geneNames[i]].values[0])
+        padjValuesFile1.append(dfFile1['padj'][dfFile1['genes']==geneNames[i]].values[0])
+        padjValuesFile2.append(dfFile2['padj'][dfFile2['genes']==geneNames[i]].values[0])
     dic = {'genes':geneNames,'lfc_'+filesNamesClean2[file1-1]:lfcValuesFile1,'lfc_'+filesNamesClean2[file2-1]:lfcValuesFile2,
     'p-adj_'+filesNamesClean2[file1-1]:padjValuesFile1,'p-adj_'+filesNamesClean2[file2-1]:padjValuesFile2}
     outputDf = pd.DataFrame(dic)
@@ -364,40 +391,11 @@ def genesShared(filenames,experiment,org,threshold):
     outputDf = outputDf.reset_index(drop=True)
     print(outputDf)
     pathFunctionnalAnnotation='../../../8_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis/'
-    outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+experiment+'_'+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_shared.csv',encoding='utf-8')
-    
+    if not outputDf.empty:
+        if flagCandidate == 'Y':
+            outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+experiment+'_'+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_genesCandidates'+'_shared.csv',encoding='utf-8')
+        else:
+            outputDf.to_csv(pathFunctionnalAnnotation+org+'_'+experiment+'_'+filesNamesClean2[file1-1]+"_X_"+filesNamesClean2[file2-1]+'_shared.csv',encoding='utf-8') 
+    else:
+        print("\nNo results are available\n")
 
-def getAnnotation(): 
-    curedFile = []
-    with open('../../data/net/8_functionnalAnnotation/hmmsearchOutput.out') as f:
-        contents = f.readlines()
-    for i in contents:
-        if 'TRINITY' in i:
-            curedFile.append(i)
-    geneNames=[] ; pfamAnnot= [] ; pfamCode = []
-    separator = "PF"
-    for i in range(len(curedFile)):
-        geneNames.append(curedFile[i].split(" - ",1)[0])
-        splitDash = curedFile[i].split(" - ",1)[1]
-        splitAnnot = splitDash.split(separator,1)[0] ; splitAnnot = splitAnnot.strip()
-        splitCode = splitDash.split(separator,1)[1] ; splitCode = splitCode.split(".",1)[0] ; splitCode = separator + splitCode
-        pfamAnnot.append(splitAnnot) ; pfamCode.append(splitCode)
-    dic={'genes':geneNames,'pfam_annotation':pfamAnnot,'pfam_code':pfamCode}
-    mergeDf=pd.DataFrame(dic) 
-    mergeDf = mergeDf.replace(to_replace ='(_i).*', value = '', regex = True)
-    return mergeDf
-
-def filterCandidate():
-    annot = getAnnotation()
-    candidate=['ectin','sushi','galaxin','collagen','adhesin','cadherin','actin','HCO3','anhydrase','V_ATPase','calmodulin']
-    annotFilter = annot[annot.stack().str.contains('|'.join(candidate)).any(level=0)]
-    annotFilter = annotFilter.drop_duplicates(subset='genes', keep='first', inplace=False, ignore_index=False)
-    pfam = annotFilter['pfam_annotation'].tolist()
-    pfamFilter = []
-    for i in pfam:
-        newName = i.split(' ',1)[1]
-        pfamFilter.append(newName)
-    annotFilter['pfam_annotation'] = pfamFilter
-    annotFilter.to_csv('candidateGenes.csv',index=False,encoding='utf-8')
-    
-filterCandidate()

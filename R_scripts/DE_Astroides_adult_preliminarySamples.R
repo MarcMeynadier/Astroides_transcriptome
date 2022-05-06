@@ -180,18 +180,27 @@ dev.off()
 # Candidate genes heatmap
 
 listGenes <- candidateGenes$genes
+listGenes2 <- which(rownames(vsd) %in% listGenes)
+index <- which(listGenes %in% rownames(vsd))
+candidateGenes2 <- candidateGenes[index, ] 
+listProt <- candidateGenes2$pfam_annotation
+listGenes3 <- candidateGenes2$genes
 
-listGenes <- which(rownames(vsd) %in% listGenes)
-vsdCandidate <- vsd[listGenes, ]
+vsdCandidate <- vsd[listGenes3, ]
 
 labColName <- c('gm','gm','gm','gm','pv','pv','pv','sa','sa','sa')
 colnames(vsdCandidate) <- labColName
+rownames(vsdCandidate) <- listProt
 
 topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
 png(paste(outputPath,'candidateGenes_preliminarySamples_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
-heatmap.3(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
+heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
+          key.title = "none",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
-          ColSideColors = ,xlab="sampling sites",ylab="genes",Colv=NA,margins = c(4, 9)) 
+          xlab="sampling sites",ylab="genes",Colv=NA,margins = c(4, 7))
+
+main='Differential expression of 50 most expressed candidates genes\n\nPreliminary samples'
+title(main, cex.main = 0.7)
 dev.off()
 
 

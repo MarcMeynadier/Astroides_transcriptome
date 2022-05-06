@@ -19,7 +19,7 @@ def filenamesToDataframe(filenames,threshold):
         dfs[i]=dfs[i].drop(dfs[i][dfs[i].p>threshold].index)
     return dfs
 
-def singleFileOntologizer(threshold):
+def singleFileOntologizer(threshold,flagCandidate):
     os.chdir('../../data/net/8_functionnalAnnotation/ontologizer/outputResults/codingDEG') 
     path=os.getcwd()
     filesNamesClean1=[]
@@ -64,12 +64,15 @@ def singleFileOntologizer(threshold):
         print(outputDf)
         pathFunctionnalAnnotation='../../../functionnalGenesAnalysis/ontologizer_analysis/'
         outputFileName = selectedFiles[0]
-        outputDf.to_csv(pathFunctionnalAnnotation+outputFileName+'_single_file.csv',encoding='utf-8')
+        if flagCandidate == 'Y':
+            outputDf.to_csv(pathFunctionnalAnnotation+outputFileName+'_genesCandidates'+'_singleFile.csv',encoding='utf-8')
+        else:
+           outputDf.to_csv(pathFunctionnalAnnotation+outputFileName+'_singleFile.csv',encoding='utf-8') 
     else:
         print("\nNo GO terms are available for this file\n")
    
 
-def genesUnsharedOntologizer(threshold):
+def genesUnsharedOntologizer(threshold,flagCandidate):
     os.chdir('../../data/net/8_functionnalAnnotation/ontologizer/outputResults/codingDEG') 
     path=os.getcwd()
     filesNamesClean1=[]
@@ -132,7 +135,10 @@ def genesUnsharedOntologizer(threshold):
             print(outputDf)
             pathFunctionnalAnnotation='../../../functionnalGenesAnalysis/ontologizer_analysis/'
             outputFileName = '_X_'.join(selectedFiles)
-            outputDf.to_csv(pathFunctionnalAnnotation+outputFileName+'_unshared.csv',encoding='utf-8')
+            if flagCandidate == 'Y':
+                outputDf.to_csv(pathFunctionnalAnnotation+outputFileName+'_genesCandidates'+'_unshared.csv',encoding='utf-8')
+            else:
+                outputDf.to_csv(pathFunctionnalAnnotation+outputFileName+'_unshared.csv',encoding='utf-8')
         else:
             print("\nNo GO terms are overlapping between those conditions with this threshold\n")
     else:
@@ -140,7 +146,7 @@ def genesUnsharedOntologizer(threshold):
 
 
 
-def genesSharedOntologizer(threshold):
+def genesSharedOntologizer(threshold,flagCandidate):
     os.chdir('../../data/net/8_functionnalAnnotation/ontologizer/outputResults/codingDEG') 
     path=os.getcwd()
     filesNamesClean1=[]
@@ -195,6 +201,9 @@ def genesSharedOntologizer(threshold):
         print(outputDf)
         pathFunctionnalAnnotation='../../../functionnalGenesAnalysis/ontologizer_analysis/'
         outputFileName = '_X_'.join(selectedFiles)
-        outputDf.to_csv(pathFunctionnalAnnotation+outputFileName+'_shared.csv',encoding='utf-8')
+        if flagCandidate == 'Y':
+            outputDf.to_csv(pathFunctionnalAnnotation+outputFileName+'_genesCandidates'+'_shared.csv',encoding='utf-8')
+        else:
+           outputDf.to_csv(pathFunctionnalAnnotation+outputFileName+'_shared.csv',encoding='utf-8') 
     else:
         print("\nNo GO terms are overlapping between those conditions with this threshold\n")
