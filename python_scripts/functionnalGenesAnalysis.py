@@ -30,26 +30,24 @@ from finalExpressionAnalyser import *
 
 def main_menu_display():
     print("\n")
-    print("--------------------------------------------------------")
-    print("|                                                      |")
-    print("|             Functionnal Genes Analysis               |")
-    print("|                                                      |")
-    print("|                                                      |")
-    print("|      Select a p-value threshold : 0                  |")
-    print("|                                                      |")
-    print("|      DESeq2 output files analysis : 1                |")
-    print("|                                                      |")
-    print("|      Ontologizer output files analysis : 2           |")
-    print("|                                                      |")
-    print("|      DESeq2 output filtering after enrichment : 3    |")
-    print("|                                                      |")
-    print("|      Enrichment analysis input files parsing : 4     |") 
-    print("|                                                      |")
-    print("|      Filter DESeq2 results by candidates genes : 5   |")
-    print("|                                                      |")
-    print("|      Exit : 6                                        |")
-    print("|                                                      |")
-    print("--------------------------------------------------------")
+    print("--------------------------------------------")
+    print("|                                          |")
+    print("|        Functionnal Genes Analysis        |")
+    print("|                                          |")
+    print("|                                          |")
+    print("|       DESeq2_analyser : 1                |")
+    print("|                                          |")
+    print("|       Ontologizer_analyser: 2            |")
+    print("|                                          |")
+    print("|       DESeq2_X_ontologizer: 3            |")
+    print("|                                          |")
+    print("|       Final_Expression_analyser : 4      |") 
+    print("|                                          |")
+    print("|       Parsing & settings : 5             |")
+    print("|                                          |")
+    print("|       Exit : 6                           |")
+    print("|                                          |")
+    print("--------------------------------------------")
     print("\n")
     return
 
@@ -91,6 +89,25 @@ def menu_display_ontologizer():
     print("\n")
     return
 
+def menu_display_parsing_settings():
+    print("\n")
+    print("----------------------------------------------")
+    print("|                                            |")
+    print("|   Parsing input files & program settings   |")
+    print("|                                            |")
+    print("|                                            |")
+    print("|       Parsing : 1                          |")
+    print("|                                            |")
+    print("|       p-value threshold : 2                |")
+    print("|                                            |")
+    print("|       Candidate genes threshold : 3        |")
+    print("|                                            |")
+    print("|       Back to previous selection : 4       |")
+    print("|                                            |")
+    print("----------------------------------------------")
+    print("\n")
+    return
+
 def menu_display_enrichment_parsing():
     print("\n")
     print("----------------------------------------------")
@@ -98,7 +115,7 @@ def menu_display_enrichment_parsing():
     print("|     Enrichment analysis files parsing      |")
     print("|                                            |")
     print("|                                            |")
-    print("|       Ontologizer  : 1                     |")
+    print("|       Ontologizer : 1                      |")
     print("|                                            |")
     print("|       GO_MWU : 2                           |")
     print("|                                            |")
@@ -120,27 +137,26 @@ def main_menu(threshold,flagCandidate):
             try:
                 answer = int(input())
             except ValueError:
-                print("\nYou must indicate an integer value ranging from 0 to 5\n")
+                print("\nYou must indicate an integer value ranging from 1 to 6\n")
                 continue
-            break
-        if answer==0:
-            threshold = setThreshold()
-        elif answer==1:
+            break 
+        if answer==1:
             menu_DESeq2(threshold,flagCandidate)
         elif answer==2:
             menu_ontologizer_output(threshold,flagCandidate)
         elif answer==3:
-            matchingFiles()
+            matchingFiles() 
         elif answer==4:
-            menu_enrichment_parsing(threshold,flagCandidate)
-        elif answer==5:
-            flagCandidate = filterByCandidate()
-        elif answer==6:
             typeOrg, experiment, org= experimentChoice() 
             filenames = getFilenamesFinal(experiment,threshold,flagCandidate)
+            if len(filenames)==0:
+                print('\nNo results are available for this experiment condition')
+                main_menu(threshold,flagCandidate)
             dfs,conditions,experiment = filenamesToDfFinal(filenames,experiment,flagCandidate)
             exploitResults(dfs,conditions,experiment)
-        elif answer==7:
+        elif answer==5:
+            parsing_settings(threshold,flagCandidate)
+        elif answer==6:
             sys.exit(0)
 
 def menu_DESeq2(threshold,flagCandidate):
@@ -184,6 +200,25 @@ def menu_ontologizer_output(threshold,flagCandidate):
             genesSharedOntologizer(threshold,flagCandidate)
         elif answer==4:
             main_menu(threshold,flagCandidate)
+
+
+def parsing_settings(threshold,flagCandidate):
+    while True:
+        menu_display_parsing_settings()
+        while True:
+            try:
+                answer = int(input())
+            except ValueError:
+                print("\nYou must indicate an integer value ranging from 1 to 3\n")
+                continue
+            if answer==1:
+                menu_enrichment_parsing(threshold,flagCandidate)
+            elif answer==2:
+                threshold = setThreshold()
+            elif answer==3:
+                flagCandidate = filterByCandidate()
+            elif answer==4:
+                main_menu(threshold,flagCandidate) 
 
 def menu_enrichment_parsing(threshold,flagCandidate):
     while True:

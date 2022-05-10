@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import glob
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -82,17 +83,19 @@ def filenamesToDfFinal(filenames,experiment,flagCandidate):
 
 def protFamilies():
     catabolic_enzyme_l=['hydrolase','hydrolysis','protease','peptidase','endopeptidase','metalloendopeptidase','proteolysis','phosphatase','phospholipase'
-    ,'catalytic activity','metallopeptidase','metallocarboxypeptidase','lipase','catabolic process']
-    isomerase_enzyme_l=['lyase','isomerase','transferase','mutase','oxydoreductase','dehydrogenase','kinase']
-    binding_enzyme_l=['carbohydrate binding','chitin binding','ion binding','acid binding','protein binding']
+    ,'catalytic activity','metallopeptidase','metallocarboxypeptidase','lipase','catabolic process','ATPase','GTPase','aminidase']
+    isomerase_enzyme_l=['lyase','isomerase','transferase','mutase','oxydoreductase','dehydrogenase','kinase,peroxydase,deiodinase']
+    binding_enzyme_l=['carbohydrate binding','chitin binding','ion binding','acid binding','protein binding','biotin binding']
     ion_regulation_l=['proton','ion transport','calcium ion','zinc ion','magnesium ion','channel','transmembrane transport','intermembrane','translocase',
-    'iron ion','copper ion','cation transport','anion transport','sulfate transport']
+    'iron ion','copper ion','cation transport','anion transport','sulfate transport','potassium channel','ammonium transmembrane','ionotropic glutamate receptor',
+    'ion transmembrane']
     genetic_regulation_l=['DNA','histone','nucleic acid','telomere','helicase']
     transcriptomic_regulation_l=['translation','ribosome','RNA','elongation']
-    cytoskeleton_regulation_l = ['microtubule','cytoskeleton','mitotic spindle','cytokinesis','extracellular matrix','actin']
-    redox_regulation_l = ['oxydoreductase','oxygenase','antioxydant','redox homeostasis','NAD','NADH','dehydrogenase','FAD','FADH']
+    cytoskeleton_regulation_l = ['microtubule','cytoskeleton','mitotic spindle','cytokinesis','extracellular matrix','actin','cell adhesion','extracellular matrix','dynein'
+    ,'dystrophin','fibrillin','sushi','galaxin']
+    redox_regulation_l = ['oxydoreductase','oxygenase','antioxydant','redox homeostasis','NAD','NADH','dehydrogenase','FAD','FADH','peroxydase','deiodinase']
     immune_regulation_l = ['tumor','necrosis','apoptosis','immune']
-    other_l = ['extracellular','signal transduction','vesicle','lipid transport']
+    other_l = ['signal transduction','vesicle','lipid transport','organism development','nuclear pore','circadian rhythm']
     protFam = {'catabolic enzyme':catabolic_enzyme_l,'isomerase enzyme':isomerase_enzyme_l,'binding enzyme':binding_enzyme_l,
     'ion regulation':ion_regulation_l,'genetic regulation':genetic_regulation_l,'translation regulation':transcriptomic_regulation_l,
     'cytoskeleton regulation':cytoskeleton_regulation_l,'redox regulation':redox_regulation_l,'immune regulation':immune_regulation_l,'miscellaneous functions':other_l}
@@ -128,29 +131,100 @@ def sortResults(df,conditions):
         protExpr[i] = exprValue 
     return protAnnot,protExpr 
 
+
 def exploitResults(dfs,conditions,experiment):
-    print(dfs)
     if len(conditions) == 0:
         print('No results are available for this experiment condition')
         return
+    tick = 0 ; fontsize = 0 ; width = 0 ; adjust = 0
+    x_axis = np.array
+    prot_functions = pd.Series
+    patterns = ["//", "..", "--", "**" ]
+    fig = plt.figure(figsize=(15, 10))
+    bars_list = []
+    numberProtList = []
     for i in range(len(dfs)):
+        if len(dfs) < 3:
+            tick += 0.3
+            width = 0.3
+            fontsize = 8
+            adjust = 0.15
+        else:
+            width = 0.2
+            tick += 0.2
+            fontsize = 6
+            adjust = 0.1
         protAnnot,protExpr = sortResults(dfs[i],conditions[i])
+        print(protAnnot) ; print(len(protAnnot))
+        numberProt = []
+        for j in protAnnot.values():
+            numberProt.append(len(j))
+        numberProtList.append(numberProt)
         listProt = list(protExpr.keys()) 
         listExpr = list(protExpr.values()) 
-        df = pd.DataFrame(list(zip(listProt, listExpr)),columns=['Proteins functions','Expression values'])
+        df = pd.DataFrame(list(zip(listProt, listExpr)),columns=['Proteins functions','Expression values '+conditions[i]])  
+        df['colors '+conditions[i]] = '#E66100'
+        df.loc[df['Expression values '+conditions[i]]>=0,'colors '+conditions[i]] = '#006CD1'       
+        x_axis = np.arange(len(df['Proteins functions']))
+        prot_functions = df['Proteins functions']
+        bars = plt.bar(x_axis+tick, df['Expression values '+conditions[i]], color=df['colors '+conditions[i]],edgecolor='black',width=width,hatch=patterns[i])
+        bars_list.append(bars)
+    axes = plt.gca() ; ymax = axes.get_ylim()  ; print(ymax)
+    if ymax[1] <= 5:
+        y_coeff = 0.15 ; y_neg_coeff = 0.8
+    if ymax[1] > 5 and ymax[1] <= 10:
+        y_coeff = 0.5 ; y_neg_coeff = 1.5
+    elif ymax[1] > 10 and ymax[1] <= 30:
+        y_coeff = 2 ; y_neg_coeff = 6
+    elif ymax[1] > 30 and ymax[1] <= 50: 
+        y_coeff = 20 ; y_neg_coeff = 80
+    elif ymax[1] > 50 and ymax[1] <= 70:
+        y_coeff = 60 ; y_neg_coeff = 120
+    elif ymax[1] > 70 and ymax[1] <= 90:
+        y_coeff = 90 ; y_neg_coeff = 270
+    elif ymax[1] > 90 and ymax[1] <= 110:
+        y_coeff = 120 ; y_neg_coeff = 350
+    elif ymax[1] > 110 and ymax[1] <= 130:
+        y_coeff = 150 ; y_neg_coeff = 400   
+    for i in range(len(bars_list)):
+        for j in range(len(bars_list[i])):
+                yval = bars_list[i][j].get_height()
+                if yval >= 0:
+                    plt.text(bars_list[i][j].get_x()+adjust, yval+(y_coeff*(1/ymax[1])), 'N:'+str(numberProtList[i][j]),ha='center',fontsize=fontsize)
+                else:
+                    plt.text(bars_list[i][j].get_x()+adjust,yval-(y_neg_coeff*(1/ymax[1])), 'N:'+str(numberProtList[i][j]),ha='center',fontsize=fontsize)
+    if len(dfs) == 1:
+        plt.xticks(x_axis+0.3,prot_functions,rotation=45,fontsize=10) 
+    elif len(dfs) == 2:
+        plt.xticks(x_axis+0.6-(0.3/len(dfs)),prot_functions,rotation=45,fontsize=10)     
+    elif len(dfs) == 3:
+        plt.xticks(x_axis+(0.3*len(dfs)-0.3),prot_functions,rotation=45,fontsize=10)
+    elif len(dfs) == 4:     
+        plt.xticks(x_axis+(0.2*len(dfs)-0.3),prot_functions,rotation=45,fontsize=10)  
+    plt.axhline(y=0,color='black')
+    plt.xlabel('Proteins functions', fontsize=16)
+    plt.ylabel('Expression values\n(additive log2 fold change)', fontsize=16)
+    legend = []
+    up = mpatches.Patch(facecolor='#006CD1', label='Upregulated',edgecolor='black') ; legend.append(up)
+    down = mpatches.Patch(facecolor='#E66100', label='Downregulated',edgecolor='black') ; legend.append(down)
+    for i in range(len(conditions)):
+        if i==0:
+            leg = mpatches.Patch(hatch=r'////',label=conditions[i],facecolor='white',edgecolor='black')
+            legend.append(leg)
+        elif i==1:
+            leg = mpatches.Patch(hatch='....',label=conditions[i],facecolor='white',edgecolor='black')
+            legend.append(leg)
+        elif i==2:
+            leg = mpatches.Patch(hatch='----',label=conditions[i],facecolor='white',edgecolor='black')
+            legend.append(leg)
+        elif i==2:
+            leg = mpatches.Patch(hatch='****',label=conditions[i],facecolor='white',edgecolor='black')
+            legend.append(leg)     
+    plt.legend(handles=legend, loc=0,fontsize=7.5,frameon=False)
+    plt.title('Expression values of genes associated to proteins functions\n\n'+experiment,fontsize=18)
+    plt.subplots_adjust(bottom=0.3)
+    outputPath = '../../../../../output/functionalGenesAnnotation/'
+    conditionsStr = '_X_'.join(conditions) 
+    fig.savefig(outputPath+'FGA_barplot_'+experiment+'_'+conditionsStr+'.png')   
+    #plt.show()
         
-        df['colors'] = 'r'
-        df.loc[df['Expression values']>=0,'colors'] = 'g'
-        #print(df)
-        
-        fig = plt.figure()
-        plt.bar(df['Proteins functions'], df['Expression values'], color=df['colors'],edgecolor='black')
-        plt.axhline(y=0,color='black')
-        plt.xticks(rotation=45,fontsize=10)
-        fig.suptitle('Expression values of genes associated to proteins functions\n\n'+experiment+'_'+conditions[i], fontsize=20)
-        plt.xlabel('Proteins functions', fontsize=16)
-        plt.ylabel('Expression values\nadditive log2 fold change', fontsize=16)
-        plt.subplots_adjust(bottom=0.3)
-        #plt.show()
-        
-
