@@ -20,7 +20,7 @@ from DESeq2_analysis import *
 from enrichment_analysis_parser import *
 from ontologizer_analysis import *
 from DESeq2_X_ontologizer import *
-#from getCandidates import *
+from getCandidates import *
 from finalExpressionAnalyser import *
 
 
@@ -64,7 +64,7 @@ def menu_display_DESeq2():
     print("|                                            |")
     print("|       Genes shared : 3                     |")
     print("|                                            |")
-    print("|       Back to previous selection : 4       |")
+    print("|       Back to main menu : 4                |")
     print("|                                            |")
     print("----------------------------------------------")
     print("\n")
@@ -83,7 +83,7 @@ def menu_display_ontologizer():
     print("|                                            |")
     print("|       GO terms shared : 3                  |")
     print("|                                            |")
-    print("|       Back to previous selection : 4       |")
+    print("|       Back to main menu : 4                |")
     print("|                                            |")
     print("----------------------------------------------")
     print("\n")
@@ -96,13 +96,15 @@ def menu_display_parsing_settings():
     print("|   Parsing input files & program settings   |")
     print("|                                            |")
     print("|                                            |")
-    print("|       Parsing : 1                          |")
+    print("|       Ontologizer input files parsing : 1  |")
     print("|                                            |")
-    print("|       p-value threshold : 2                |")
+    print("|       Generate candidate genes file : 2    |")
     print("|                                            |")
-    print("|       Candidate genes threshold : 3        |")
+    print("|       p-value threshold : 3                |")
     print("|                                            |")
-    print("|       Back to previous selection : 4       |")
+    print("|       Candidate genes threshold : 4        |")
+    print("|                                            |")
+    print("|       Back to main menu : 5                |")
     print("|                                            |")
     print("----------------------------------------------")
     print("\n")
@@ -119,7 +121,7 @@ def menu_display_enrichment_parsing():
     print("|                                            |")
     print("|       GO_MWU : 2                           |")
     print("|                                            |")
-    print("|       Back to previous selection : 3       |")
+    print("|       Back to main menu : 3                |")
     print("|                                            |")
     print("----------------------------------------------")
     print("\n")
@@ -203,21 +205,24 @@ def menu_ontologizer_output(threshold,flagCandidate):
 
 
 def parsing_settings(threshold,flagCandidate):
-    while True:
-        menu_display_parsing_settings()
-        while True:
-            try:
-                answer = int(input())
-            except ValueError:
-                print("\nYou must indicate an integer value ranging from 1 to 3\n")
-                continue
+        while True: 
+            menu_display_parsing_settings()
+            while True:
+                try:
+                    answer = int(input())
+                except ValueError:
+                    print("\nYou must indicate an integer value ranging from 1 to 5\n")
+                    continue
+                break
             if answer==1:
                 menu_enrichment_parsing(threshold,flagCandidate)
             elif answer==2:
-                threshold = setThreshold()
+                getCandidateGenes()
             elif answer==3:
-                flagCandidate = filterByCandidate()
+                threshold = setThreshold()
             elif answer==4:
+                flagCandidate = filterByCandidate()
+            elif answer==5:
                 main_menu(threshold,flagCandidate) 
 
 def menu_enrichment_parsing(threshold,flagCandidate):

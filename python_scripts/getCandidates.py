@@ -20,7 +20,7 @@ def getAnnotation():
     mergeDf = mergeDf.replace(to_replace ='(_i).*', value = '', regex = True)
     return mergeDf
 
-def filterCandidate():
+def getCandidateGenes():
     annot = getAnnotation()
     candidate=['ectin','sushi','galaxin','collagen','adhesin','cadherin','actin','HCO3','anhydrase','V_ATPase','calmodulin']
     annotFilter = annot[annot.stack().str.contains('|'.join(candidate)).any(level=0)]
@@ -32,5 +32,5 @@ def filterCandidate():
         pfamFilter.append(newName)
     annotFilter['pfam_annotation'] = pfamFilter
     annotFilter.to_csv('candidateGenes.csv',index=False,encoding='utf-8')
+    return
     
-filterCandidate()
