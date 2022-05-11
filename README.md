@@ -1,7 +1,7 @@
 # Astroides_transcriptome
 
 <p align="center">
-https://github.com/MarcMeynadier/Astroides_transcriptome/blob/master/pictures/astroides.png
+  <img src="https://github.com/MarcMeynadier/Astroides_transcriptome/blob/master/pictures/astroides.png?raw=true" alt="Astroides calycularis"/>
 </p>
   
 This repository is about comparative transcriptomic on the scleractinian coral Astroides calycularis.
