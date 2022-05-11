@@ -1,6 +1,6 @@
 # Astroides_transcriptome
 
-![Astroides calycularis](master/pictures/astroides.png)
+![Astroides calycularis](pictures/astroides.png)
 
 This repository is about comparative transcriptomic on the scleractinian coral Astroides calycularis.
 
