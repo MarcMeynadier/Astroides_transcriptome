@@ -13,13 +13,58 @@ import os
 import pandas as pd
 
 
-def filenamesToDataframe(filenames,threshold): 
+def filenamesToDataframe(filenames,threshold):
+    """
+    Description
+    -----------
+    Retrieves CSV files from Ontologizer by their names, transforms them into dataframe before entering them into a list. 
+    The genes are then filtered according to the p-value, and the dataframe list is returned. 
+
+    Parameters
+    ----------
+    filenames
+        list, contains the name of files parsed by listOfFiles()
+    threshold
+        int, contains the value of p-value threshold defined in the settings
+
+    Returns
+    -------
+    dfs
+        list, dataframe containing the filtered Ontologizer results.
+    """   
+
     dfs = [pd.read_csv(filename,error_bad_lines=False,sep='\t') for filename in filenames]
     for i in range(len(dfs)):
         dfs[i]=dfs[i].drop(dfs[i][dfs[i].p>threshold].index)
     return dfs
 
 def singleFileOntologizer(threshold,flagCandidate):
+    """
+    Description
+    -----------
+    From the file names with their associated paths, the function parse them with listOfFiles() and retrieve the associated 
+    Ontologizer data with filenamesToDataframe(). The user then chooses which file he wants to analyze. 
+
+    Parameters
+    ----------
+    filenames
+        list, contains the full names and paths of the DESeq2 output files
+    experiment
+        str, contains the type of experiment
+    org
+        str, adult or juvenile
+    threshold
+        float, p-value threshold value
+    flagCandidate
+        str, Y or N (yes or no)
+
+    Returns
+    -------
+    outputDf
+        Pandas dataframe, contains all the information from the user-selected DESeq2 file, 
+        with filtered genes and functional annotations provided as well.
+    """
+
     os.chdir('../../data/net/8_functionnalAnnotation/ontologizer/outputResults/codingDEG') 
     path=os.getcwd()
     filesNamesClean1=[]

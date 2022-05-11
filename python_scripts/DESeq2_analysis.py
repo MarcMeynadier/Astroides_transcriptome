@@ -1,5 +1,6 @@
 """
-Matching between differentially expressed genes retrieved from DESeq2
+DESeq2_analyser : Treatments applied to DESeq2 contrast results.
+
 Marc Meynadier
 """
 
@@ -23,6 +24,22 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def getProteinSequences():
+    """
+    Description
+    -----------
+    Retrieves the output file from TransDecoder.Predict and parse it into a dataframe containing 
+    the gene IDs and their associated protein sequences.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    sequencesDf
+        Pandas dataframe, contains the genes IDs, and the proteins sequences associated with the genes.
+    """
+
     with open('../../../8_functionnalAnnotation/transdecoderOutput.pep') as f:
         contents = f.readlines()
     geneNames = []
@@ -48,6 +65,24 @@ def getProteinSequences():
     return sequencesDf
 
 def getAnnotationFile():
+    """
+    Description
+    -----------
+    Retrieves the output file from hmmsearch, parse it to retrieve the Pfam annotation and the Pfam code of the genes. 
+    Retrieves the dataframe from getProteinSequences(), then the output file from hmmsearch in order to parse it to get 
+    the Pfam annotation as well as the Pfam code of the genes. The two data frames are then merged together and returned 
+    as a common data frame. The merge is done so that even a non-coding gene ID is returned. 
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    mergeDf
+       Pandas dataframe, contains successively the gene IDs, the Pfam annotations, the Pfam codes and the protein sequences. 
+    """
+
     sequencesDf = getProteinSequences()
     curedFile = []
     with open('../../../8_functionnalAnnotation/hmmsearchOutput.out') as f:
@@ -69,7 +104,26 @@ def getAnnotationFile():
     mergeDf = mergeDf.replace(to_replace ='(_i).*', value = '', regex = True)
     return mergeDf
 
-def pfam2goFile(): 
+def pfam2goFile():
+    """
+    Description
+    -----------
+    Retrieve the pfam2go database from the Gene Ontology site, then parse this database to retrieve the GO terms 
+    and GO codes associated with each Pfam code. Since a Pfam code can contain several GO terms, several successive 
+    parsings are necessary to produce a dataframe containing the Pfam annotations, the GO terms and the GO codes. 
+    The dataframe from getAnnotationFile() is then retrieved and merged with the previously parsed dataframe, 
+    using the common Pfam code between the two dataframes.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    mergeDf
+       Pandas dataframe, contains successively the gene IDs, the Pfam annotations, the Pfam codes, the GO terms, the GO codes and the protein sequences. 
+    """    
+     
     url = 'http://current.geneontology.org/ontology/external2go/pfam2go'
     pfam2go = urlopen(url).read().decode('utf-8') 
     pfam2goList = pfam2go.split("\n")
@@ -119,6 +173,23 @@ def pfam2goFile():
     return mergeDf
 
 def getPantherFiles():
+    """
+    Description
+    -----------
+    Retrieves the output file from the Panther tool, parse it to turn it into a dataframe containing gene IDs, Panther annotations and Panther codes. 
+    The dataframe from pfam2goFile() is retrieved, then merges with the previously parsed dataframe using the gene IDs.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    mergeDf
+       Pandas dataframe, contains successively the gene IDs, the Panther annotations, the Panther codes, the Pfam codes, the GO terms, 
+       the GO codes, the Pfam annotations and the protein sequences.  
+    """   
+
     curedList = []
     with open('../../../8_functionnalAnnotation/pantherOutput.out') as f:
         contents = f.readlines() 
@@ -141,16 +212,52 @@ def getPantherFiles():
     return mergeDf
 
 def getFilenames(typeOrg,experiment):
+    """
+    Description
+    -----------
+    Retrieves the output file names from DESeq2 based on the type of organism and the associated experiment.
+
+    Parameters
+    ----------
+    typeOrg
+        int, 1 for adults and 2 for juveniles.       
+    experiment
+        str, contains the type of experiment retrieved with experimentChoice().
+
+    Returns
+    -------
+    filenames
+        list, contains the file names of the DESeq2 results associated with their paths.
+    """   
+
     if typeOrg == 1:
         folderOrg = "/adult"
     elif typeOrg == 2:
         folderOrg = "/juvenile"
-    os.chdir('../../data/net/7_deseq2/adultTranscriptome'+folderOrg) # Changing working directory to DESeq2 results
+    os.chdir('../../data/net/7_deseq2/adultTranscriptome'+folderOrg) 
     path=os.getcwd()
     filenames = glob.glob(path + "/*"+experiment+"*.csv")
     return filenames
 
 def listOfFiles(filenames,experiment):
+    """
+    Description
+    -----------
+    Gets the list provided by getFilenames() in order to parse it to get only the file names without their paths and formats. 
+
+    Parameters
+    ----------
+    filenames
+        list, contains the full names and paths of the DESeq2 output files.
+    experiment
+        str, contains the type of experiment retrieved with experimentChoice().
+
+    Returns
+    -------
+    filesNamesClean
+        list, contains the file names of the DESeq2 results without their associated paths.
+    """   
+
     filesNamesClean=[]
     for i in filenames:
          newName=i.rsplit('/',1)[1]
@@ -160,7 +267,28 @@ def listOfFiles(filenames,experiment):
     return filesNamesClean
 
 def filenamesToDataframe(filenames,threshold,flagCandidate):
-    dfs = [pd.read_csv(filename) for filename in filenames]
+    """
+    Description
+    -----------
+    Retrieves CSV files from DESeq2 by their names, transforms them into dataframe before entering them into a list. 
+    The genes are then filtered according to the p-value and candidate gene thresholds, and the dataframe list is returned.
+
+    Parameters
+    ----------
+    filenames
+        list, contains the name of files parsed by listOfFiles().
+    threshold
+        int, contains the value of p-value threshold defined in the settings.
+    flagCandidate
+        str, contains the switch activating the filtering by candidate genes defined in the settings.
+
+    Returns
+    -------
+    dfs
+        list, dataframe containing the filtered DESeq2 results.
+    """   
+
+    dfs = [pd.read_csv(filename) for filename in filenames] 
     if flagCandidate == 'Y':
         candidateGenes = pd.read_csv('../../../../../Astroides_transcriptome/R_scripts/candidateGenes.csv')
     for i in range(len(dfs)):
@@ -172,6 +300,25 @@ def filenamesToDataframe(filenames,threshold,flagCandidate):
     return dfs
 
 def experimentChoice():
+    """
+    Description
+    -----------
+    Allows the user to select the type of organization and experiment from which the DESeq2 results are derived.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    typeOrg
+        int, 1 for adults and 2 for juveniles.       
+    experiment
+        str, contains the type of experiment.
+    org
+        str, adult or juvenile.
+    """   
+
     print("\nSelect your type of organisms :\n\n1 : Adult\n2 : Juvenile\n")
     while True:
         try:
@@ -213,33 +360,35 @@ def experimentChoice():
 #------------------------------------------------------------------------------#
 
 
-def setThreshold():
-    print("\nDefine your threshold value (usually 0.05)\n")
-    while True:
-        try:
-            threshold_pvalue=float(input())
-        except ValueError:
-            print("\nYou must indicate a valid float ranging from 0 to 1\n")
-            continue
-        break
-    return threshold_pvalue
-
-
-def filterByCandidate():
-    print("\nDo you want to filter genes by candidate genes ? Y or N\n")
-    flagCandidate = input()
-    if flagCandidate == 'Y':
-        return flagCandidate
-    elif flagCandidate == 'N':
-        return flagCandidate
-    else:
-        print('\nYou did not choose a valid answer, no filtration by candidate genes will occur\n')
-        flagCandidate = 'N'
-        return flagCandidate
-
-
-
 def singleFile(filenames,experiment,org,threshold,flagCandidate):
+    """
+    Description
+    -----------
+    From the file names with their associated paths, parse them with listOfFiles() and retrieve the associated 
+    DESeq2 data with filenamesToDataframe(). The user then chooses which file he wants to analyze. The latter is 
+    retrieved as well as annotations dataframe with getPantherFiles(), and both are merged thanks to the IDs of the genes 
+    in common. A CSV file containing all the information is then save and returned.
+
+    Parameters
+    ----------
+    filenames
+        list, contains the full names and paths of the DESeq2 output files.
+    experiment
+        str, contains the type of experiment.
+    org
+        str, adult or juvenile.
+    threshold
+        float, p-value threshold value.
+    flagCandidate
+        str, Y or N (yes or no).
+
+    Returns
+    -------
+    outputDf
+        Pandas dataframe, contains all the information from the user-selected DESeq2 file, 
+        with filtered genes and functional annotations provided as well.
+    """   
+
     filesNamesClean = listOfFiles(filenames,experiment)
     for i in range(len(filesNamesClean)):
         filesNamesClean[i] = str(i+1) + " : " + filesNamesClean[i]
@@ -298,6 +447,33 @@ def singleFile(filenames,experiment,org,threshold,flagCandidate):
 
 
 def genesUnshared(filenames,experiment,org,threshold,flagCandidate):
+    """
+    Description
+    -----------
+    From the file names with their associated paths, parse them with listOfFiles() and retrieve the associated 
+    DESeq2 data with filenamesToDataframe(). The genes that are not in common between the files and their information are recovered.
+    A CSV file containing all those informations is then save and returned.
+
+    Parameters
+    ----------
+    filenames
+        list, contains the full names and paths of the DESeq2 output files.
+    experiment
+        str, contains the type of experiment.
+    org
+        str, adult or juvenile.
+    threshold
+        float, p-value threshold value.
+    flagCandidate
+        str, Y or N (yes or no).
+
+    Returns
+    -------
+    outputDf
+        Pandas dataframe, contains all the information from the user-selected DESeq2 files, 
+        with filtered genes and functional annotations provided as well.
+    """   
+
     filesNamesClean = listOfFiles(filenames,experiment)
     filesNamesClean2=filesNamesClean.copy()
     for i in range(len(filesNamesClean)):
@@ -351,6 +527,33 @@ def genesUnshared(filenames,experiment,org,threshold,flagCandidate):
         print("\nNo results are available\n")
 
 def genesShared(filenames,experiment,org,threshold,flagCandidate):
+    """
+    Description
+    -----------
+    From the file names with their associated paths, parse them with listOfFiles() and retrieve the associated 
+    DESeq2 data with filenamesToDataframe(). The genes that are in common between the files and their information are recovered.
+    A CSV file containing all those informations is then save and returned.
+
+    Parameters
+    ----------
+    filenames
+        list, contains the full names and paths of the DESeq2 output files.
+    experiment
+        str, contains the type of experiment.
+    org
+        str, adult or juvenile.
+    threshold
+        float, p-value threshold value.
+    flagCandidate
+        str, Y or N (yes or no).
+
+    Returns
+    -------
+    outputDf
+        Pandas dataframe, contains all the information from the user-selected DESeq2 files, 
+        with filtered genes and functional annotations provided as well.
+    """   
+
     filesNamesClean1 = listOfFiles(filenames,experiment)
     filesNamesClean2=filesNamesClean1.copy()
     print("\nList of output files from DESeq2 \n")

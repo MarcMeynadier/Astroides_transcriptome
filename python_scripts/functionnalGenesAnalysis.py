@@ -6,7 +6,6 @@ Three modules are available in this program :
 2 : Ontologizer results retrieval, sorting and comparison across multiple files to detect common biological functions across multiple conditions
 3 : Parsing and preparation of input files required to run the following functional enrichment programs: Ontologizer and GO_MWU
 
-
 Marc Meynadier
 """
 
@@ -20,6 +19,7 @@ from DESeq2_analysis import *
 from enrichment_analysis_parser import *
 from ontologizer_analysis import *
 from DESeq2_X_ontologizer import *
+from threshold_settings import *
 from getCandidates import *
 from finalExpressionAnalyser import *
 
@@ -27,6 +27,7 @@ from finalExpressionAnalyser import *
 #------------------------------------------------------------------------------#
 #                              Menu functions                                  #
 #------------------------------------------------------------------------------#
+
 
 def main_menu_display():
     print("\n")
@@ -150,7 +151,7 @@ def main_menu(threshold,flagCandidate):
             matchingFiles() 
         elif answer==4:
             typeOrg, experiment, org= experimentChoice() 
-            filenames = getFilenamesFinal(experiment,threshold,flagCandidate)
+            filenames = getFilenamesFinal(experiment,flagCandidate)
             if len(filenames)==0:
                 print('\nNo results are available for this experiment condition')
                 main_menu(threshold,flagCandidate)

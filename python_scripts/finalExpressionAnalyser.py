@@ -1,8 +1,16 @@
 """
-Final Expression Analyser
+finalExpressionAnalyser : Classifies DESeq2_X_ontologizer genes into different associated 
+biological functions and produces barplots of these biological functions based on 
+the gene expression of the affected genes. 
 
 Marc Meynadier
 """
+
+
+#------------------------------------------------------------------------------#
+#                       Importation of external libraries                      #
+#------------------------------------------------------------------------------#
+
 
 import os
 import pandas as pd
@@ -14,7 +22,30 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
-def getFilenamesFinal(experiment,threshold,flagCandidate):
+#------------------------------------------------------------------------------#
+#                              Files management                                #
+#------------------------------------------------------------------------------#
+
+
+def getFilenamesFinal(experiment,flagCandidate):
+    """
+    Description
+    -----------
+    Retrieves the output file names from DESeq2_X_ontologizer based on associated experiment.
+
+    Parameters
+    ----------
+    experiment
+        str, contains the type of experiment retrieved with experimentChoice().      
+    flagCandidate
+        str, contains the switch activating the filtering by candidate genes defined in the settings.
+
+    Returns
+    -------
+    filenames
+        list, contains the file names of the DESeq2_X_ontologizer results.
+    """   
+
     script_dir = os.path.dirname(__file__)
     path = os.path.join(script_dir, '../../data/net/8_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_X_ontologizer')
     os.chdir(path)
@@ -32,6 +63,27 @@ def getFilenamesFinal(experiment,threshold,flagCandidate):
 
 
 def filenamesToDfFinal(filenames,experiment,flagCandidate):
+    """
+    Description
+    -----------
+    Retrieves CSV files from DESeq2_X_ontologizer by their names, transforms them into dataframe before entering them into a list. 
+    The genes are then filtered according to the p-value and candidate gene thresholds, and the dataframe list is returned.
+
+    Parameters
+    ----------
+    filenames
+        list, contains the name of files parsed by getFilenamesFinal().
+    experiment
+        str, contains the type of experiment retrieved with experimentChoice().      
+    flagCandidate
+        str, contains the switch activating the filtering by candidate genes defined in the settings.
+
+    Returns
+    -------
+    filenames
+        list, contains the file names of the DESeq2_X_ontologizer results.
+    """   
+
     filenamesClean = []
     for i in filenames:
         if flagCandidate == 'Y':
@@ -45,7 +97,7 @@ def filenamesToDfFinal(filenames,experiment,flagCandidate):
     dfs = [pd.read_csv(filename,error_bad_lines=False,sep=',') for filename in filenames]
     if len(filenamesClean) == 0:
         return dfs,filenamesClean
-    print("\nHow many files do you want to compare ?\n")  
+    print("\nHow many files do you want to analyse ?\n")  
     nbrFiles = 3
     while nbrFiles!=0:
         try:
@@ -55,7 +107,7 @@ def filenamesToDfFinal(filenames,experiment,flagCandidate):
             else:
                 break
         except ValueError:
-            print("\nYou must indicate an integer number corresponding to the number of files you want to compare\n")
+            print("\nYou must indicate an integer number corresponding to the number of files you want to analyse\n")
     comparedFiles = []
     print("\nWhich files do you want to compare ?\n")
     selectedFilesNames = []
@@ -79,6 +131,11 @@ def filenamesToDfFinal(filenames,experiment,flagCandidate):
         elif '_unshared' in i:
             conditions.append(i.split('_unshared',1)[0])
     return comparedFiles,conditions,experiment
+
+
+#------------------------------------------------------------------------------#
+#                            Analysis computation                              #
+#------------------------------------------------------------------------------#
 
 
 def protFamilies():
