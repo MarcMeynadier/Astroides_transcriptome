@@ -1,7 +1,9 @@
 # Astroides_transcriptome
 
+<center>
 ![Astroides calycularis](pictures/astroides.png)
-
+</center>
+  
 This repository is about comparative transcriptomic on the scleractinian coral Astroides calycularis.
 
 Three different directories are different based on the script language, but these also correspond to the different stages of the comparative coral transcriptome study.
