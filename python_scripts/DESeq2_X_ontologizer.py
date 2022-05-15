@@ -76,7 +76,7 @@ def matchingFiles():
     None
     """ 
 
-    DESeq2FilesPath='../../data/net/8_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_analysis'
+    DESeq2FilesPath='../../data/net/8_functionalAnnotation/functionalGenesAnalysis/DESeq2_analysis'
     ontologizerFilesPath='../ontologizer_analysis'
     DESeq2Files,DESeq2Df = gettingFiles(DESeq2FilesPath)
     ontologizerFiles,ontologizerDf = gettingFiles(ontologizerFilesPath)

@@ -2,7 +2,7 @@ import pandas as pd
 
 def getAnnotation(): 
     curedFile = []
-    with open('../../data/net/8_functionnalAnnotation/hmmsearchOutput.out') as f:
+    with open('../../data/net/8_functionalAnnotation/hmmsearchOutput.out') as f:
         contents = f.readlines()
     for i in contents:
         if 'TRINITY' in i:

@@ -47,7 +47,7 @@ def getFilenamesFinal(experiment,flagCandidate):
     """   
 
     script_dir = os.path.dirname(__file__)
-    path = os.path.join(script_dir, '../../data/net/8_functionnalAnnotation/functionnalGenesAnalysis/DESeq2_X_ontologizer')
+    path = os.path.join(script_dir, '../../data/net/8_functionalAnnotation/functionalGenesAnalysis/DESeq2_X_ontologizer')
     os.chdir(path)
     filenames = []
     files = glob.glob('*'+experiment+'*.csv')
@@ -212,7 +212,7 @@ def exploitResults(dfs,conditions,experiment):
             fontsize = 6
             adjust = 0.1
         protAnnot,protExpr = sortResults(dfs[i],conditions[i])
-        print(protAnnot) ; print(len(protAnnot))
+        print(protAnnot) 
         numberProt = []
         for j in protAnnot.values():
             numberProt.append(len(j))
@@ -226,7 +226,7 @@ def exploitResults(dfs,conditions,experiment):
         prot_functions = df['Proteins functions']
         bars = plt.bar(x_axis+tick, df['Expression values '+conditions[i]], color=df['colors '+conditions[i]],edgecolor='black',width=width,hatch=patterns[i])
         bars_list.append(bars)
-    axes = plt.gca() ; ymax = axes.get_ylim()  ; print(ymax)
+    axes = plt.gca() ; ymax = axes.get_ylim() 
     if ymax[1] <= 5:
         y_coeff = 0.15 ; y_neg_coeff = 0.8
     if ymax[1] > 5 and ymax[1] <= 10:
@@ -241,7 +241,7 @@ def exploitResults(dfs,conditions,experiment):
         y_coeff = 90 ; y_neg_coeff = 270
     elif ymax[1] > 90 and ymax[1] <= 110:
         y_coeff = 120 ; y_neg_coeff = 350
-    elif ymax[1] > 110 and ymax[1] <= 130:
+    elif ymax[1] > 110 and ymax[1] <= 135:
         y_coeff = 150 ; y_neg_coeff = 400   
     for i in range(len(bars_list)):
         for j in range(len(bars_list[i])):
@@ -260,7 +260,7 @@ def exploitResults(dfs,conditions,experiment):
         plt.xticks(x_axis+(0.2*len(dfs)-0.3),prot_functions,rotation=45,fontsize=10)  
     plt.axhline(y=0,color='black')
     plt.xlabel('Proteins functions', fontsize=16)
-    plt.ylabel('Expression values\n(additive log2 fold change)', fontsize=16)
+    plt.ylabel('Additive log2 fold change', fontsize=16)
     legend = []
     up = mpatches.Patch(facecolor='#006CD1', label='Upregulated',edgecolor='black') ; legend.append(up)
     down = mpatches.Patch(facecolor='#E66100', label='Downregulated',edgecolor='black') ; legend.append(down)
