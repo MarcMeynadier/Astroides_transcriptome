@@ -15,11 +15,11 @@ Marc Meynadier
 
 
 import sys
-from DESeq2_analysis import *
-from enrichment_analysis_parser import *
-from ontologizer_analysis import *
+from DESeq2Analysis import *
+from enrichmentAnalysisParser import *
+from ontologizerAnalysis import *
 from DESeq2_X_ontologizer import *
-from threshold_settings import *
+from thresholdSettings import *
 from getCandidates import *
 from finalExpressionAnalyser import *
 
