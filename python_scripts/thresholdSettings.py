@@ -37,7 +37,6 @@ def setThreshold():
         break
     return threshold_pvalue
 
-
 def filterByCandidate():
     """
     Description

@@ -21,6 +21,7 @@ from urllib.request import urlopen
 #                              Files management                                #
 #------------------------------------------------------------------------------#
 
+
 def getOntologyFileOntologizer():
     """
     Description
@@ -58,7 +59,6 @@ def getOntologyFileGOMWU():
     url = 'http://purl.obolibrary.org/obo/go.obo'
     wget.download(url)
     shutil.move('go.obo', '../../data/net/8_functionalAnnotation/GO_MWU')
-
 
 def swap_columns(df, col1, col2):
     """

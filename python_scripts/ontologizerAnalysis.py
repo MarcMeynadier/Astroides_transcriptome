@@ -6,12 +6,17 @@ Marc Meynadier
 
 
 #------------------------------------------------------------------------------#
-#                            Analysis computation                              #
+#                       Importation of external libraries                      #
 #------------------------------------------------------------------------------#
 
 
 import os
 import pandas as pd
+
+
+#------------------------------------------------------------------------------#
+#                              Files management                                #
+#------------------------------------------------------------------------------#
 
 
 def filenamesToDataframe(filenames,threshold):
@@ -39,6 +44,12 @@ def filenamesToDataframe(filenames,threshold):
         dfs[i]=dfs[i].drop(dfs[i][dfs[i].p>threshold].index)
     return dfs
 
+
+#------------------------------------------------------------------------------#
+#                            Analysis computation                              #
+#------------------------------------------------------------------------------#
+
+
 def singleFileOntologizer(threshold,flagCandidate):
     """
     Description
@@ -48,12 +59,6 @@ def singleFileOntologizer(threshold,flagCandidate):
 
     Parameters
     ----------
-    filenames
-        list, contains the full names and paths of the DESeq2 output files
-    experiment
-        str, contains the type of experiment
-    org
-        str, adult or juvenile
     threshold
         float, p-value threshold value
     flagCandidate
@@ -61,9 +66,7 @@ def singleFileOntologizer(threshold,flagCandidate):
 
     Returns
     -------
-    outputDf
-        Pandas dataframe, contains all the information from the user-selected DESeq2 file, 
-        with filtered genes and functional annotations provided as well.
+    None
     """
 
     os.chdir('../../data/net/8_functionalAnnotation/ontologizer/outputResults/codingDEG') 
@@ -119,6 +122,25 @@ def singleFileOntologizer(threshold,flagCandidate):
    
 
 def genesUnsharedOntologizer(threshold,flagCandidate):
+    """
+    Description
+    -----------
+    From the file names with their associated paths, the function parse them with listOfFiles() and retrieve the associated 
+    Ontologizer data with filenamesToDataframe(). The user then chooses which file he wants to analyze and the program selects 
+    the Gene Ontology terms that are not shared between the files. These terms are associated with the corresponding genes, 
+    the whole is transformed into a dataframe and saved as a CSV file.
+
+    Parameters
+    ----------
+    threshold
+        float, p-value threshold value
+    flagCandidate
+        str, Y or N (yes or no)
+
+    Returns
+    -------
+    None
+    """
 
     os.chdir('../../data/net/8_functionalAnnotation/ontologizer/outputResults/codingDEG') 
     path=os.getcwd()
@@ -191,9 +213,27 @@ def genesUnsharedOntologizer(threshold,flagCandidate):
     else:
         print("\nNo GO terms are overlapping between those conditions with this threshold\n")
 
-
-
 def genesSharedOntologizer(threshold,flagCandidate):
+    """
+    Description
+    -----------
+    From the file names with their associated paths, the function parse them with listOfFiles() and retrieve the associated 
+    Ontologizer data with filenamesToDataframe(). The user then chooses which file he wants to analyze and the program selects 
+    the Gene Ontology terms that are shared between the files. These terms are associated with the corresponding genes, 
+    the whole is transformed into a dataframe and saved as a CSV file.
+
+    Parameters
+    ----------
+    threshold
+        float, p-value threshold value
+    flagCandidate
+        str, Y or N (yes or no)
+
+    Returns
+    -------
+    None
+    """
+
     os.chdir('../../data/net/8_functionalAnnotation/ontologizer/outputResults/codingDEG') 
     path=os.getcwd()
     filesNamesClean1=[]
