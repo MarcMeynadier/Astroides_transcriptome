@@ -57,7 +57,7 @@ names(txi)
 names(txiNatSim)
 head(txi$counts)
 head(txiNatSim$counts)
-dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~site_pH)
+dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~site+pH)
 ddsNatSim<-DESeqDataSetFromTximport(txiNatSim,colData=samplesNatSim,design= ~site_pH)
 
 # pre-filtering
@@ -72,13 +72,13 @@ ddsNatSim<-DESeq(ddsNatSim)
 cbind(resultsNames(dds))
 cbind(resultsNames(ddsNatSim))
 sp_VS_gm<-results(dds, contrast=c("site","sp","gm"), alpha = 0.05)
-ext_VS_amb<-results(dds, contrast=c("pH","ext","amb"), alpha = 0.05)
-low_VS_amb<-results(dds, contrast=c("pH","low","amb"), alpha = 0.05)
+amb_VS_ext<-results(dds, contrast=c("pH","amb","ext"), alpha = 0.05)
+amb_VS_low<-results(dds, contrast=c("pH","amb","low"), alpha = 0.05)
 low_VS_ext<-results(dds, contrast=c("pH","low","ext"), alpha = 0.05)
 sp_amb_VS_gm_low_natSim<-results(ddsNatSim,contrast=c("site_pH","sp_amb","gm_low"),alpha = 0.05)
 summary(sp_VS_gm)
-summary(ext_VS_amb)
-summary(low_VS_amb)
+summary(amb_VS_ext)
+summary(amb_VS_low)
 summary(low_VS_ext)
 summary(sp_amb_VS_gm_low_natSim)
 
@@ -106,17 +106,17 @@ dev.off()
 # Results ext VS amb
 
 #MA-plot
-png(paste(outputPath,'DGE_MA-plot_juvenile_ext_VS_amb.png',sep=''), width=7, height=5, units = "in", res = 300)
-DESeq2::plotMA(ext_VS_amb,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\next_VS_amb")
+png(paste(outputPath,'DGE_MA-plot_juvenile_amb_VS_ext.png',sep=''), width=7, height=5, units = "in", res = 300)
+DESeq2::plotMA(amb_VS_ext,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\namb_VS_ext")
 dev.off()
 
 # Volcano plot
-png(paste(outputPath,'DGE_volcanoPlot_juvenile_ext_VS_amb.png',sep=''), width=7, height=7, units = "in", res = 300)
-EnhancedVolcano(data.frame(ext_VS_amb), lab = rownames(data.frame(ext_VS_amb)), x = 'log2FoldChange', y = 'padj',
+png(paste(outputPath,'DGE_volcanoPlot_juvenile_amb_VS_ext.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(amb_VS_ext), lab = rownames(data.frame(amb_VS_ext)), x = 'log2FoldChange', y = 'padj',
                 xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                 pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
                 title = "Volcano plot", subtitle = "Contrast between ext and amb",
-                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(ext_VS_amb), ' variables'),
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(amb_VS_ext), ' variables'),
                 legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
                 legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
 dev.off()
@@ -124,16 +124,16 @@ dev.off()
 # Results low VS amb
 
 #MA-plot
-png(paste(outputPath,'DGE_MA-plot_juvenile_low_VS_amb.png',sep=''), width=7, height=5, units = "in", res = 300)
-DESeq2::plotMA(low_VS_amb,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\nlow_VS_amb")
+png(paste(outputPath,'DGE_MA-plot_juvenile_amb_VS_low.png',sep=''), width=7, height=5, units = "in", res = 300)
+DESeq2::plotMA(amb_VS_low,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\namb_VS_low")
 dev.off()
 # Volcano plot
-png(paste(outputPath,'DGE_volcanoPlot_juvenile_low_VS_amb.png',sep=''), width=7, height=7, units = "in", res = 300)
-EnhancedVolcano(data.frame(low_VS_amb), lab = rownames(data.frame(low_VS_amb)), x = 'log2FoldChange', y = 'padj',
+png(paste(outputPath,'DGE_volcanoPlot_juvenile_amb_VS_low.png',sep=''), width=7, height=7, units = "in", res = 300)
+EnhancedVolcano(data.frame(amb_VS_low), lab = rownames(data.frame(amb_VS_low)), x = 'log2FoldChange', y = 'padj',
                 xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
                 pCutoff = pCutoff, FCcutoff = FCcutoff, pointSize = 1.0, labSize = 2.0,
                 title = "Volcano plot", subtitle = "Contrast between low and amb",
-                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(low_VS_amb), ' variables'),
+                caption = paste0('log2 FC cutoff: ', FCcutoff, '; p-value cutoff: ', pCutoff, '\nTotal = ', nrow(amb_VS_low), ' variables'),
                 legendLabels=c('NS','Log2 FC','Adjusted p-value', 'Adjusted p-value & Log2 FC'),
                 legendPosition = 'bottom', legendLabSize = 14, legendIconSize = 5.0)
 dev.off()
@@ -180,18 +180,19 @@ dev.off()
 # Principal Component Analysis
 vsd = vst(dds,blind=T)
 
-pcaData = plotPCA(vsd, intgroup="site_pH", 
+pcaData = plotPCA(vsd, intgroup=c("site","pH"), 
                   returnData=TRUE)
 percentVar = round(100 * attr(pcaData, "percentVar"))
 
 png(paste(outputPath,'DGE_PCA_juvenile.png',sep=''), width=7, height=7, units = "in", res = 300)
-ggplot(pcaData, aes(PC1, PC2, colour = site_pH,)) + 
+ggplot(pcaData, aes(PC1, PC2, colour = site, shape = pH)) + 
   geom_point(size = 2) + theme_bw() + 
-  geom_text_repel(aes(label = site_pH), nudge_x = -1, nudge_y = 0.2, size = 3, max.overlaps = Inf) +
-  ggtitle("Principal Component Analysis (PCA) of juvenile corals", subtitle = "Consideration of two environmental factors: Site and pH") +
+  scale_color_manual(values = c("#ff4040","#6495ED")) +
+  scale_shape_manual(values = c("triangle","circle","square")) +
+  geom_text_repel(aes(label = site), nudge_x = -1, nudge_y = 0.2, size = 3, max.overlaps = Inf) +
+  ggtitle("Principal Component Analysis of juvenile corals", subtitle = "Juvenile dataset") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-  stat_ellipse(level = 0.95)
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 dev.off()
 
 
@@ -204,12 +205,11 @@ percentVar = round(100 * attr(pcaData, "percentVar"))
 png(paste(outputPath,'DGE_PCA_juvenile_natSim.png',sep=''), width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = site_pH)) + 
   geom_point(size = 2) + theme_bw() + 
-  scale_color_manual(values = c("#ff4040","#000080")) +
+  scale_color_manual(values = c("#ff4040","#6495ED")) +
   geom_text_repel(aes(label = site_pH), nudge_x = -1, nudge_y = 0.2, size = 3, max.overlaps = Inf) +
-  ggtitle("Principal Component Analysis (PCA) of juvenile corals", subtitle = "Simulation of natural environmental conditions") +
+  ggtitle("Principal Component Analysis of juvenile corals", subtitle = "Juvenile dataset - Natural conditions simulation") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-  stat_ellipse(level = 0.95)
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 dev.off()
 
 # Venn diagramm 
@@ -219,17 +219,17 @@ resOrderedDF_sp_VS_gm_venn <- filter(resOrderedDF_sp_VS_gm,padj < 0.05)
 resOrderedDF_sp_VS_gm_venn <- list(rownames(resOrderedDF_sp_VS_gm_venn))
 resOrderedDF_sp_VS_gm_venn <- unlist(resOrderedDF_sp_VS_gm_venn)
 
-resOrdered_ext_VS_amb <- ext_VS_amb[order(ext_VS_amb$padj),]
-resOrderedDF_ext_VS_amb <- as.data.frame(resOrdered_ext_VS_amb)
-resOrderedDF_ext_VS_amb_venn <- filter(resOrderedDF_ext_VS_amb,padj < 0.05)
-resOrderedDF_ext_VS_amb_venn <- list(rownames(resOrderedDF_ext_VS_amb_venn))
-resOrderedDF_ext_VS_amb_venn <- unlist(resOrderedDF_ext_VS_amb_venn)
+resOrdered_amb_VS_ext <- amb_VS_ext[order(amb_VS_ext$padj),]
+resOrderedDF_amb_VS_ext <- as.data.frame(resOrdered_amb_VS_ext)
+resOrderedDF_amb_VS_ext_venn <- filter(resOrderedDF_amb_VS_ext,padj < 0.05)
+resOrderedDF_amb_VS_ext_venn <- list(rownames(resOrderedDF_amb_VS_ext_venn))
+resOrderedDF_amb_VS_ext_venn <- unlist(resOrderedDF_amb_VS_ext_venn)
 
-resOrdered_low_VS_amb <- low_VS_amb[order(low_VS_amb$padj),]
-resOrderedDF_low_VS_amb <- as.data.frame(resOrdered_low_VS_amb)
-resOrderedDF_low_VS_amb_venn <- filter(resOrderedDF_low_VS_amb,padj < 0.05)
-resOrderedDF_low_VS_amb_venn <- list(rownames(resOrderedDF_low_VS_amb_venn))
-resOrderedDF_low_VS_amb_venn <- unlist(resOrderedDF_low_VS_amb_venn)
+resOrdered_amb_VS_low <- amb_VS_low[order(amb_VS_low$padj),]
+resOrderedDF_amb_VS_low <- as.data.frame(resOrdered_amb_VS_low)
+resOrderedDF_amb_VS_low_venn <- filter(resOrderedDF_amb_VS_low,padj < 0.05)
+resOrderedDF_amb_VS_low_venn <- list(rownames(resOrderedDF_amb_VS_low_venn))
+resOrderedDF_amb_VS_low_venn <- unlist(resOrderedDF_amb_VS_low_venn)
 
 resOrdered_low_VS_ext <- low_VS_ext[order(low_VS_ext$padj),]
 resOrderedDF_low_VS_ext <- as.data.frame(resOrdered_low_VS_ext)
@@ -237,8 +237,8 @@ resOrderedDF_low_VS_ext_venn <- filter(resOrderedDF_low_VS_ext,padj < 0.05)
 resOrderedDF_low_VS_ext_venn <- list(rownames(resOrderedDF_low_VS_ext_venn))
 resOrderedDF_low_VS_ext_venn <- unlist(resOrderedDF_low_VS_ext_venn)
 
-x = list('sp VS gm' = resOrderedDF_sp_VS_gm_venn, 'ext VS amb' = resOrderedDF_ext_VS_amb_venn,
-         'low VS amb' = resOrderedDF_low_VS_amb_venn, 'low VS ext' = resOrderedDF_low_VS_ext_venn)
+x = list('sp VS gm' = resOrderedDF_sp_VS_gm_venn, 'amb VS ext' = resOrderedDF_amb_VS_ext_venn,
+         'amb VS low' = resOrderedDF_amb_VS_low_venn, 'low VS ext' = resOrderedDF_low_VS_ext_venn)
 
 png(paste(outputPath,'vennDiagramm_juveniles.png',sep=''), width=7, height=5, units = "in", res = 300)
 ggvenn(
@@ -251,20 +251,56 @@ dev.off()
 
 # Candidate genes heatmap
 
+# Global
 listGenes <- candidateGenes$genes
+listGenes2 <- which(rownames(vsd) %in% listGenes)
+index <- which(listGenes %in% rownames(vsd))
+candidateGenes2 <- candidateGenes[index, ] 
+listProt <- candidateGenes2$pfam_annotation
+listGenes3 <- candidateGenes2$genes
 
-listGenes <- which(rownames(vsd) %in% listGenes)
-vsdCandidate <- vsd[listGenes, ]
+vsdCandidate <- vsd[listGenes3, ]
 
 labColName <- c('gm_amb','gm_amb','gm_amb','gm_amb','gm_low','gm_low','gm_low','gm_low','gm_ext','gm_ext','gm_ext',
                 'gm_ext','sp_amb','sp_amb','sp_amb','sp_amb','sp_low','sp_low','sp_low','sp_low')
+
 colnames(vsdCandidate) <- labColName
+rownames(vsdCandidate) <- listProt
 
 topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
 png(paste(outputPath,'candidateGenes_juveniles_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
-heatmap.3(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1,key=T,KeyValueName = "Gene expression",
+heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",key.title = "none",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
-          ColSideColors = ,xlab="sampling sites",ylab="genes",Colv=NA,margins = c(5, 9)) 
+          xlab="sampling sites",ylab="proteins associated to genes",Colv=NA,margins = c(5, 7))
+
+main='Differential expression of 50 most expressed candidates genes\n\nJuveniles'
+title(main, cex.main = 0.7)
+dev.off()
+
+
+# Natural conditions simulation
+listGenes <- candidateGenes$genes
+listGenes2 <- which(rownames(vsdNatSim) %in% listGenes)
+index <- which(listGenes %in% rownames(vsdNatSim))
+candidateGenes2 <- candidateGenes[index, ] 
+listProt <- candidateGenes2$pfam_annotation
+listGenes3 <- candidateGenes2$genes
+
+vsdCandidate <- vsdNatSim[listGenes3, ]
+
+labColName <- c('gm_low','gm_low','gm_low','gm_low','sp_amb','sp_amb','sp_amb','sp_amb')
+
+colnames(vsdCandidate) <- labColName
+rownames(vsdCandidate) <- listProt
+
+topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
+png(paste(outputPath,'candidateGenes_juveniles_natSim_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
+heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",key.title = "none",
+          col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
+          xlab="sampling sites",ylab="proteins associated to genes",Colv=NA,margins = c(5, 7))
+
+main='Differential expression of 50 most expressed candidates genes\n\nJuveniles - Natural conditions simulation'
+title(main, cex.main = 0.7)
 dev.off()
 
 # Inferences statistics
@@ -285,8 +321,8 @@ resOrdered_sp_amb_VS_gm_low_natSim <- sp_amb_VS_gm_low_natSim[order(sp_amb_VS_gm
 resOrderedDF_sp_amb_VS_gm_low_natSim <- as.data.frame(resOrdered_sp_amb_VS_gm_low_natSim)
 
 write.csv(resOrderedDF_sp_VS_gm, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/juvenile/DESeq2_results_juvenile_sp_VS_gm.csv',sep=''))
-write.csv(resOrderedDF_ext_VS_amb, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/juvenile/DESeq2_results_juvenile_ext_VS_amb.csv',sep=''))
-write.csv(resOrderedDF_low_VS_amb, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/juvenile/DESeq2_results_juvenile_low_VS_amb.csv',sep=''))
+write.csv(resOrderedDF_amb_VS_ext, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/juvenile/DESeq2_results_juvenile_amb_VS_ext.csv',sep=''))
+write.csv(resOrderedDF_amb_VS_low, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/juvenile/DESeq2_results_juvenile_amb_VS_low.csv',sep=''))
 write.csv(resOrderedDF_low_VS_ext, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/juvenile/DESeq2_results_juvenile_low_VS_ext.csv',sep=''))
 write.csv(resOrderedDF_sp_amb_VS_gm_low_natSim, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/juvenile/DESeq2_results_juvenile_sp_amb_VS_gm_low_natSim.csv',sep=''))
 

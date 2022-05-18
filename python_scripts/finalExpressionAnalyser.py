@@ -262,7 +262,7 @@ def exploitResults(dfs,conditions,experiment):
     elif len(dfs) == 2:
         plt.xticks(x_axis+0.6-(0.3/len(dfs)),prot_functions,rotation=45,fontsize=10)     
     elif len(dfs) == 3:
-        plt.xticks(x_axis+(0.3*len(dfs)-0.3),prot_functions,rotation=45,fontsize=10)
+        plt.xticks(x_axis+(0.3*len(dfs)-0.5),prot_functions,rotation=45,fontsize=10)
     elif len(dfs) == 4:     
         plt.xticks(x_axis+(0.2*len(dfs)-0.3),prot_functions,rotation=45,fontsize=10)  
     plt.axhline(y=0,color='black')
@@ -290,5 +290,5 @@ def exploitResults(dfs,conditions,experiment):
     outputPath = '../../../../../output/functionalGenesAnnotation/'
     conditionsStr = '_X_'.join(conditions) 
     fig.savefig(outputPath+'FGA_barplot_'+experiment+'_'+conditionsStr+'.png')   
-    #plt.show()
+    plt.show()
         
