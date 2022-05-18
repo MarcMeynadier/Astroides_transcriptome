@@ -1,6 +1,7 @@
 """
 DESeq2_X_ontologizer : Retrieval of differentially expressed and annotated genes with 
 statistically significant Gene Ontology terms.
+
 Marc Meynadier
 """
 

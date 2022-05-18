@@ -80,8 +80,12 @@ def filenamesToDfFinal(filenames,experiment,flagCandidate):
 
     Returns
     -------
-    filenames
-        list, contains the file names of the DESeq2_X_ontologizer results.
+    comparedFiles
+        list, contains the Pandas dataframes for each selected files.
+    conditions,
+        list, contains names of the conditions of experimentation of each selected files.
+    experiment
+        str, contains the type of experiment retrieved with experimentChoice(). 
     """   
 
     filenamesClean = []
@@ -139,9 +143,25 @@ def filenamesToDfFinal(filenames,experiment,flagCandidate):
 
 
 def protFamilies():
+    """
+    Description
+    -----------
+    Creates a dictionary whose keys are biological functions and the values of the keywords associated with these same functions. 
+    Each keyword has been carefully selected from the Gene Ontology terms, and its membership to a biological function is documented. 
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    protFam
+        dictionnary, each key corresponds to a biological function, and each value to a keyword of the Gene ontology.
+    """
+
     catabolic_enzyme_l=['hydrolase','hydrolysis','protease','peptidase','endopeptidase','metalloendopeptidase','proteolysis','phosphatase','phospholipase'
     ,'catalytic activity','metallopeptidase','metallocarboxypeptidase','lipase','catabolic process','ATPase','GTPase','aminidase']
-    isomerase_enzyme_l=['lyase','isomerase','transferase','mutase','oxydoreductase','dehydrogenase','kinase,peroxydase,deiodinase']
+    isomerase_enzyme_l=['lyase','isomerase','transferase','mutase','oxydoreductase','dehydrogenase','kinase','peroxydase','deiodinase']
     binding_enzyme_l=['carbohydrate binding','chitin binding','ion binding','acid binding','protein binding','biotin binding']
     ion_regulation_l=['proton','ion transport','calcium ion','zinc ion','magnesium ion','channel','transmembrane transport','intermembrane','translocase',
     'iron ion','copper ion','cation transport','anion transport','sulfate transport','potassium channel','ammonium transmembrane','ionotropic glutamate receptor',
@@ -159,6 +179,21 @@ def protFamilies():
     return protFam
 
 def protResults():
+    """
+    Description
+    -----------
+    Create a dictionary identical to protFamilies() but whose keys do not contain any values.  
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    protRes
+        dictionnary, each key corresponds to a biological function, and no values are added to the keys.
+    """
+
     catabolic_enzyme_l = [] ; isomerase_enzyme_l = [] ; binding_enzyme_l = [] ; ion_regulation_l = [] ; genetic_regulation_l = [] ; transcriptomic_regulation_l = []
     cytoskeleton_regulation_l = [] ; redox_regulation_l = [] ; immune_regulation_l = [] ; other_l = []
     protRes = {'catabolic enzyme':catabolic_enzyme_l,'isomerase enzyme':isomerase_enzyme_l,'binding enzyme':binding_enzyme_l,
@@ -166,7 +201,30 @@ def protResults():
     'cytoskeleton regulation':cytoskeleton_regulation_l,'redox regulation':redox_regulation_l,'immune regulation':immune_regulation_l,'miscellaneous functions':other_l}
     return protRes
 
-def sortResults(df,conditions):
+def sortResults(df,condition):
+    """
+    Description
+    -----------
+    From the filled keyword dictionary provided by protaFamilies(), the empty keyword dictionary provided by protResults() and the list of dataframes 
+    of each file provided by filenamesToDfFinal(), sort the Gene Ontology terms of each dataframe in order to match a gene to its biological function(s). 
+    Two empty dictionaries are created with protResults(), one allowing to store the proteins corresponding to the functions, the other allowing to store 
+    the expression values of the genes. Once all the dataframes have been scanned, the two dictionaries are returned. 
+
+    Parameters
+    ----------
+    df
+        Pandas dataframe, contains the information of an output file of DESeq2_X_ontologizer.
+    condition
+        str, contains name of the conditions of experimentation of the selected files.
+
+    Returns
+    -------
+    protAnnot
+        dictionnary, contains the names of the proteins associated with each biological function for a DESeq2_X_ontologizer output file.
+    protExpr
+        dictionnary, contains the genes expressions values associated with each biological function for a DESeq2_X_ontologizer output file. 
+    """
+
     protFam = protFamilies()
     protAnnot = protResults()
     protExpr = protResults()
@@ -176,7 +234,7 @@ def sortResults(df,conditions):
                 if k in row['GO_annotation']:  
                     annot = row['pfam_annotation'].split(' ',1)[1]     
                     protAnnot[j].append(annot)   
-                    protExpr[j].append(row['lfc_'+conditions])   
+                    protExpr[j].append(row['lfc_'+condition])   
                     break
     for i in protExpr:
         exprValue = 0
@@ -190,6 +248,27 @@ def sortResults(df,conditions):
 
 
 def exploitResults(dfs,conditions,experiment):
+    """
+    Description
+    -----------
+    Using the Matplotlib library, create a bar chart representing the different biological functions of each file according to the expression values 
+    of each biological function. It is possible to visualize on the bar chart up to 4 different files, a type of pattern represented in legend being 
+    displayed for each file. The bar chart thus created is saved then displayed. 
+
+    Parameters
+    ----------
+    dfs
+        list, contains the Pandas dataframes for each selected files.
+    conditions,
+        list, contains names of the conditions of experimentation of each selected files.
+    experiment
+        str, contains the type of experiment retrieved with experimentChoice().
+        
+    Returns
+    -------
+    None
+    """
+
     if len(conditions) == 0:
         print('No results are available for this experiment condition')
         return

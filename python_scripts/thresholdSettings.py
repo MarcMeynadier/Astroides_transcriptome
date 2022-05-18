@@ -4,6 +4,13 @@ threshold_settings : Definition of threshold values to process the results of th
 Marc Meynadier
 """
 
+
+#------------------------------------------------------------------------------#
+#                            Analysis computation                              #
+#------------------------------------------------------------------------------#
+
+
+
 def setThreshold():
     """
     Description

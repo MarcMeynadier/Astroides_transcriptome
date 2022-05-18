@@ -1,11 +1,12 @@
 """
-Comparison of overlaping GO terms between Ontologizer output files
+onntologizer_analyser : Treatments applied to Ontologizer results.
+
 Marc Meynadier
 """
 
 
 #------------------------------------------------------------------------------#
-#                       Importation of external libraries                      #
+#                            Analysis computation                              #
 #------------------------------------------------------------------------------#
 
 
@@ -118,6 +119,7 @@ def singleFileOntologizer(threshold,flagCandidate):
    
 
 def genesUnsharedOntologizer(threshold,flagCandidate):
+
     os.chdir('../../data/net/8_functionalAnnotation/ontologizer/outputResults/codingDEG') 
     path=os.getcwd()
     filesNamesClean1=[]
