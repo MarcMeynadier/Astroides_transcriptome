@@ -35,6 +35,8 @@ source_url("https://raw.githubusercontent.com/obigriffith/biostar-tutorials/mast
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(scriptPath)
 samples<-read.table('tximport_design_trueTransplant.txt',header=T)
+samplesBck<-read.table('tximport_design_trueTransplant_bck.txt',header=T)
+samplesTro<-read.table('tximport_design_trueTransplant_tro.txt',header=T)
 samplesBckTro<-read.table('tximport_design_trueTransplant_tro_bck.txt',header=T)
 samplesTrt<-read.table('tximport_design_trueTransplant_trt.txt',header=T)
 tx2gene<-read.table('tx2gene_adultTranscriptome',header=T)
@@ -48,23 +50,35 @@ setwd(wdPath)
 
 # Data importation - txImport
 files<-paste0(samples$samples,'.tsv')
+filesBck<-paste0(samplesBck$samples,'.tsv')
+filesTro<-paste0(samplesTro$samples,'.tsv')
 filesBckTro<-paste0(samplesBckTro$samples,'.tsv')
 filesTrt<-paste0(samplesTrt$samples,'.tsv')
 names(files)<-samples$samples
+names(filesBck)<-samplesBck$samples
+names(filesTro)<-samplesTro$samples
 names(filesBckTro)<-samplesBckTro$samples
 names(filesTrt)<-samplesTrt$samples
 txi<-tximport(files = files,type='kallisto',tx2gene = tx2gene)
+txiBck<-tximport(files = filesBck,type='kallisto',tx2gene = tx2gene)
+txiTro<-tximport(files = filesTro,type='kallisto',tx2gene = tx2gene)
 txiBckTro<-tximport(files = filesBckTro,type='kallisto',tx2gene = tx2gene)
 txiTrt<-tximport(files = filesTrt,type='kallisto',tx2gene = tx2gene)
 names(txi)
 head(txi$counts)
 dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~originSite_finalSite_experiment)
+ddsBck<-DESeqDataSetFromTximport(txiBck,colData=samplesBck,design= ~originSite_finalSite_experiment)
+ddsTro<-DESeqDataSetFromTximport(txiTro,colData=samplesTro,design= ~originSite_finalSite_experiment)
 ddsBckTro<-DESeqDataSetFromTximport(txiBckTro,colData=samplesBckTro,design= ~originSite_finalSite_experiment)
 ddsTrt<-DESeqDataSetFromTximport(txiTrt,colData=samplesTrt,design= ~originSite_finalSite_experiment)
 
 # pre-filtering
 keep <- rowSums(counts(dds)) >= 10 
 dds <- dds[keep,]
+keep <- rowSums(counts(ddsBck)) >= 10 
+ddsBck <- ddsBck[keep,]
+keep <- rowSums(counts(ddsTro)) >= 10 
+ddsTro <- ddsTro[keep,]
 keep <- rowSums(counts(ddsBckTro)) >= 10 
 ddsBckTro <- ddsBckTro[keep,]
 keep <- rowSums(counts(ddsTrt)) >= 10 
@@ -72,6 +86,8 @@ ddsTrt <- ddsTrt[keep,]
 
 # Differential expression analysis
 dds<-DESeq(dds)
+ddsBck<-DESeq(ddsBck)
+ddsTro<-DESeq(ddsTro)
 ddsBckTro<-DESeq(ddsBckTro)
 ddsTrt<-DESeq(ddsTrt)
 cbind(resultsNames(dds))
@@ -82,10 +98,10 @@ pv_gm_trt_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment
 sp_gm_trt_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_gm_trt","sp_sp_bck"), alpha = 0.05)
 pv_gm_trt_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_gm_trt","gm_gm_bck"), alpha = 0.05)
 sp_gm_trt_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_gm_trt","gm_gm_bck"), alpha = 0.05)
-gm_pv_trt_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_gm_trt","pv_pv_bck"), alpha = 0.05)
-gm_sp_trt_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_gm_trt","sp_sp_bck"), alpha = 0.05)
-gm_pv_trt_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_gm_trt","gm_gm_bck"), alpha = 0.05)
-gm_sp_trt_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_gm_trt","gm_gm_bck"), alpha = 0.05)
+gm_pv_trt_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_pv_trt","pv_pv_bck"), alpha = 0.05)
+gm_sp_trt_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_sp_trt","sp_sp_bck"), alpha = 0.05)
+gm_pv_trt_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_pv_trt","gm_gm_bck"), alpha = 0.05)
+gm_sp_trt_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_sp_trt","gm_gm_bck"), alpha = 0.05)
 summary(gm_gm_tro_VS_gm_gm_bck)
 summary(pv_pv_tro_VS_pv_pv_bck)
 summary(sp_sp_tro_VS_sp_sp_bck)
@@ -295,7 +311,7 @@ dev.off()
 
 # Principal Component Analysis
 
-# vst transformation
+# Global
 vsd = vst(dds,blind=T)
 
 pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment", 
@@ -307,10 +323,77 @@ ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) +
   geom_point(size = 2) + theme_bw() + 
   #scale_color_manual(values = c("#ff0040", "#a40000","#9bddff")) +
   geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3,max.overlaps = Inf) +
-  ggtitle("Principal Component Analysis (PCA)", subtitle = "VST transformation") +
+  ggtitle("Principal Component Analysis of adult corals", subtitle = "may2018 dataset") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-  stat_ellipse(level = 0.95)
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+dev.off()
+
+# Background
+vsdBck = vst(ddsBck,blind=T)
+
+pcaData = plotPCA(vsdBck, intgroup="originSite_finalSite_experiment", 
+                  returnData=TRUE)
+percentVar = round(100 * attr(pcaData, "percentVar"))
+
+png(paste(outputPath,'DGE_PCA_adult_trueTransplant_bck.png',sep=''), width=7, height=7, units = "in", res = 300)
+ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
+  geom_point(size = 2) + theme_bw() + 
+  scale_color_manual(values = c("#ff4040", "#00008B","#6495ED")) +
+  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3,max.overlaps = Inf) +
+  ggtitle("Principal Component Analysis of adult corals", subtitle = "may2018 dataset - Background subset") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+dev.off()
+
+# Transplant origin
+vsdTro = vst(ddsTro,blind=T)
+
+pcaData = plotPCA(vsdTro, intgroup="originSite_finalSite_experiment", 
+                  returnData=TRUE)
+percentVar = round(100 * attr(pcaData, "percentVar"))
+
+png(paste(outputPath,'DGE_PCA_adult_trueTransplant_tro.png',sep=''), width=7, height=7, units = "in", res = 300)
+ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
+  geom_point(size = 2) + theme_bw() + 
+  scale_color_manual(values = c("#ff4040", "#00008B","#6495ED")) +
+  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3,max.overlaps = Inf) +
+  ggtitle("Principal Component Analysis of adult corals", subtitle = "may2018 dataset - Transplant origin subset") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+dev.off()
+
+# Background & transplant origin
+vsdBckTro = vst(ddsBckTro,blind=T)
+
+pcaData = plotPCA(vsdBckTro, intgroup="originSite_finalSite_experiment", 
+                  returnData=TRUE)
+percentVar = round(100 * attr(pcaData, "percentVar"))
+
+png(paste(outputPath,'DGE_PCA_adult_trueTransplant_bck_tro.png',sep=''), width=7, height=7, units = "in", res = 300)
+ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
+  geom_point(size = 2) + theme_bw() + 
+  #scale_color_manual(values = c("#ff0040", "#a40000","#9bddff")) +
+  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3,max.overlaps = Inf) +
+  ggtitle("Principal Component Analysis of adult corals", subtitle = "may2018 dataset - Background and transplant origin subsets") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+dev.off()
+
+# True transplant
+vsdTrt = vst(ddsTrt,blind=T)
+
+pcaData = plotPCA(vsdTrt, intgroup="originSite_finalSite_experiment", 
+                  returnData=TRUE)
+percentVar = round(100 * attr(pcaData, "percentVar"))
+
+png(paste(outputPath,'DGE_PCA_adult_trueTransplant_trt.png',sep=''), width=7, height=7, units = "in", res = 300)
+ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
+  geom_point(size = 2) + theme_bw() + 
+  scale_color_manual(values = c("#F36161", "#AD1C03","#00008B","#6495ED")) +
+  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3,max.overlaps = Inf) +
+  ggtitle("Principal Component Analysis of adult corals", subtitle = "may2018 dataset - Transplant true subset") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 dev.off()
 
 # Venn diagramm 
@@ -443,7 +526,7 @@ png(paste(outputPath,'candidateGenes_trueTransplant_heatmap.png',sep=''), width=
 heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
           key.title = "none",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
-          xlab="sampling sites",ylab="genes",Colv=NA,margins = c(6, 7))
+          xlab="sampling sites",ylab="proteins associated to genes",Colv=NA,margins = c(6, 7))
 
 main='Differential expression of 50 most expressed candidates genes\n\nTrue transplant'
 title(main, cex.main = 0.7)
@@ -474,7 +557,7 @@ png(paste(outputPath,'candidateGenes_trueTransplant_bck_tro_heatmap.png',sep='')
 heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
           key.title = "none",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
-          xlab="sampling sites",ylab="genes",Colv=NA,margins = c(6, 7))
+          xlab="sampling sites",ylab="proteins associated to genes",Colv=NA,margins = c(6, 7))
 
 main='Differential expression of 50 most expressed candidates genes\n\nTrue transplant - Focus on bck and tro'
 title(main, cex.main = 0.7)
@@ -505,7 +588,7 @@ png(paste(outputPath,'candidateGenes_trueTransplant_trt_heatmap.png',sep=''), wi
 heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
           key.title = "none",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
-          xlab="sampling sites",ylab="genes",Colv=NA,margins = c(6, 7))
+          xlab="sampling sites",ylab="proteins associated to genes",Colv=NA,margins = c(6, 7))
 
 main='Differential expression of 50 most expressed candidates genes\n\nTrue transplant - Focus on trt'
 title(main, cex.main = 0.7)

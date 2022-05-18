@@ -129,23 +129,20 @@ dev.off()
 
 # Principal Component Analysis
 
-# vst transformation
-
 vsd = vst(dds,blind=T)
 
 pcaData = plotPCA(vsd, intgroup="site", 
                   returnData=TRUE)
 percentVar = round(100 * attr(pcaData, "percentVar"))
 
-png(paste(outputPath,'DGE_PCA_vst_adult_preliminarySamples.png',sep=''), width=7, height=7, units = "in", res = 300)
+png(paste(outputPath,'DGE_PCA_adult_preliminarySamples.png',sep=''), width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = site)) + 
   geom_point(size = 2) + theme_bw() + 
-  scale_color_manual(values = c("#ff4040", "#6699cc","#9bddff")) +
+  scale_color_manual(values = c("#ff4040", "#00008B","#6495ED")) +
   geom_text_repel(aes(label = site), nudge_x = -1, nudge_y = 0.2, size = 3) +
-  ggtitle("Principal Component Analysis (PCA)", subtitle = "VST transformation") +
+  ggtitle("Principal Component Analysis of adult corals", subtitle = "nov2016 dataset") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-  stat_ellipse(level = 0.95)
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 dev.off()
 
 # Venn diagramm 
@@ -197,7 +194,7 @@ png(paste(outputPath,'candidateGenes_preliminarySamples_heatmap.png',sep=''), wi
 heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
           key.title = "none",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
-          xlab="sampling sites",ylab="genes",Colv=NA,margins = c(4, 7))
+          xlab="sampling sites",ylab="proteins associated to genes",Colv=NA,margins = c(4, 7))
 
 main='Differential expression of 50 most expressed candidates genes\n\nPreliminary samples'
 title(main, cex.main = 0.7)

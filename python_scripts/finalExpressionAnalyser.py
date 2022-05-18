@@ -226,10 +226,14 @@ def exploitResults(dfs,conditions,experiment):
         prot_functions = df['Proteins functions']
         bars = plt.bar(x_axis+tick, df['Expression values '+conditions[i]], color=df['colors '+conditions[i]],edgecolor='black',width=width,hatch=patterns[i])
         bars_list.append(bars)
-    axes = plt.gca() ; ymax = axes.get_ylim() 
-    if ymax[1] <= 5:
+    axes = plt.gca() ; ymax = axes.get_ylim()  
+    if ymax[1] < 0:
+       y_neg_coeff = 2 
+    elif ymax[1] < 10 and ymax[0] < -10:
+       y_coeff = 2 ; y_neg_coeff = 4
+    elif ymax[1] <= 5:
         y_coeff = 0.15 ; y_neg_coeff = 0.8
-    if ymax[1] > 5 and ymax[1] <= 10:
+    elif ymax[1] > 5 and ymax[1] <= 10:
         y_coeff = 0.5 ; y_neg_coeff = 1.5
     elif ymax[1] > 10 and ymax[1] <= 30:
         y_coeff = 2 ; y_neg_coeff = 6
@@ -243,13 +247,16 @@ def exploitResults(dfs,conditions,experiment):
         y_coeff = 120 ; y_neg_coeff = 350
     elif ymax[1] > 110 and ymax[1] <= 135:
         y_coeff = 150 ; y_neg_coeff = 400   
+    textBarValue = ymax[1] 
+    if textBarValue == 0:
+        textBarValue = 8
     for i in range(len(bars_list)):
         for j in range(len(bars_list[i])):
-                yval = bars_list[i][j].get_height()
+                yval = bars_list[i][j].get_height() 
                 if yval >= 0:
-                    plt.text(bars_list[i][j].get_x()+adjust, yval+(y_coeff*(1/ymax[1])), 'N:'+str(numberProtList[i][j]),ha='center',fontsize=fontsize)
+                    plt.text(bars_list[i][j].get_x()+adjust, yval+(y_coeff*(1/textBarValue)), 'N:'+str(numberProtList[i][j]),ha='center',fontsize=fontsize)
                 else:
-                    plt.text(bars_list[i][j].get_x()+adjust,yval-(y_neg_coeff*(1/ymax[1])), 'N:'+str(numberProtList[i][j]),ha='center',fontsize=fontsize)
+                    plt.text(bars_list[i][j].get_x()+adjust,yval-(y_neg_coeff*(1/textBarValue)), 'N:'+str(numberProtList[i][j]),ha='center',fontsize=fontsize)
     if len(dfs) == 1:
         plt.xticks(x_axis+0.3,prot_functions,rotation=45,fontsize=10) 
     elif len(dfs) == 2:
@@ -274,10 +281,10 @@ def exploitResults(dfs,conditions,experiment):
         elif i==2:
             leg = mpatches.Patch(hatch='----',label=conditions[i],facecolor='white',edgecolor='black')
             legend.append(leg)
-        elif i==2:
-            leg = mpatches.Patch(hatch='****',label=conditions[i],facecolor='white',edgecolor='black')
+        elif i==3:
+            leg = mpatches.Patch(hatch='***',label=conditions[i],facecolor='white',edgecolor='black')
             legend.append(leg)     
-    plt.legend(handles=legend, loc=0,fontsize=7.5,frameon=False)
+    plt.legend(handles=legend, loc=0,fontsize=10,frameon=False)
     plt.title('Expression values of genes associated to proteins functions\n\n'+experiment,fontsize=18)
     plt.subplots_adjust(bottom=0.3)
     outputPath = '../../../../../output/functionalGenesAnnotation/'

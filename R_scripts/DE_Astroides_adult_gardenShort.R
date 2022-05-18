@@ -36,7 +36,8 @@ scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(scriptPath)
 samples<-read.table('tximport_design_gardenShort.txt',header=T)
 samplesBck<-read.table('tximport_design_gardenShort_bck.txt',header=T)
-samplesGas<-read.table('tximport_design_gardenShort_gas.txt',header=T)
+samplesGasSame<-read.table('tximport_design_gardenShort_gas_same.txt',header=T)
+samplesGasDiff<-read.table('tximport_design_gardenShort_gas_diff.txt',header=T)
 tx2gene<-read.table('tx2gene_adultTranscriptome',header=T)
 candidateGenes<-read.csv('candidateGenes.csv',header=T,sep=',')
 scriptPath <- sub("/[^/]+$", "", scriptPath)
@@ -49,31 +50,38 @@ setwd(wdPath)
 # Data importation - txImport
 files<-paste0(samples$samples,'.tsv')
 filesBck<-paste0(samplesBck$samples,'.tsv')
-filesGas<-paste0(samplesGas$samples,'.tsv')
+filesGasSame<-paste0(samplesGasSame$samples,'.tsv')
+filesGasDiff<-paste0(samplesGasDiff$samples,'.tsv')
 names(files)<-samples$samples
 names(filesBck)<-samplesBck$samples
-names(filesGas)<-samplesGas$samples
+names(filesGasSame)<-samplesGasSame$samples
+names(filesGasDiff)<-samplesGasDiff$samples
 txi<-tximport(files = files,type='kallisto',tx2gene = tx2gene)
 txiBck<-tximport(files = filesBck,type='kallisto',tx2gene = tx2gene)
-txiGas<-tximport(files = filesGas,type='kallisto',tx2gene = tx2gene)
+txiGasSame<-tximport(files = filesGasSame,type='kallisto',tx2gene = tx2gene)
+txiGasDiff<-tximport(files = filesGasDiff,type='kallisto',tx2gene = tx2gene)
 names(txi)
 head(txi$counts)
 dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~originSite_finalSite_experiment)
 ddsBck<-DESeqDataSetFromTximport(txiBck,colData=samplesBck,design= ~originSite_finalSite_experiment)
-ddsGas<-DESeqDataSetFromTximport(txiGas,colData=samplesGas,design= ~originSite_finalSite_experiment)
+ddsGasSame<-DESeqDataSetFromTximport(txiGasSame,colData=samplesGasSame,design= ~originSite_finalSite_experiment)
+ddsGasDiff<-DESeqDataSetFromTximport(txiGasDiff,colData=samplesGasDiff,design= ~originSite_finalSite_experiment)
 
 # pre-filtering
 keep <- rowSums(counts(dds)) >= 10 
 dds <- dds[keep,]
 keep <- rowSums(counts(ddsBck)) >= 10 
 ddsBck <- ddsBck[keep,]
-keep <- rowSums(counts(ddsGas)) >= 10 
-ddsGas <- ddsGas[keep,]
+keep <- rowSums(counts(ddsGasSame)) >= 10 
+ddsGasSame <- ddsGasSame[keep,]
+keep <- rowSums(counts(ddsGasDiff)) >= 10 
+ddsGasDiff <- ddsGasDiff[keep,]
 
 # Differential expression analysis
 dds<-DESeq(dds)
 ddsBck<-DESeq(ddsBck)
-ddsGas<-DESeq(ddsGas)
+ddsGasSame<-DESeq(ddsGasSame)
+ddsGasDiff<-DESeq(ddsGasDiff)
 cbind(resultsNames(dds))
 gm_gm_gas_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_gm_gas","gm_gm_bck"), alpha = 0.05)
 pv_pv_gas_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_gas","pv_pv_bck"), alpha = 0.05)
@@ -291,23 +299,74 @@ dev.off()
 
 # Principal Component Analysis
 
-# vst transformation
+# Global
 vsd = vst(dds,blind=T)
 
 pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment", 
                   returnData=TRUE)
 percentVar = round(100 * attr(pcaData, "percentVar"))
 
-png(paste(outputPath,'DGE_PCA_vst_adult_gardenShort.png',sep=''), width=7, height=7, units = "in", res = 300)
+png(paste(outputPath,'DGE_PCA_adult_gardenShort.png',sep=''), width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
   geom_point(size = 2) + theme_bw() + 
   #scale_color_manual(values = c("#ff0040", "#a40000","#9bddff")) +
   geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3,max.overlaps = Inf) +
-  ggtitle("Principal Component Analysis (PCA)", subtitle = "vst transformation") +
+  ggtitle("Principal Component Analysis of adult corals", subtitle = "sept2018 dataset") +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-  stat_ellipse(level = 0.95)
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 dev.off()
+
+# Background 
+vsdBck = vst(ddsBck,blind=T)
+
+pcaData = plotPCA(vsdBck, intgroup="originSite_finalSite_experiment", 
+                  returnData=TRUE)
+percentVar = round(100 * attr(pcaData, "percentVar"))
+
+png(paste(outputPath,'DGE_PCA_adult_gardenShort_bck.png',sep=''), width=7, height=7, units = "in", res = 300)
+ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
+  geom_point(size = 2) + theme_bw() + 
+  scale_color_manual(values = c("#ff4040", "#00008B","#6495ED")) +
+  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3,max.overlaps = Inf) +
+  ggtitle("Principal Component Analysis of adult corals", subtitle = "sept2018 dataset - Background subset") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+dev.off()
+
+# Garden short - Same sites
+vsdGasSame = vst(ddsGasSame,blind=T)
+
+pcaData = plotPCA(vsdGasSame, intgroup="originSite_finalSite_experiment", 
+                  returnData=TRUE)
+percentVar = round(100 * attr(pcaData, "percentVar"))
+
+png(paste(outputPath,'DGE_PCA_adult_gardenShort_gas_same.png',sep=''), width=7, height=7, units = "in", res = 300)
+ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
+  geom_point(size = 2) + theme_bw() + 
+  scale_color_manual(values = c("#ff4040", "#00008B","#6495ED")) +
+  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3,max.overlaps = Inf) +
+  ggtitle("Principal Component Analysis of adult corals", subtitle = "sept2018 dataset - Garden short same sites") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+dev.off()
+
+# Garden short - Different sites
+vsdGasDiff = vst(ddsGasDiff,blind=T)
+
+pcaData = plotPCA(vsdGasDiff, intgroup="originSite_finalSite_experiment", 
+                  returnData=TRUE)
+percentVar = round(100 * attr(pcaData, "percentVar"))
+
+png(paste(outputPath,'DGE_PCA_adult_gardenShort_gas_diff.png',sep=''), width=7, height=7, units = "in", res = 300)
+ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
+  geom_point(size = 2) + theme_bw() + 
+  scale_color_manual(values = c("#F36161", "#AD1C03","#00008B","#6495ED")) +
+  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3,max.overlaps = Inf) +
+  ggtitle("Principal Component Analysis of adult corals", subtitle = "sept2018 dataset - Garden short different sites") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+dev.off()
+
 
 # Venn diagramm 
 
