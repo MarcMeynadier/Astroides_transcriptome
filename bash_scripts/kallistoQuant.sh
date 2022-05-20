@@ -1,12 +1,22 @@
 #!/bin/bash
 
+<<Block_comment 
+kallistoQuant : Run the Kallisto tool on the data specified as arguments when the script is launched. 
+These arguments are the type of organism (juvenile or adult), the type of reference transcriptome (A, LA, LJA), 
+the type of sequences (paired or single), the name of dataset directory. Also, if the sequence type is single end, 
+the average length of the RNA fragments (length) as well as the standard deviation of this metric (SD) must be specified. 
+They can be easily obtained using the Python script averageLength_SD_bioanalyser.
+
+Marc Meynadier
+Block_comment
+
 ORG_TYPE=$1 # adult or juvenile
 TRANSCRIPTOME_TYPE=$2 # A (adult) or LA (Larvae Adult) or LJA (Larvae Juvenile Adult)
-SEQUENCE_TYPE=$3 # paired or single
+SEQUENCE_TYPE=$3 # paired or single (paired end or single end)
 
 if [ $ORG_TYPE = "adult" ]; then
 	SEQ_PATH=/scratch2/genomes/mmeynadier/results/trimmomatic/$ORG_TYPE
-	SEQ_DIR=$4 # name of dir
+	SEQ_DIR=$4 # name of directory
 fi
 
 if [ $ORG_TYPE = "juvenile" ]; then

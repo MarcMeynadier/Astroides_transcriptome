@@ -1,5 +1,14 @@
 #!/bin/bash
 
+<<Block_comment 
+md5Check : Run the md5deep tool which allows to obtain md5 hashes recursively on a whole directory. 
+The hashes are then sorted and a hash per folder is obtained so that the user can compare this hash with another one. 
+The arguments needed to launch the script are the path to the first folder to be compared, the path to the second folder to be compared, 
+and the name of the dataset from which the compared data comes.
+
+Marc Meynadier
+Block_comment
+
 SEQ_PATH=$1
 SEQ_PATH2=$2
 SEQ_DIR=$3

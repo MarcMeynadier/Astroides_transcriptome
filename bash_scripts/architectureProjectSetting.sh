@@ -1,7 +1,7 @@
 #!/bin/bash
 
 <<Block_comment 
-Architecture Project Settings : Construction and layout of the architecture of the specific folders for the Astroides_transcriptome project
+architectureProjectSettings : Construction and layout of the architecture of the specific folders for the Astroides_transcriptome project
 
 Marc Meynadier
 Block_comment
