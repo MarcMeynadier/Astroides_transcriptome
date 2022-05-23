@@ -272,6 +272,7 @@ def exploitResults(dfs,conditions,experiment):
     if len(conditions) == 0:
         print('No results are available for this experiment condition')
         return
+    outputPath = '../../../../../output/functionalGenesAnnotation/'
     tick = 0 ; fontsize = 0 ; width = 0 ; adjust = 0
     x_axis = np.array
     prot_functions = pd.Series
@@ -291,7 +292,13 @@ def exploitResults(dfs,conditions,experiment):
             fontsize = 6
             adjust = 0.1
         protAnnot,protExpr = sortResults(dfs[i],conditions[i])
-        print(protAnnot) 
+        protDf = pd.DataFrame.from_dict(protAnnot,orient='index') 
+        protDf2 = pd.DataFrame.from_dict(protExpr,orient='index')
+        protDf2.columns=['lfc'] ; protDf2['lfc'].astype(str)
+        protDf = pd.concat([protDf,protDf2],axis=1) 
+        protDf = protDf.transpose() 
+        protDf.to_csv(outputPath+'proteinsTable_'+experiment+'_'+conditions[i]+'.csv')
+        print(protDf)
         numberProt = []
         for j in protAnnot.values():
             numberProt.append(len(j))
@@ -365,8 +372,7 @@ def exploitResults(dfs,conditions,experiment):
             legend.append(leg)     
     plt.legend(handles=legend, loc=0,fontsize=10,frameon=False)
     plt.title('Expression values of genes associated to proteins functions\n\n'+experiment,fontsize=18)
-    plt.subplots_adjust(bottom=0.3)
-    outputPath = '../../../../../output/functionalGenesAnnotation/'
+    plt.subplots_adjust(bottom=0.3) 
     conditionsStr = '_X_'.join(conditions) 
     fig.savefig(outputPath+'FGA_barplot_'+experiment+'_'+conditionsStr+'.png')   
     plt.show()
