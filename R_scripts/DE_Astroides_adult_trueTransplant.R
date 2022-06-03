@@ -599,6 +599,7 @@ dev.off()
 
 # Inferences statistics
 
+vsd = vst(dds,blind=T)
 count_tab_assay <- assay(vsd)
 dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
 adonis(data=samples,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
