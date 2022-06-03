@@ -186,11 +186,12 @@ percentVar = round(100 * attr(pcaData, "percentVar"))
 
 png(paste(outputPath,'DGE_PCA_juvenile.png',sep=''), width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = site, shape = pH)) + 
-  geom_point(size = 2) + theme_bw() + 
+  geom_point(size = 5) + theme_bw() + 
   scale_color_manual(values = c("#ff4040","#6495ED")) +
   scale_shape_manual(values = c("triangle","circle","square")) +
-  geom_text_repel(aes(label = site), nudge_x = -1, nudge_y = 0.2, size = 3, max.overlaps = Inf) +
+  geom_point() +
   ggtitle("Principal Component Analysis of juvenile corals", subtitle = "Juvenile dataset") +
+  theme(text = element_text(size=14),legend.text = element_text(size=12), legend.position = 'bottom') +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 dev.off()
@@ -204,10 +205,11 @@ percentVar = round(100 * attr(pcaData, "percentVar"))
 
 png(paste(outputPath,'DGE_PCA_juvenile_natSim.png',sep=''), width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = site_pH)) + 
-  geom_point(size = 2) + theme_bw() + 
+  geom_point(size = 5) + theme_bw() + 
   scale_color_manual(values = c("#ff4040","#6495ED")) +
-  geom_text_repel(aes(label = site_pH), nudge_x = -1, nudge_y = 0.2, size = 3, max.overlaps = Inf) +
+  geom_point() +
   ggtitle("Principal Component Analysis of juvenile corals", subtitle = "Juvenile dataset - Natural conditions simulation") +
+  theme(text = element_text(size=14),legend.text = element_text(size=12), legend.position = 'bottom') +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 dev.off()

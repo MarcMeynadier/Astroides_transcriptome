@@ -308,10 +308,10 @@ percentVar = round(100 * attr(pcaData, "percentVar"))
 
 png(paste(outputPath,'DGE_PCA_adult_gardenShort.png',sep=''), width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
-  geom_point(size = 2) + theme_bw() + 
-  #scale_color_manual(values = c("#ff0040", "#a40000","#9bddff")) +
-  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3,max.overlaps = Inf) +
+  geom_point(size = 5) + theme_bw() + 
+  geom_point() +
   ggtitle("Principal Component Analysis of adult corals", subtitle = "sept2018 dataset") +
+  theme(text = element_text(size=14),legend.text = element_text(size=12), legend.position = 'bottom') +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 dev.off()
@@ -325,12 +325,13 @@ percentVar = round(100 * attr(pcaData, "percentVar"))
 
 png(paste(outputPath,'DGE_PCA_adult_gardenShort_bck.png',sep=''), width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
-  geom_point(size = 2) + theme_bw() + 
+  geom_point(size = 5) + theme_bw() + 
   scale_color_manual(values = c("#ff4040", "#00008B","#6495ED")) +
-  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3,max.overlaps = Inf) +
+  geom_point() +
   ggtitle("Principal Component Analysis of adult corals", subtitle = "sept2018 dataset - Background subset") +
+  theme(text = element_text(size=14),legend.text = element_text(size=12), legend.position = 'bottom') +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+  ylab(paste0("PC2: ",percentVar[2],"% variance"))
 dev.off()
 
 # Garden short - Same sites
@@ -342,10 +343,11 @@ percentVar = round(100 * attr(pcaData, "percentVar"))
 
 png(paste(outputPath,'DGE_PCA_adult_gardenShort_gas_same.png',sep=''), width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
-  geom_point(size = 2) + theme_bw() + 
+  geom_point(size = 5) + theme_bw() + 
   scale_color_manual(values = c("#ff4040", "#00008B","#6495ED")) +
-  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3,max.overlaps = Inf) +
+  geom_point() +
   ggtitle("Principal Component Analysis of adult corals", subtitle = "sept2018 dataset - Garden short same sites") +
+  theme(text = element_text(size=14),legend.text = element_text(size=12), legend.position = 'bottom') +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 dev.off()
@@ -359,10 +361,11 @@ percentVar = round(100 * attr(pcaData, "percentVar"))
 
 png(paste(outputPath,'DGE_PCA_adult_gardenShort_gas_diff.png',sep=''), width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
-  geom_point(size = 2) + theme_bw() + 
+  geom_point(size = 5) + theme_bw() + 
   scale_color_manual(values = c("#F36161", "#AD1C03","#00008B","#6495ED")) +
-  geom_text_repel(aes(label = originSite_finalSite_experiment), nudge_x = -1, nudge_y = 0.2, size = 3,max.overlaps = Inf) +
+  geom_point() +
   ggtitle("Principal Component Analysis of adult corals", subtitle = "sept2018 dataset - Garden short different sites") +
+  theme(text = element_text(size=14),legend.text = element_text(size=10), legend.title = element_text(size=10),legend.position = 'bottom') +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 dev.off()
