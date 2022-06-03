@@ -1,9 +1,11 @@
-DE_Astroides_adult_preliminarySamples
-================
-Marc Meynadier
-6/3/2022
+---
+title: "DE_Astroides_adult_preliminarySamples"
+author: "Marc Meynadier"
+date: "6/3/2022"
+output: rmarkdown::github_document
+---
 
-``` r
+```{r}
 # Differential expression on Kallisto data 
 
 # Preliminary samples - 2016 dataset
