@@ -277,7 +277,7 @@ def exploitResults(dfs,conditions,experiment):
     x_axis = np.array
     prot_functions = pd.Series
     patterns = ["//", "..", "--", "**" ]
-    fig = plt.figure(figsize=(15, 10))
+    fig = plt.figure(figsize=(11, 7))
     bars_list = []
     numberProtList = []
     for i in range(len(dfs)):
