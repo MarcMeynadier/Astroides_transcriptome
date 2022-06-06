@@ -1238,7 +1238,7 @@ ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) +
   geom_point(size = 5) + theme_bw() + 
   geom_point() +
   ggtitle("Principal Component Analysis of adult corals", subtitle = "may2018 dataset") +
-  theme(text = element_text(size=14),legend.text = element_text(size=12), legend.position = 'bottom') +
+  theme(text = element_text(size=14),legend.text = element_text(size=8), legend.title = element_text(size=8),legend.position = 'bottom') +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 ```
@@ -1477,16 +1477,14 @@ title(main, cex.main = 0.7)
 ``` r
 # Background & Transplant origin
 
-vsd = vst(ddsBckTro,blind=T)
-
 listGenes <- candidateGenes$genes
-listGenes2 <- which(rownames(vsd) %in% listGenes)
-index <- which(listGenes %in% rownames(vsd))
+listGenes2 <- which(rownames(vsdBckTro) %in% listGenes)
+index <- which(listGenes %in% rownames(vsdBckTro))
 candidateGenes2 <- candidateGenes[index, ] 
 listProt <- candidateGenes2$pfam_annotation
 listGenes3 <- candidateGenes2$genes
 
-vsdCandidate <- vsd[listGenes3, ]
+vsdCandidate <- vsdBckTro[listGenes3, ]
 
 labColName <- c('gm_gm_bck','gm_gm_bck','gm_gm_bck','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_gm_tro',
                 'pv_pv_bck','pv_pv_bck','pv_pv_bck','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro',
@@ -1516,16 +1514,14 @@ title(main, cex.main = 0.7)
 ``` r
 # True transplant
 
-vsd = vst(ddsTrt,blind=T)
-
 listGenes <- candidateGenes$genes
-listGenes2 <- which(rownames(vsd) %in% listGenes)
-index <- which(listGenes %in% rownames(vsd))
+listGenes2 <- which(rownames(vsdTrt) %in% listGenes)
+index <- which(listGenes %in% rownames(vsdTrt))
 candidateGenes2 <- candidateGenes[index, ] 
 listProt <- candidateGenes2$pfam_annotation
 listGenes3 <- candidateGenes2$genes
 
-vsdCandidate <- vsd[listGenes3, ]
+vsdCandidate <- vsdTrt[listGenes3, ]
 
 labColName <- c('gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_sp_trt','gm_sp_trt',
                 'gm_sp_trt','gm_sp_trt','gm_sp_trt','pv_gm_trt','pv_gm_trt','pv_gm_trt','pv_gm_trt',
@@ -1555,40 +1551,106 @@ title(main, cex.main = 0.7)
 ``` r
 # Inferences statistics
 
-vsd = vst(dds,blind=T)
-count_tab_assay <- assay(vsd)
+# Background
+count_tab_assay <- assay(vsdBck)
 dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
-adonis(data=samples,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+adonis(data=samplesBck,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
 ```
 
     ## 
     ## Call:
-    ## adonis(formula = dist_tab_assay ~ originSite_finalSite_experiment,      data = samples, method = "euclidian") 
+    ## adonis(formula = dist_tab_assay ~ originSite_finalSite_experiment,      data = samplesBck, method = "euclidian") 
     ## 
     ## Permutation: free
     ## Number of permutations: 999
     ## 
     ## Terms added sequentially (first to last)
     ## 
-    ##                                 Df SumsOfSqs MeanSqs F.Model     R2 Pr(>F)    
-    ## originSite_finalSite_experiment  9    261751   29083  1.4236 0.2737  0.001 ***
-    ## Residuals                       34    694583   20429         0.7263           
-    ## Total                           43    956334                 1.0000           
+    ##                                 Df SumsOfSqs MeanSqs F.Model      R2 Pr(>F)   
+    ## originSite_finalSite_experiment  2     36202   18101  1.5804 0.34504  0.004 **
+    ## Residuals                        6     68719   11453         0.65496          
+    ## Total                            8    104921                 1.00000          
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 ``` r
-anova(betadisper(dist_tab_assay,samples$originSite_finalSite_experiment))
+anova(betadisper(dist_tab_assay,samplesBck$originSite_finalSite_experiment))
 ```
 
     ## Analysis of Variance Table
     ## 
     ## Response: Distances
-    ##           Df Sum Sq Mean Sq F value  Pr(>F)  
-    ## Groups     9 5809.8  645.53   2.674 0.01828 *
-    ## Residuals 34 8207.9  241.41                  
+    ##           Df  Sum Sq Mean Sq F value Pr(>F)
+    ## Groups     2  81.667  40.833  1.0844 0.3963
+    ## Residuals  6 225.937  37.656
+
+``` r
+# Transplant origin
+count_tab_assay <- assay(vsdTro)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+adonis(data=samplesTro,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+```
+
+    ## 
+    ## Call:
+    ## adonis(formula = dist_tab_assay ~ originSite_finalSite_experiment,      data = samplesTro, method = "euclidian") 
+    ## 
+    ## Permutation: free
+    ## Number of permutations: 999
+    ## 
+    ## Terms added sequentially (first to last)
+    ## 
+    ##                                 Df SumsOfSqs MeanSqs F.Model      R2 Pr(>F)    
+    ## originSite_finalSite_experiment  2     72843   36422  1.8728 0.22367  0.001 ***
+    ## Residuals                       13    252823   19448         0.77633           
+    ## Total                           15    325666                 1.00000           
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+``` r
+anova(betadisper(dist_tab_assay,samplesTro$originSite_finalSite_experiment))
+```
+
+    ## Analysis of Variance Table
+    ## 
+    ## Response: Distances
+    ##           Df Sum Sq Mean Sq F value Pr(>F)
+    ## Groups     2 1272.5  636.26  1.3505 0.2932
+    ## Residuals 13 6124.8  471.14
+
+``` r
+# Transplant true
+count_tab_assay <- assay(vsdTrt)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+adonis(data=samplesTrt,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+```
+
+    ## 
+    ## Call:
+    ## adonis(formula = dist_tab_assay ~ originSite_finalSite_experiment,      data = samplesTrt, method = "euclidian") 
+    ## 
+    ## Permutation: free
+    ## Number of permutations: 999
+    ## 
+    ## Terms added sequentially (first to last)
+    ## 
+    ##                                 Df SumsOfSqs MeanSqs F.Model      R2 Pr(>F)   
+    ## originSite_finalSite_experiment  3     72429   24143  1.4348 0.22297  0.003 **
+    ## Residuals                       15    252408   16827         0.77703          
+    ## Total                           18    324836                 1.00000          
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+``` r
+anova(betadisper(dist_tab_assay,samplesTrt$originSite_finalSite_experiment))
+```
+
+    ## Analysis of Variance Table
+    ## 
+    ## Response: Distances
+    ##           Df  Sum Sq Mean Sq F value Pr(>F)
+    ## Groups     3  486.74 162.246  1.7841 0.1933
+    ## Residuals 15 1364.12  90.941
 
 ``` r
 # Exporting results

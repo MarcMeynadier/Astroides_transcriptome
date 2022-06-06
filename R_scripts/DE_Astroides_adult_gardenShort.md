@@ -1335,7 +1335,7 @@ ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) +
   geom_point(size = 5) + theme_bw() + 
   geom_point() +
   ggtitle("Principal Component Analysis of adult corals", subtitle = "sept2018 dataset") +
-  theme(text = element_text(size=14),legend.text = element_text(size=12), legend.position = 'bottom') +
+  theme(text = element_text(size=14),legend.text = element_text(size=8), legend.title = element_text(size=8),legend.position = 'bottom') +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 ```
@@ -1557,16 +1557,14 @@ title(main, cex.main = 0.7)
 ``` r
 # Background
 
-vsd = vst(ddsBck,blind=T)
-
 listGenes <- candidateGenes$genes
-listGenes2 <- which(rownames(vsd) %in% listGenes)
-index <- which(listGenes %in% rownames(vsd))
+listGenes2 <- which(rownames(vsdBck) %in% listGenes)
+index <- which(listGenes %in% rownames(vsdBck))
 candidateGenes2 <- candidateGenes[index, ] 
 listProt <- candidateGenes2$pfam_annotation
 listGenes3 <- candidateGenes2$genes
 
-vsdCandidate <- vsd[listGenes3, ]
+vsdCandidate <- vsdBck[listGenes3, ]
 
 labColName <- c('gm','gm','gm','pv','pv','pv','sp','sp','sp')
 
@@ -1594,16 +1592,16 @@ title(main, cex.main = 0.7)
 ``` r
 # Garden short
 
-vsd = vst(ddsGas,blind=T)
+vsdGas = vst(ddsGas,blind=T)
 
 listGenes <- candidateGenes$genes
-listGenes2 <- which(rownames(vsd) %in% listGenes)
-index <- which(listGenes %in% rownames(vsd))
+listGenes2 <- which(rownames(vsdGas) %in% listGenes)
+index <- which(listGenes %in% rownames(vsdGas))
 candidateGenes2 <- candidateGenes[index, ] 
 listProt <- candidateGenes2$pfam_annotation
 listGenes3 <- candidateGenes2$genes
 
-vsdCandidate <- vsd[listGenes3, ]
+vsdCandidate <- vsdGas[listGenes3, ]
 
 labColName <- c('gm_gm_gas','gm_gm_gas','gm_gm_gas','gm_gm_gas','gm_gm_gas','gm_gm_gas',
                 'gm_gm_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_sp_gas',
@@ -1637,15 +1635,49 @@ title(main, cex.main = 0.7)
 ``` r
 # Inferences statistics
 
-vsd = vst(dds,blind=T)
-count_tab_assay <- assay(vsd)
+# Background
+count_tab_assay <- assay(vsdBck)
 dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
-adonis(data=samples,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+adonis(data=samplesBck,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
 ```
 
     ## 
     ## Call:
-    ## adonis(formula = dist_tab_assay ~ originSite_finalSite_experiment,      data = samples, method = "euclidian") 
+    ## adonis(formula = dist_tab_assay ~ originSite_finalSite_experiment,      data = samplesBck, method = "euclidian") 
+    ## 
+    ## Permutation: free
+    ## Number of permutations: 999
+    ## 
+    ## Terms added sequentially (first to last)
+    ## 
+    ##                                 Df SumsOfSqs MeanSqs F.Model      R2 Pr(>F)  
+    ## originSite_finalSite_experiment  2     50623   25312  1.3608 0.31205  0.011 *
+    ## Residuals                        6    111606   18601         0.68795         
+    ## Total                            8    162229                 1.00000         
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+``` r
+anova(betadisper(dist_tab_assay,samplesBck$originSite_finalSite_experiment))
+```
+
+    ## Analysis of Variance Table
+    ## 
+    ## Response: Distances
+    ##           Df Sum Sq Mean Sq F value Pr(>F)
+    ## Groups     2 1608.9  804.43  1.0091  0.419
+    ## Residuals  6 4783.0  797.17
+
+``` r
+# Garden short same sites
+count_tab_assay <- assay(vsdGasSame)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+adonis(data=samplesGasSame,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+```
+
+    ## 
+    ## Call:
+    ## adonis(formula = dist_tab_assay ~ originSite_finalSite_experiment,      data = samplesGasSame, method = "euclidian") 
     ## 
     ## Permutation: free
     ## Number of permutations: 999
@@ -1653,22 +1685,56 @@ adonis(data=samples,dist_tab_assay ~ originSite_finalSite_experiment, method="eu
     ## Terms added sequentially (first to last)
     ## 
     ##                                 Df SumsOfSqs MeanSqs F.Model      R2 Pr(>F)    
-    ## originSite_finalSite_experiment  9    297026   33003  1.6421 0.24722  0.001 ***
-    ## Residuals                       45    904439   20099         0.75278           
-    ## Total                           54   1201465                 1.00000           
+    ## originSite_finalSite_experiment  2     58260   29130  1.8029 0.18391  0.001 ***
+    ## Residuals                       16    258525   16158         0.81609           
+    ## Total                           18    316785                 1.00000           
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 ``` r
-anova(betadisper(dist_tab_assay,samples$originSite_finalSite_experiment))
+anova(betadisper(dist_tab_assay,samplesGasSame$originSite_finalSite_experiment))
+```
+
+    ## Analysis of Variance Table
+    ## 
+    ## Response: Distances
+    ##           Df  Sum Sq Mean Sq F value Pr(>F)
+    ## Groups     2   30.44  15.222  0.2186  0.806
+    ## Residuals 16 1114.42  69.651
+
+``` r
+# Garden short different sites
+count_tab_assay <- assay(vsdGasDiff)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+adonis(data=samplesGasDiff,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+```
+
+    ## 
+    ## Call:
+    ## adonis(formula = dist_tab_assay ~ originSite_finalSite_experiment,      data = samplesGasDiff, method = "euclidian") 
+    ## 
+    ## Permutation: free
+    ## Number of permutations: 999
+    ## 
+    ## Terms added sequentially (first to last)
+    ## 
+    ##                                 Df SumsOfSqs MeanSqs F.Model      R2 Pr(>F)    
+    ## originSite_finalSite_experiment  3     79889   26630  1.6833 0.18003  0.001 ***
+    ## Residuals                       23    363867   15820         0.81997           
+    ## Total                           26    443756                 1.00000           
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+``` r
+anova(betadisper(dist_tab_assay,samplesGasDiff$originSite_finalSite_experiment))
 ```
 
     ## Analysis of Variance Table
     ## 
     ## Response: Distances
     ##           Df Sum Sq Mean Sq F value Pr(>F)
-    ## Groups     9   3099  344.33   1.523 0.1691
-    ## Residuals 45  10174  226.08
+    ## Groups     3  282.0  94.014  0.5493 0.6537
+    ## Residuals 23 3936.6 171.155
 
 ``` r
 # Exporting results

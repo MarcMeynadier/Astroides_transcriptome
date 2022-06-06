@@ -323,7 +323,7 @@ ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) +
   geom_point(size = 5) + theme_bw() + 
   geom_point() +
   ggtitle("Principal Component Analysis of adult corals", subtitle = "may2018 dataset") +
-  theme(text = element_text(size=14),legend.text = element_text(size=12), legend.position = 'bottom') +
+  theme(text = element_text(size=14),legend.text = element_text(size=8), legend.title = element_text(size=8),legend.position = 'bottom') +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 dev.off()
@@ -537,16 +537,14 @@ dev.off()
 
 # Background & Transplant origin
 
-vsd = vst(ddsBckTro,blind=T)
-
 listGenes <- candidateGenes$genes
-listGenes2 <- which(rownames(vsd) %in% listGenes)
-index <- which(listGenes %in% rownames(vsd))
+listGenes2 <- which(rownames(vsdBckTro) %in% listGenes)
+index <- which(listGenes %in% rownames(vsdBckTro))
 candidateGenes2 <- candidateGenes[index, ] 
 listProt <- candidateGenes2$pfam_annotation
 listGenes3 <- candidateGenes2$genes
 
-vsdCandidate <- vsd[listGenes3, ]
+vsdCandidate <- vsdBckTro[listGenes3, ]
 
 labColName <- c('gm_gm_bck','gm_gm_bck','gm_gm_bck','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_gm_tro',
                 'pv_pv_bck','pv_pv_bck','pv_pv_bck','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro',
@@ -568,16 +566,14 @@ dev.off()
 
 # True transplant
 
-vsd = vst(ddsTrt,blind=T)
-
 listGenes <- candidateGenes$genes
-listGenes2 <- which(rownames(vsd) %in% listGenes)
-index <- which(listGenes %in% rownames(vsd))
+listGenes2 <- which(rownames(vsdTrt) %in% listGenes)
+index <- which(listGenes %in% rownames(vsdTrt))
 candidateGenes2 <- candidateGenes[index, ] 
 listProt <- candidateGenes2$pfam_annotation
 listGenes3 <- candidateGenes2$genes
 
-vsdCandidate <- vsd[listGenes3, ]
+vsdCandidate <- vsdTrt[listGenes3, ]
 
 labColName <- c('gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_sp_trt','gm_sp_trt',
                 'gm_sp_trt','gm_sp_trt','gm_sp_trt','pv_gm_trt','pv_gm_trt','pv_gm_trt','pv_gm_trt',
@@ -599,11 +595,23 @@ dev.off()
 
 # Inferences statistics
 
-vsd = vst(dds,blind=T)
-count_tab_assay <- assay(vsd)
+# Background
+count_tab_assay <- assay(vsdBck)
 dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
-adonis(data=samples,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
-anova(betadisper(dist_tab_assay,samples$originSite_finalSite_experiment))
+adonis(data=samplesBck,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+anova(betadisper(dist_tab_assay,samplesBck$originSite_finalSite_experiment))
+
+# Transplant origin
+count_tab_assay <- assay(vsdTro)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+adonis(data=samplesTro,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+anova(betadisper(dist_tab_assay,samplesTro$originSite_finalSite_experiment))
+
+# Transplant true
+count_tab_assay <- assay(vsdTrt)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+adonis(data=samplesTrt,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+anova(betadisper(dist_tab_assay,samplesTrt$originSite_finalSite_experiment))
 
 # Exporting results
 write.csv(resOrderedDF_gm_gm_tro_VS_gm_gm_bck, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/adult/DESeq2_results_adult_trueTransplant_gm_gm_tro_VS_gm_gm_bck.csv',sep=''))

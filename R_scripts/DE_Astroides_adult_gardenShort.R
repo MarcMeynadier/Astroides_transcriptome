@@ -319,7 +319,7 @@ ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) +
   geom_point(size = 5) + theme_bw() + 
   geom_point() +
   ggtitle("Principal Component Analysis of adult corals", subtitle = "sept2018 dataset") +
-  theme(text = element_text(size=14),legend.text = element_text(size=12), legend.position = 'bottom') +
+  theme(text = element_text(size=14),legend.text = element_text(size=8), legend.title = element_text(size=8),legend.position = 'bottom') +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 dev.off()
@@ -519,16 +519,14 @@ dev.off()
 
 # Background
 
-vsd = vst(ddsBck,blind=T)
-
 listGenes <- candidateGenes$genes
-listGenes2 <- which(rownames(vsd) %in% listGenes)
-index <- which(listGenes %in% rownames(vsd))
+listGenes2 <- which(rownames(vsdBck) %in% listGenes)
+index <- which(listGenes %in% rownames(vsdBck))
 candidateGenes2 <- candidateGenes[index, ] 
 listProt <- candidateGenes2$pfam_annotation
 listGenes3 <- candidateGenes2$genes
 
-vsdCandidate <- vsd[listGenes3, ]
+vsdCandidate <- vsdBck[listGenes3, ]
 
 labColName <- c('gm','gm','gm','pv','pv','pv','sp','sp','sp')
 
@@ -548,16 +546,16 @@ dev.off()
 
 # Garden short
 
-vsd = vst(ddsGas,blind=T)
+vsdGas = vst(ddsGas,blind=T)
 
 listGenes <- candidateGenes$genes
-listGenes2 <- which(rownames(vsd) %in% listGenes)
-index <- which(listGenes %in% rownames(vsd))
+listGenes2 <- which(rownames(vsdGas) %in% listGenes)
+index <- which(listGenes %in% rownames(vsdGas))
 candidateGenes2 <- candidateGenes[index, ] 
 listProt <- candidateGenes2$pfam_annotation
 listGenes3 <- candidateGenes2$genes
 
-vsdCandidate <- vsd[listGenes3, ]
+vsdCandidate <- vsdGas[listGenes3, ]
 
 labColName <- c('gm_gm_gas','gm_gm_gas','gm_gm_gas','gm_gm_gas','gm_gm_gas','gm_gm_gas',
                 'gm_gm_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_pv_gas','gm_sp_gas',
@@ -583,11 +581,23 @@ dev.off()
 
 # Inferences statistics
 
-vsd = vst(dds,blind=T)
-count_tab_assay <- assay(vsd)
+# Background
+count_tab_assay <- assay(vsdBck)
 dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
-adonis(data=samples,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
-anova(betadisper(dist_tab_assay,samples$originSite_finalSite_experiment))
+adonis(data=samplesBck,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+anova(betadisper(dist_tab_assay,samplesBck$originSite_finalSite_experiment))
+
+# Garden short same sites
+count_tab_assay <- assay(vsdGasSame)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+adonis(data=samplesGasSame,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+anova(betadisper(dist_tab_assay,samplesGasSame$originSite_finalSite_experiment))
+
+# Garden short different sites
+count_tab_assay <- assay(vsdGasDiff)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+adonis(data=samplesGasDiff,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+anova(betadisper(dist_tab_assay,samplesGasDiff$originSite_finalSite_experiment))
 
 # Exporting results
 write.csv(resOrderedDF_gm_gm_gas_VS_gm_gm_bck, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/adult/DESeq2_results_adult_gardenShort_gm_gm_gas_VS_gm_gm_bck.csv',sep=''))
