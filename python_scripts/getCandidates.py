@@ -80,7 +80,7 @@ def getCandidateGenes():
     """
 
     annot = getAnnotation()
-    candidate=['ectin','sushi','galaxin','collagen','adhesin','cadherin','actin','HCO3','anhydrase','V_ATPase','calmodulin']
+    candidate=['lectin','sushi','galaxin','collagen','adhesin','cadherin','actin','HCO3','anhydrase','V_ATPase','calmodulin']
     annotFilter = annot[annot.stack().str.contains('|'.join(candidate)).any(level=0)]
     annotFilter = annotFilter.drop_duplicates(subset='genes', keep='first', inplace=False, ignore_index=False)
     pfam = annotFilter['pfam_annotation'].tolist()
