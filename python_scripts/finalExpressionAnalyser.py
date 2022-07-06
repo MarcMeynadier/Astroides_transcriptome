@@ -277,7 +277,7 @@ def exploitResults(dfs,conditions,experiment):
     x_axis = np.array
     prot_functions = pd.Series
     patterns = ["//", "..", "--", "**" ]
-    fig = plt.figure(figsize=(11, 7))
+    fig = plt.figure(figsize=(15, 10))
     bars_list = []
     numberProtList = []
     for i in range(len(dfs)):
@@ -344,18 +344,18 @@ def exploitResults(dfs,conditions,experiment):
                 else:
                     plt.text(bars_list[i][j].get_x()+adjust,yval-(y_neg_coeff*(1/textBarValue)), 'N:'+str(numberProtList[i][j]),ha='center',fontsize=fontsize)
     if len(dfs) == 1:
-        plt.xticks(x_axis+0.3,prot_functions,rotation=45,fontsize=10) 
+        plt.xticks(x_axis+0.3,prot_functions,rotation=45,fontsize=12) 
     elif len(dfs) == 2:
-        plt.xticks(x_axis+0.6-(0.3/len(dfs)),prot_functions,rotation=45,fontsize=10)     
+        plt.xticks(x_axis+0.6-(0.3/len(dfs)),prot_functions,rotation=45,fontsize=12)     
     elif len(dfs) == 3:
-        plt.xticks(x_axis+(0.3*len(dfs)-0.5),prot_functions,rotation=45,fontsize=10)
+        plt.xticks(x_axis+(0.3*len(dfs)-0.5),prot_functions,rotation=45,fontsize=12)
     elif len(dfs) == 4:     
-        plt.xticks(x_axis+(0.2*len(dfs)-0.3),prot_functions,rotation=45,fontsize=10)  
+        plt.xticks(x_axis+(0.2*len(dfs)-0.3),prot_functions,rotation=45,fontsize=12)  
     plt.axhline(y=0,color='black')
-    plt.xlabel('Proteins functions', fontsize=16)
-    plt.ylabel('Additive log2 fold change', fontsize=16)
+    plt.xlabel('Protein functions', fontsize=18)
+    plt.ylabel('Additive log2 fold change', fontsize=18)
     legend = []
-    up = mpatches.Patch(facecolor='#006CD1', label='Upregulated',edgecolor='black') ; legend.append(up)
+    #up = mpatches.Patch(facecolor='#006CD1', label='Upregulated',edgecolor='black') ; legend.append(up)
     down = mpatches.Patch(facecolor='#E66100', label='Downregulated',edgecolor='black') ; legend.append(down)
     for i in range(len(conditions)):
         if i==0:
@@ -370,8 +370,8 @@ def exploitResults(dfs,conditions,experiment):
         elif i==3:
             leg = mpatches.Patch(hatch='***',label=conditions[i],facecolor='white',edgecolor='black')
             legend.append(leg)     
-    plt.legend(handles=legend, loc=0,fontsize=10,frameon=False)
-    plt.title('Expression values of genes associated to proteins functions\n\n'+experiment,fontsize=18)
+    plt.legend(handles=legend, loc=1,fontsize=14,frameon=False)
+    #plt.title('Expression values of genes associated to proteins functions\n\n'+experiment,fontsize=18)
     plt.subplots_adjust(bottom=0.3) 
     conditionsStr = '_X_'.join(conditions) 
     fig.savefig(outputPath+'FGA_barplot_'+experiment+'_'+conditionsStr+'.png')   

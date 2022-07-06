@@ -509,7 +509,7 @@ rownames(vsdCandidate) <- listProt
 topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
 png(paste(outputPath,'candidateGenes_gardenShort_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
 heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
-          key.title = "none",
+          key.title = "",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
           xlab="sampling sites",ylab="genes",Colv=NA,margins = c(6, 7))
 
@@ -536,7 +536,7 @@ rownames(vsdCandidate) <- listProt
 topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
 png(paste(outputPath,'candidateGenes_gardenShort_bck_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
 heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
-          key.title = "none",
+          key.title = "",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
           xlab="sampling sites",ylab="genes",Colv=NA,margins = c(6, 7))
 
@@ -571,7 +571,7 @@ rownames(vsdCandidate) <- listProt
 topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
 png(paste(outputPath,'candidateGenes_gardenShort_gas_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
 heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
-          key.title = "none",
+          key.title = "",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
           xlab="sampling sites",ylab="genes",Colv=NA,margins = c(6, 7))
 

@@ -19,6 +19,48 @@ import pandas as pd
 #------------------------------------------------------------------------------#
 
 
+def getProteinSequences():
+    """
+    Description
+    -----------
+    Retrieves the output file from TransDecoder.Predict and parse it into a dataframe containing 
+    the gene IDs and their associated protein sequences.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    sequencesDf
+        Pandas dataframe, contains the genes IDs, and the proteins sequences associated with the genes.
+    """
+
+    with open('../../data/net/8_functionalAnnotation/transdecoderOutput.pep') as f:
+        contents = f.readlines()
+    geneNames = []
+    proteinSequences = []
+    concatProt = []
+    for i in contents:
+        if 'TRINITY' not in i:
+            concatProt.append(i)
+        else:
+            geneNames.append(i)
+            sequenceProt = ''
+            for j in concatProt:
+                sequenceProt += ''.join(j)
+            proteinSequences.append(sequenceProt) 
+            concatProt = []
+    for i in range(len(geneNames)):
+        geneNames[i]=geneNames[i].replace('>TRINITY_','TRINITY_')
+        geneNames[i]=geneNames[i].split(' ',1)[0] 
+    for i in range(len(proteinSequences)):
+        proteinSequences[i] = proteinSequences[i].replace('\n','')
+    dic = {'genes':geneNames,'protein_sequence':proteinSequences}
+    sequencesDf = pd.DataFrame(dic)
+    return sequencesDf
+
+
 def getAnnotation(): 
     """
     Description
@@ -26,7 +68,7 @@ def getAnnotation():
     Retrieves the output file from hmmsearch, parse it to retrieve the Pfam annotation and the Pfam code of the genes. 
     Retrieves the dataframe from getProteinSequences(), then the output file from hmmsearch in order to parse it to get 
     the Pfam annotation as well as the Pfam code of the genes. The two data frames are then merged together and returned 
-    as a common data frame. The merge is done so that even a non-coding gene ID is returned. 
+    as a common data frame. 
 
     Parameters
     ----------
@@ -38,6 +80,7 @@ def getAnnotation():
        Pandas dataframe, contains successively the gene IDs, the Pfam annotations, the Pfam codes and the protein sequences. 
     """
 
+    codingSequences = getProteinSequences()
     curedFile = []
     with open('../../data/net/8_functionalAnnotation/hmmsearchOutput.out') as f:
         contents = f.readlines()
@@ -54,6 +97,7 @@ def getAnnotation():
         pfamAnnot.append(splitAnnot) ; pfamCode.append(splitCode)
     dic={'genes':geneNames,'pfam_annotation':pfamAnnot,'pfam_code':pfamCode}
     mergeDf=pd.DataFrame(dic) 
+    mergeDf = mergeDf.merge(codingSequences,how='inner')
     mergeDf = mergeDf.replace(to_replace ='(_i).*', value = '', regex = True)
     return mergeDf
 
@@ -90,5 +134,6 @@ def getCandidateGenes():
         pfamFilter.append(newName)
     annotFilter['pfam_annotation'] = pfamFilter
     annotFilter.to_csv('candidateGenes.csv',index=False,encoding='utf-8')
+    print(pfamFilter)
     return
     

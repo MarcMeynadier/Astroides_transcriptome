@@ -334,6 +334,7 @@ ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 
+
 # Venn diagramm 
 
 # gas VS bck diagramm 1
@@ -457,7 +458,7 @@ rownames(vsdCandidate) <- listProt
 
 topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
 heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
-          key.title = "none",
+          key.title = "",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
           xlab="sampling sites",ylab="genes",Colv=NA,margins = c(6, 7))
 
@@ -482,7 +483,7 @@ rownames(vsdCandidate) <- listProt
 
 topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
 heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
-          key.title = "none",
+          key.title = "",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
           xlab="sampling sites",ylab="genes",Colv=NA,margins = c(6, 7))
 
@@ -515,7 +516,7 @@ rownames(vsdCandidate) <- listProt
 
 topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
 heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
-          key.title = "none",
+          key.title = "",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
           xlab="sampling sites",ylab="genes",Colv=NA,margins = c(6, 7))
 

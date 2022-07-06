@@ -75,7 +75,6 @@ res_pv_sa<-results(dds, contrast=c("site","pv","sa"), alpha = 0.05)
 resLFC = lfcShrink(dds, contrast=c("site","pv","gm"), 
                    type="ashr")
 plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes\nPreliminary samples : pv VS gm")
-
 # Volcano plot
 pCutoff = 0.05
 FCcutoff = 1.0
@@ -111,6 +110,7 @@ resLFC = lfcShrink(dds, contrast=c("site","pv","sa"),
                    type="ashr")
 plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), 
        main = "MA-plot for the shrunken log2 fold changes\nPreliminary samples : pv VS sa")
+
 # Volcano plot
 EnhancedVolcano(data.frame(res_pv_sa), lab = rownames(data.frame(res_pv_sa)), x = 'log2FoldChange', y = 'padj',
                 xlab = bquote(~Log[2]~ 'fold change'), ylab = bquote(~-Log[10]~adjusted~italic(P)),
@@ -181,12 +181,13 @@ rownames(vsdCandidate) <- listProt
 
 topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
 heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
-          key.title = "none",
+          key.title = "",
           col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
           xlab="sampling sites",ylab="proteins associated to genes",Colv=NA,margins = c(4, 7))
 
 main='Differential expression of 50 most expressed candidates genes\n\nPreliminary samples'
 title(main, cex.main = 0.7)
+
 
 # Inferences statistics
 count_tab_assay <- assay(vsd)
