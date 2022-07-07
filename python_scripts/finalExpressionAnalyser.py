@@ -228,6 +228,7 @@ def sortResults(df,condition):
     protFam = protFamilies()
     protAnnot = protResults()
     protExpr = protResults()
+    exprSD = []
     for index, row in df.iterrows():   
         for j in protFam:
             for k in protFam[j]:
@@ -238,13 +239,17 @@ def sortResults(df,condition):
                     break
     for i in protExpr:
         exprValue = 0
+        exprList = []
         if len(protExpr[i]) != 0:
             for j in range(len(protExpr[i])):
-                exprValue += protExpr[i][j] 
+                exprList.append(protExpr[i][j])
+                exprValue += protExpr[i][j]  
         else:
             exprValue = 0
+            exprList.append(exprValue)
+        exprSD.append(np.std(exprList))
         protExpr[i] = exprValue 
-    return protAnnot,protExpr 
+    return protAnnot,protExpr,exprSD
 
 
 def exploitResults(dfs,conditions,experiment):
@@ -291,14 +296,15 @@ def exploitResults(dfs,conditions,experiment):
             tick += 0.2
             fontsize = 6
             adjust = 0.1
-        protAnnot,protExpr = sortResults(dfs[i],conditions[i])
+        protAnnot,protExpr,exprSD = sortResults(dfs[i],conditions[i])
+        print(exprSD[i])
         protDf = pd.DataFrame.from_dict(protAnnot,orient='index') 
         protDf2 = pd.DataFrame.from_dict(protExpr,orient='index')
         protDf2.columns=['lfc'] ; protDf2['lfc'].astype(str)
         protDf = pd.concat([protDf,protDf2],axis=1) 
         protDf = protDf.transpose() 
         protDf.to_csv(outputPath+'proteinsTable_'+experiment+'_'+conditions[i]+'.csv')
-        print(protDf)
+        #print(protDf)
         numberProt = []
         for j in protAnnot.values():
             numberProt.append(len(j))
@@ -310,7 +316,9 @@ def exploitResults(dfs,conditions,experiment):
         df.loc[df['Expression values '+conditions[i]]>=0,'colors '+conditions[i]] = '#006CD1'       
         x_axis = np.arange(len(df['Proteins functions']))
         prot_functions = df['Proteins functions']
+        df.insert(3,"Standard deviation of expression",exprSD,True)
         bars = plt.bar(x_axis+tick, df['Expression values '+conditions[i]], color=df['colors '+conditions[i]],edgecolor='black',width=width,hatch=patterns[i])
+        plt.errorbar(x_axis+tick,df['Expression values '+conditions[i]], xerr=None,yerr=df['Standard deviation of expression'], ecolor='black', color='black',ls='none',elinewidth=2)
         bars_list.append(bars)
     axes = plt.gca() ; ymax = axes.get_ylim()  
     if ymax[1] < 0:
@@ -353,9 +361,9 @@ def exploitResults(dfs,conditions,experiment):
         plt.xticks(x_axis+(0.2*len(dfs)-0.3),prot_functions,rotation=45,fontsize=12)  
     plt.axhline(y=0,color='black')
     plt.xlabel('Protein functions', fontsize=18)
-    plt.ylabel('Additive log2 fold change', fontsize=18)
+    plt.ylabel('Additive log₂ fold change', fontsize=18)
     legend = []
-    #up = mpatches.Patch(facecolor='#006CD1', label='Upregulated',edgecolor='black') ; legend.append(up)
+    up = mpatches.Patch(facecolor='#006CD1', label='Upregulated',edgecolor='black') ; legend.append(up) # juvenile
     down = mpatches.Patch(facecolor='#E66100', label='Downregulated',edgecolor='black') ; legend.append(down)
     for i in range(len(conditions)):
         if i==0:
@@ -370,8 +378,8 @@ def exploitResults(dfs,conditions,experiment):
         elif i==3:
             leg = mpatches.Patch(hatch='***',label=conditions[i],facecolor='white',edgecolor='black')
             legend.append(leg)     
-    plt.legend(handles=legend, loc=1,fontsize=14,frameon=False)
-    #plt.title('Expression values of genes associated to proteins functions\n\n'+experiment,fontsize=18)
+    plt.legend(handles=legend, loc=0,fontsize=14,frameon=False)
+    plt.title('Expression values of genes associated to proteins functions\n\n'+experiment,fontsize=18) # juvenile
     plt.subplots_adjust(bottom=0.3) 
     conditionsStr = '_X_'.join(conditions) 
     fig.savefig(outputPath+'FGA_barplot_'+experiment+'_'+conditionsStr+'.png')   
