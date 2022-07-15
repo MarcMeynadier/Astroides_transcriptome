@@ -363,7 +363,7 @@ def exploitResults(dfs,conditions,experiment):
     plt.xlabel('Protein functions', fontsize=18)
     plt.ylabel('Additive log₂ fold change', fontsize=18)
     legend = []
-    up = mpatches.Patch(facecolor='#006CD1', label='Upregulated',edgecolor='black') ; legend.append(up) # juvenile
+    #up = mpatches.Patch(facecolor='#006CD1', label='Upregulated',edgecolor='black') ; legend.append(up) # juvenile
     down = mpatches.Patch(facecolor='#E66100', label='Downregulated',edgecolor='black') ; legend.append(down)
     for i in range(len(conditions)):
         if i==0:
@@ -378,8 +378,8 @@ def exploitResults(dfs,conditions,experiment):
         elif i==3:
             leg = mpatches.Patch(hatch='***',label=conditions[i],facecolor='white',edgecolor='black')
             legend.append(leg)     
-    plt.legend(handles=legend, loc=0,fontsize=14,frameon=False)
-    plt.title('Expression values of genes associated to proteins functions\n\n'+experiment,fontsize=18) # juvenile
+    plt.legend(handles=legend, loc=1,fontsize=14,frameon=False)
+    #plt.title('Expression values of genes associated to proteins functions\n\n'+experiment,fontsize=18) # juvenile
     plt.subplots_adjust(bottom=0.3) 
     conditionsStr = '_X_'.join(conditions) 
     fig.savefig(outputPath+'FGA_barplot_'+experiment+'_'+conditionsStr+'.png')   

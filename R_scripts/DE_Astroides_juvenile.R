@@ -139,7 +139,6 @@ dev.off()
 png(paste(outputPath,'DGE_MA-plot_juvenile_amb_VS_ext.png',sep=''), width=7, height=5, units = "in", res = 300)
 DESeq2::plotMA(amb_VS_ext,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\namb_VS_ext")
 dev.off()
-
 # Volcano plot
 png(paste(outputPath,'DGE_volcanoPlot_juvenile_amb_VS_ext.png',sep=''), width=7, height=7, units = "in", res = 300)
 EnhancedVolcano(data.frame(amb_VS_ext), lab = rownames(data.frame(amb_VS_ext)), x = 'log2FoldChange', y = 'padj',
@@ -175,7 +174,6 @@ dev.off()
 png(paste(outputPath,'DGE_MA-plot_juvenile_low_VS_ext.png',sep=''), width=7, height=5, units = "in", res = 300)
 DESeq2::plotMA(low_VS_ext,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\nlow_VS_ext")
 dev.off()
-
 # Volcano plot
 png(paste(outputPath,'DGE_volcanoPlot_juvenile_low_VS_ext.png',sep=''), width=7, height=7, units = "in", res = 300)
 EnhancedVolcano(data.frame(low_VS_ext), lab = rownames(data.frame(low_VS_ext)), x = 'log2FoldChange', y = 'padj',
@@ -216,12 +214,12 @@ percentVar = round(100 * attr(pcaData, "percentVar"))
 pcaData$site_pH = factor(pcaData$site_pH, levels=c("GM_extreme_low","GM_low","GM_ambient","SP_low","SP_ambient"))
 
 png(paste(outputPath,'DGE_PCA_juvenile.png',sep=''), width=7, height=7, units = "in", res = 300)
-ggplot(pcaData, aes(PC1, PC2, colour = site_pH)) + 
-  geom_point(size = 5) + theme_bw() + 
-  scale_color_manual(values = c("#D55E00","#E69F00","#FFFF00","#0072B2","#56B4E9")) +
-  geom_point() +
-  theme(text = element_text(size=10),legend.text = element_text(size=10), legend.position = 'bottom',
-  axis.text=element_text(size=12), axis.title = element_text(size=12)) +
+ggplot(pcaData, aes(PC1, PC2, fill = site_pH)) + 
+  geom_point(color="black",pch=21, size=5) + theme_bw() +
+  scale_fill_manual(values = c("#D55E00","#E69F00","#FFFF00","#0072B2","#56B4E9")) +
+  #ggtitle("Principal Component Analysis of adult corals", subtitle = "may2018 dataset") +
+  theme(text = element_text(size=14), legend.position = 'bottom') +
+  theme(legend.title=element_blank()) +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 dev.off()
@@ -291,7 +289,7 @@ x = list('SP VS GM' = resOrderedDF_sp_VS_gm_venn,'ambient VS low' = resOrderedDF
 png(paste(outputPath,'vennDiagramm_juveniles_site_pH.png',sep=''), width=7, height=5, units = "in", res = 300)
 ggvenn(
   x, 
-  fill_color = c("#0073C2FF", "#EFC000FF"),
+  fill_color = c("#8E8E8E", "#E0E0E0"),
   stroke_size = 0.4, set_name_size = 4
 )
 dev.off()
@@ -337,7 +335,7 @@ x = list('GM ambient VS GM low' = resOrderedDF_gm_amb_VS_gm_low_venn,'SP ambient
 png(paste(outputPath,'vennDiagramm_juveniles_site_amb_VS_low.png',sep=''), width=7, height=5, units = "in", res = 300)
 ggvenn(
   x, 
-  fill_color = c("#0073C2FF", "#EFC000FF"),
+  fill_color = c("#EE4000", "#5CACEE"),
   stroke_size = 0.4, set_name_size = 4
 )
 dev.off()
@@ -417,6 +415,8 @@ title(main, cex.main = 0.7)
 dev.off()
 
 # Inferences statistics
+
+vsd = vst(dds,blind=T)
 
 count_tab_assay <- assay(vsd)
 dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")

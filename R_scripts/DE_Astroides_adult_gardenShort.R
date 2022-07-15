@@ -315,11 +315,12 @@ pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment",
 percentVar = round(100 * attr(pcaData, "percentVar"))
 
 png(paste(outputPath,'DGE_PCA_adult_gardenShort.png',sep=''), width=7, height=7, units = "in", res = 300)
-ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
-  geom_point(size = 5) + theme_bw() + 
-  geom_point() +
-  ggtitle("Principal Component Analysis of adult corals", subtitle = "sept2018 dataset") +
-  theme(text = element_text(size=14),legend.text = element_text(size=8), legend.title = element_text(size=8),legend.position = 'bottom') +
+ggplot(pcaData, aes(PC1, PC2, fill = originSite_finalSite_experiment)) + 
+  geom_point(color="black",pch=21, size=5) + theme_bw() +
+  scale_fill_manual(values = c("#ff9999","#ffb380","#990000","#ff3300","#008000","#bfff80","#99ff99","#000099","#9999ff","#99ebff")) +
+  #ggtitle("Principal Component Analysis of adult corals", subtitle = "may2018 dataset") +
+  theme(text = element_text(size=14), legend.position = 'bottom') +
+  theme(legend.title=element_blank()) +
   xlab(paste0("PC1: ",percentVar[1],"% variance")) +
   ylab(paste0("PC2: ",percentVar[2],"% variance")) 
 dev.off()
