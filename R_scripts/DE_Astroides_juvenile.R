@@ -72,7 +72,7 @@ head(txiNatSim$counts)
 dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~site + pH)
 dds2<-DESeqDataSetFromTximport(txi2,colData=samples2,design= ~site + pH)
 dds3<-DESeqDataSetFromTximport(txi3,colData=samples3,design= ~site_pH)
-ddsNatSim<-DESeqDataSetFromTximport(txiNatSim,colData=samplesNatSim,design= ~site_pH)
+ddsNatSim<-DESeqDataSetFromTximport(txiNatSim,colData=samplesNatSim,design= ~Site)
 
 # pre-filtering
 keep <- rowSums(counts(dds)) >= 10 

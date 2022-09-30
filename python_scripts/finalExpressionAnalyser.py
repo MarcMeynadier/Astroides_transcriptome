@@ -297,14 +297,12 @@ def exploitResults(dfs,conditions,experiment):
             fontsize = 6
             adjust = 0.1
         protAnnot,protExpr,exprSD = sortResults(dfs[i],conditions[i])
-        print(exprSD[i])
         protDf = pd.DataFrame.from_dict(protAnnot,orient='index') 
         protDf2 = pd.DataFrame.from_dict(protExpr,orient='index')
         protDf2.columns=['lfc'] ; protDf2['lfc'].astype(str)
         protDf = pd.concat([protDf,protDf2],axis=1) 
         protDf = protDf.transpose() 
         protDf.to_csv(outputPath+'proteinsTable_'+experiment+'_'+conditions[i]+'.csv')
-        #print(protDf)
         numberProt = []
         for j in protAnnot.values():
             numberProt.append(len(j))
@@ -344,12 +342,16 @@ def exploitResults(dfs,conditions,experiment):
     textBarValue = ymax[1] 
     if textBarValue == 0:
         textBarValue = 8
+    upLegendSwitch = False
+    downLegendSwitch = False
     for i in range(len(bars_list)):
         for j in range(len(bars_list[i])):
                 yval = bars_list[i][j].get_height() 
                 if yval >= 0:
+                    upLegendSwitch = True
                     plt.text(bars_list[i][j].get_x()+adjust, yval+(y_coeff*(1/textBarValue)), 'N:'+str(numberProtList[i][j]),ha='center',fontsize=fontsize)
                 else:
+                    downLegendSwitch = True
                     plt.text(bars_list[i][j].get_x()+adjust,yval-(y_neg_coeff*(1/textBarValue)), 'N:'+str(numberProtList[i][j]),ha='center',fontsize=fontsize)
     if len(dfs) == 1:
         plt.xticks(x_axis+0.3,prot_functions,rotation=45,fontsize=12) 
@@ -363,8 +365,10 @@ def exploitResults(dfs,conditions,experiment):
     plt.xlabel('Protein functions', fontsize=18)
     plt.ylabel('Additive log₂ fold change', fontsize=18)
     legend = []
-    #up = mpatches.Patch(facecolor='#006CD1', label='Upregulated',edgecolor='black') ; legend.append(up) # juvenile
-    down = mpatches.Patch(facecolor='#E66100', label='Downregulated',edgecolor='black') ; legend.append(down)
+    if upLegendSwitch == True:
+        up = mpatches.Patch(facecolor='#006CD1', label='Upregulated',edgecolor='black') ; legend.append(up) # juvenile
+    if downLegendSwitch == True:
+        down = mpatches.Patch(facecolor='#E66100', label='Downregulated',edgecolor='black') ; legend.append(down)
     for i in range(len(conditions)):
         if i==0:
             leg = mpatches.Patch(hatch=r'////',label=conditions[i],facecolor='white',edgecolor='black')
@@ -378,7 +382,7 @@ def exploitResults(dfs,conditions,experiment):
         elif i==3:
             leg = mpatches.Patch(hatch='***',label=conditions[i],facecolor='white',edgecolor='black')
             legend.append(leg)     
-    plt.legend(handles=legend, loc=1,fontsize=14,frameon=False)
+    plt.legend(handles=legend, loc=4,fontsize=14,frameon=False)
     #plt.title('Expression values of genes associated to proteins functions\n\n'+experiment,fontsize=18) # juvenile
     plt.subplots_adjust(bottom=0.3) 
     conditionsStr = '_X_'.join(conditions) 
