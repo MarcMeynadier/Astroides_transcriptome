@@ -16,8 +16,10 @@ import os
 import pandas as pd
 import numpy as np
 import glob
+import statistics
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import seaborn as sb
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -201,7 +203,7 @@ def protResults():
     'cytoskeleton regulation':cytoskeleton_regulation_l,'redox regulation':redox_regulation_l,'immune regulation':immune_regulation_l,'miscellaneous functions':other_l}
     return protRes
 
-def sortResults(df,condition):
+def sortResultsBarplots(df,condition):
     """
     Description
     -----------
@@ -251,8 +253,22 @@ def sortResults(df,condition):
         protExpr[i] = exprValue 
     return protAnnot,protExpr,exprSD
 
+def sortResultsBoxplots(df,condition):
+    protFam = protFamilies()
+    protAnnot = protResults()
+    protExpr = protResults()
+    exprSD = []
+    for index, row in df.iterrows():   
+        for j in protFam:
+            for k in protFam[j]:
+                if k in row['GO_annotation']:  
+                    annot = row['pfam_annotation'].split(' ',1)[1]     
+                    protAnnot[j].append(annot)   
+                    protExpr[j].append(row['lfc_'+condition])   
+                    break
+    return protAnnot,protExpr
 
-def exploitResults(dfs,conditions,experiment):
+def exploitResultsBarplots(dfs,conditions,experiment):
     """
     Description
     -----------
@@ -296,13 +312,13 @@ def exploitResults(dfs,conditions,experiment):
             tick += 0.2
             fontsize = 6
             adjust = 0.1
-        protAnnot,protExpr,exprSD = sortResults(dfs[i],conditions[i])
+        protAnnot,protExpr,exprSD = sortResultsBarplots(dfs[i],conditions[i])
         protDf = pd.DataFrame.from_dict(protAnnot,orient='index') 
         protDf2 = pd.DataFrame.from_dict(protExpr,orient='index')
         protDf2.columns=['lfc'] ; protDf2['lfc'].astype(str)
         protDf = pd.concat([protDf,protDf2],axis=1) 
         protDf = protDf.transpose() 
-        protDf.to_csv(outputPath+'proteinsTable_'+experiment+'_'+conditions[i]+'.csv')
+        protDf.to_csv(outputPath+'proteinsTableAdditiveLFC_'+experiment+'_'+conditions[i]+'.csv')
         numberProt = []
         for j in protAnnot.values():
             numberProt.append(len(j))
@@ -388,4 +404,23 @@ def exploitResults(dfs,conditions,experiment):
     conditionsStr = '_X_'.join(conditions) 
     fig.savefig(outputPath+'FGA_barplot_'+experiment+'_'+conditionsStr+'.png')   
     plt.show()
+
+def exploitResultsBoxplots(dfs,conditions,experiment):
+    if len(conditions) == 0:
+        print('No results are available for this experiment condition')
+        return
+    outputPath = '../../../../../output/functionalGenesAnnotation/'
+
+    
+    
         
+    
+    df1 = pd.DataFrame(np.random.randn(4,8), columns=list(range(1,9))).assign(Trial=1) ; print(df1)
+    """
+    df2 = pd.DataFrame(np.random.randn(5,5), columns=list(range(1,6))).assign(Trial=2)
+    df3 = pd.DataFrame(np.random.randn(5,5), columns=list(range(1,6))).assign(Trial=3)
+    cdf = pd.concat([df1, df2, df3])                                # CONCATENATE
+    mdf = pd.melt(cdf, id_vars=['Trial'], var_name=['Number'])      # MELT
+    ax = sb.boxplot(x="Trial", y="value", hue="Number", data=mdf)  # RUN PLOT
+    plt.show()
+    """
