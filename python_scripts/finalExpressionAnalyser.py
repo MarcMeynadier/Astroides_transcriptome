@@ -20,6 +20,7 @@ import statistics
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import seaborn as sb
+from matplotlib import pyplot
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -405,22 +406,62 @@ def exploitResultsBarplots(dfs,conditions,experiment):
     fig.savefig(outputPath+'FGA_barplot_'+experiment+'_'+conditionsStr+'.png')   
     plt.show()
 
-def exploitResultsBoxplots(dfs,conditions,experiment):
-    if len(conditions) == 0:
-        print('No results are available for this experiment condition')
-        return
-    outputPath = '../../../../../output/functionalGenesAnnotation/'
-
+def prepareBoxplots(dfs,conditions):
+    catabolic_enzyme_df = pd.DataFrame() ; isomerase_enzyme_df = pd.DataFrame() ; binding_enzyme_df = pd.DataFrame() 
+    ion_regulation_df = pd.DataFrame() ; genetic_regulation_df = pd.DataFrame() ; transcriptomic_regulation_df = pd.DataFrame() 
+    cytoskeleton_regulation_df = pd.DataFrame() ; redox_regulation_df = pd.DataFrame() ; immune_regulation_df = pd.DataFrame()  
+    other_df = pd.DataFrame() 
+    for i in range(len(dfs)):
+        protAnnot,protExpr = sortResultsBoxplots(dfs[i],conditions[i])
+        #protDf = pd.DataFrame.from_dict(protAnnot,orient='index') 
+        exprDf = pd.DataFrame.from_dict(protExpr,orient='index') 
+        catabolic_enzyme_df[conditions[i]] = exprDf.loc['catabolic enzyme']
+        isomerase_enzyme_df[conditions[i]] = exprDf.loc['isomerase enzyme']
+        binding_enzyme_df[conditions[i]] = exprDf.loc['binding enzyme']
+        ion_regulation_df[conditions[i]] = exprDf.loc['ion regulation']
+        genetic_regulation_df[conditions[i]] = exprDf.loc['genetic regulation']
+        transcriptomic_regulation_df[conditions[i]] = exprDf.loc['translation regulation']
+        cytoskeleton_regulation_df[conditions[i]] = exprDf.loc['cytoskeleton regulation']
+        redox_regulation_df[conditions[i]] = exprDf.loc['redox regulation']
+        immune_regulation_df[conditions[i]] = exprDf.loc['immune regulation']
+        other_df[conditions[i]] = exprDf.loc['miscellaneous functions']
+    catabolic_enzyme_df = catabolic_enzyme_df.assign(Function="Catabolic enzyme")
+    isomerase_enzyme_df = isomerase_enzyme_df.assign(Function="Isomerase enzyme")
+    binding_enzyme_df = binding_enzyme_df.assign(Function="Binding enzyme")
+    ion_regulation_df = ion_regulation_df.assign(Function="Ionic regulation")
+    genetic_regulation_df = genetic_regulation_df.assign(Function="Genetic regulation")
+    transcriptomic_regulation_df = transcriptomic_regulation_df.assign(Function="Transcriptomic regulation")
+    cytoskeleton_regulation_df = cytoskeleton_regulation_df.assign(Function="Cytoskeleton regulation")
+    redox_regulation_df = redox_regulation_df.assign(Function="Redox regulation")
+    other_df = other_df.assign(Function="Miscellaneous functions")
+    concatDf = pd.concat([catabolic_enzyme_df,isomerase_enzyme_df,binding_enzyme_df,ion_regulation_df,
+    genetic_regulation_df,transcriptomic_regulation_df,cytoskeleton_regulation_df,redox_regulation_df,other_df]) 
+    meltDf = pd.melt(concatDf,id_vars=['Function'],var_name=['Conditions'])
+    ax = sb.boxplot(x="Function", y="value", hue="Conditions",data=meltDf)
+    ax.set_ylabel( "LFC" , size = 10)
+    ax.set_xticklabels(ax.get_xticklabels(),rotation=45)
+    ax.set_xlabel( "Protein functions" , size = 5) 
+    plt.show()
     
-    
-        
-    
-    df1 = pd.DataFrame(np.random.randn(4,8), columns=list(range(1,9))).assign(Trial=1) ; print(df1)
     """
+    df1 = pd.DataFrame(np.random.randn(4,8), columns=list(range(1,9))).assign(Trial=1) 
     df2 = pd.DataFrame(np.random.randn(5,5), columns=list(range(1,6))).assign(Trial=2)
     df3 = pd.DataFrame(np.random.randn(5,5), columns=list(range(1,6))).assign(Trial=3)
     cdf = pd.concat([df1, df2, df3])                                # CONCATENATE
     mdf = pd.melt(cdf, id_vars=['Trial'], var_name=['Number'])      # MELT
     ax = sb.boxplot(x="Trial", y="value", hue="Number", data=mdf)  # RUN PLOT
-    plt.show()
     """
+    
+    #plt.show()
+
+def exploitResultsBoxplots(dfs,conditions,experiment):
+    if len(conditions) == 0:
+        print('No results are available for this experiment condition')
+        return
+    outputPath = '../../../../../output/functionalGenesAnnotation/'
+    
+    
+        
+    
+    
+    
