@@ -1,0 +1,299 @@
+---
+title: "heatmap_Astroides"
+author: "Marc Meynadier"
+date: "2023-08-01"
+output: html_document
+---
+
+```{r}
+packageCheckClassic <- function(x){
+  # 
+  for( i in x ){
+    if( ! require( i , character.only = TRUE ) ){
+      install.packages( i , dependencies = TRUE )
+      require( i , character.only = TRUE )
+    }
+  }
+}
+
+packageCheckClassic(c('DESeq2','adegenet','devtools','BiocManager','ggplot2','ggrepel','markdown','pheatmap','RColorBrewer','genefilter','gplots','vegan','dplyr','limma'))
+#BiocManager::install('tximport', force = TRUE)
+#BiocManager::install('apeglm')
+#BiocManager::install('ashr')
+#BiocManager::install("EnhancedVolcano")
+#BiocManager::install("arrayQualityMetrics")
+if (!require(devtools)) install.packages("devtools")
+devtools::install_github("yanlinlin82/ggvenn")
+library("adegenet")
+library('ggvenn')
+library('tximport')
+library('apeglm')
+library('ashr')
+library('EnhancedVolcano')
+library('BiocManager')
+source_url("https://raw.githubusercontent.com/obigriffith/biostar-tutorials/master/Heatmaps/heatmap.3.R")
+
+# Working environment and data loading
+scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
+setwd(scriptPath)
+candidateGenes<-read.csv('candidateGenes.csv',header=T,sep=',')
+samples<-read.table('tximport_design_preliminarySamples.txt',header=T)
+dataPath<-'/Users/mmeynadier/Documents/PhD/species/Astroides/analysis/STARmapping/teixido/adult/nov2016'
+outputPath<-'/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/output/DESeq2/annotatedGenome/adult/preliminarySamples/'
+setwd(dataPath)
+data<-list.files(pattern = "*ReadsPerGene.out.tab$", full.names = TRUE)
+counts.files <- lapply(data, read.table, skip = 4)
+raw_counts <- as.data.frame(sapply(counts.files, function(x) x[ , 4]))
+data <- gsub( "Users/mmeynadier/Documents/PhD/species/Astroides/analysis/STARmapping/teixido/adult/nov2016", "", data )
+data <- gsub( "_ReadsPerGene.out.tab", "", data )
+data <- gsub( "./", "", data )
+colnames(raw_counts) <- data
+row.names(raw_counts) <- counts.files[[1]]$V1
+
+
+heatmap_genes <- function(candidateGenes,vsd,species,genesType,colNames,dataset) {
+  
+  newColNames = list()
+  len = length(newColNames)
+  newColNamesSplit = strsplit(sub("^([^_]+_[^_]+)_", "\\1,", colNames), ",")
+  c = 1
+  for (i in newColNamesSplit) {
+    nw = strsplit(sub("^([^_]+_[^_]+_[^_]+)_", "\\1,", i[2]), ",")
+    newColNames[[len+c]] = nw[[1]][1]
+    c = c + 1
+  }
+  
+  listGenes <- candidateGenes$genes
+  listGenes2 <- which(rownames(vsd) %in% listGenes)
+  index <- which(listGenes %in% rownames(vsd))
+  candidateGenes2 <- candidateGenes[index, ] 
+  listProt <- candidateGenes2$pfam_annotation
+  listGenes3 <- candidateGenes2$genes
+  
+  vsdCandidate <- vsd[listGenes3, ]
+  
+  colnames(vsdCandidate) <- newColNames
+  rownames(vsdCandidate) <- listProt
+  
+  topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
+  
+  heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
+            key.title = "",
+            col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
+            ylab="PFAM annotation of expressed genes",Colv = F,margins = c(6, 7))
+  main=paste("Expression level of genes related to",genesType,"in",species,"\n",dataset,sep= " ")
+  title(main, cex.main = 0.9)
+}
+
+# nov2016
+
+dds<-DESeqDataSetFromMatrix(countData = raw_counts, colData = samples,design = ~site)
+keep <- rowSums(counts(dds)) >= 10 
+dds <- dds[keep,]
+
+dds<-DESeq(dds)
+cbind(resultsNames(dds))
+res_pv_gm<-results(dds, contrast=c("site","pv","gm"), alpha = 0.05)
+res_sa_gm<-results(dds, contrast=c("site","sa","gm"), alpha = 0.05)
+res_pv_sa<-results(dds, contrast=c("site","pv","sa"), alpha = 0.05)
+
+vsd = vst(dds,blind=T)
+
+nov2016Cali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/nov2016.csv',header=T,sep=',')
+exclusiveGm <- read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/nov2016_gm.csv',header=T,sep=',')
+
+heatmap_genes(nov2016Cali,vsd,'Astroides','calcification',vsd@colData@rownames,"nov2016")
+
+heatmap_genes(exclusiveGm,vsd,'Astroides','calcification',vsd@colData@rownames,"nov2016 - GM exclusive DEGs")
+
+
+# may2018
+
+scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
+setwd(scriptPath)
+samples<-read.table('tximport_design_trueTransplant.txt',header=T)
+samplesBck<-read.table('tximport_design_trueTransplant_bck.txt',header=T)
+samplesTro<-read.table('tximport_design_trueTransplant_tro.txt',header=T)
+samplesBckTro<-read.table('tximport_design_trueTransplant_tro_bck.txt',header=T)
+samplesTrt<-read.table('tximport_design_trueTransplant_trt.txt',header=T)
+candidateGenes<-read.csv('candidateGenes.csv',header=T,sep=',')
+dataPath<-'/Users/mmeynadier/Documents/PhD/species/Astroides/analysis/STARmapping/teixido/adult/may2018'
+outputPath<-'/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/output/DESeq2/annotatedGenome/adult/trueTransplant/'
+setwd(dataPath)
+data<-list.files(pattern = "*ReadsPerGene.out.tab$", full.names = TRUE)
+counts.files <- lapply(data, read.table, skip = 4)
+raw_counts <- as.data.frame(sapply(counts.files, function(x) x[ , 4]))
+data <- gsub( "Users/mmeynadier/Documents/PhD/species/Astroides/analysis/STARmapping/teixido/adult/may2018", "", data )
+data <- gsub( "_ReadsPerGene.out.tab", "", data )
+data <- gsub( "./", "", data )
+colnames(raw_counts) <- data
+row.names(raw_counts) <- counts.files[[1]]$V1
+unusedData<-setdiff(colnames(raw_counts),samples[['sample']])
+raw_counts = raw_counts[,!(names(raw_counts) %in% unusedData),]
+
+raw_counts_bck <- raw_counts[,grep("bck", colnames(raw_counts))] 
+raw_counts_tro <- raw_counts[,grep("tro", colnames(raw_counts))] 
+raw_counts_bck_tro <- raw_counts[,grep("bck|tro", colnames(raw_counts))] 
+raw_counts_trt <- raw_counts[,grep("trt", colnames(raw_counts))] 
+
+dds<-DESeqDataSetFromMatrix(countData = raw_counts, colData = samples,design = ~originSite_finalSite_experiment)
+ddsBck<-DESeqDataSetFromMatrix(countData = raw_counts_bck, colData = samplesBck,design = ~originSite_finalSite_experiment)
+ddsTro<-DESeqDataSetFromMatrix(countData = raw_counts_tro, colData = samplesTro,design = ~originSite_finalSite_experiment)
+ddsBckTro<-DESeqDataSetFromMatrix(countData = raw_counts_bck_tro, colData = samplesBckTro,design = ~originSite_finalSite_experiment)
+ddsTrt<-DESeqDataSetFromMatrix(countData = raw_counts_trt, colData = samplesTrt,design = ~originSite_finalSite_experiment)
+
+keep <- rowSums(counts(dds)) >= 10 
+dds <- dds[keep,]
+keep <- rowSums(counts(ddsBck)) >= 10 
+ddsBck <- ddsBck[keep,]
+keep <- rowSums(counts(ddsTro)) >= 10 
+ddsTro <- ddsTro[keep,]
+keep <- rowSums(counts(ddsBckTro)) >= 10 
+ddsBckTro <- ddsBckTro[keep,]
+keep <- rowSums(counts(ddsTrt)) >= 10 
+ddsTrt <- ddsTrt[keep,]
+
+dds<-DESeq(dds)
+ddsBck<-DESeq(ddsBck)
+ddsTro<-DESeq(ddsTro)
+ddsBckTro<-DESeq(ddsBckTro)
+ddsTrt<-DESeq(ddsTrt)
+cbind(resultsNames(dds))
+pv_pv_bck_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_bck","gm_gm_bck"), alpha = 0.05)
+sp_sp_bck_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_bck","gm_gm_bck"), alpha = 0.05)
+pv_pv_bck_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_bck","sp_sp_bck"), alpha = 0.05)
+gm_gm_tro_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_gm_tro","gm_gm_bck"), alpha = 0.05)
+pv_pv_tro_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_tro","pv_pv_bck"), alpha = 0.05)
+sp_sp_tro_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_tro","sp_sp_bck"), alpha = 0.05)
+pv_pv_tro_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_tro","gm_gm_bck"), alpha = 0.05)
+sp_sp_tro_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_tro","gm_gm_bck"), alpha = 0.05)
+pv_gm_trt_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_gm_trt","pv_pv_bck"), alpha = 0.05)
+sp_gm_trt_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_gm_trt","sp_sp_bck"), alpha = 0.05)
+pv_gm_trt_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_gm_trt","gm_gm_bck"), alpha = 0.05)
+sp_gm_trt_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_gm_trt","gm_gm_bck"), alpha = 0.05)
+gm_pv_trt_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_pv_trt","pv_pv_bck"), alpha = 0.05)
+gm_sp_trt_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_sp_trt","sp_sp_bck"), alpha = 0.05)
+gm_pv_trt_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_pv_trt","gm_gm_bck"), alpha = 0.05)
+gm_sp_trt_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_sp_trt","gm_gm_bck"), alpha = 0.05)
+
+vsd = vst(dds,blind=T)
+vsdBck = vst(ddsBck,blind=T)
+vsdTro = vst(ddsTro,blind=T)
+vsdBckTro = vst(ddsBckTro,blind=T)
+vsdTrt = vst(ddsTrt,blind=T)
+
+may2018BckCali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/may2018_bck.csv',header=T,sep=',')
+may2018ExclBckCali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/may2018_excl_gm_bck.csv',header=T,sep=',')
+
+may2018TroCali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/may2018_tro.csv',header=T,sep=',')
+may2018ExclTroCali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/may2018_excl_gm_tro.csv',header=T,sep=',')
+
+may2018TrtCali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/may2018_trt.csv',header=T,sep=',')
+may2018ExclTrtCali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/may2018_excl_gm_trt.csv',header=T,sep=',')
+
+heatmap_genes(may2018BckCali,vsdBck,'Astroides','calcification',vsdBck@colData@rownames,"may2018 - background")
+heatmap_genes(may2018ExclBckCali,vsdBck,'Astroides','calcification',vsdBck@colData@rownames,"may2018 - background GM exclusive DEGs")
+
+heatmap_genes(may2018TroCali,vsdTro,'Astroides','calcification',vsdTro@colData@rownames,"may2018 - transplant origin")
+heatmap_genes(may2018ExclTroCali,vsdTro,'Astroides','calcification',vsdTro@colData@rownames,"may2018 - transplant origin GM exclusive DEGs")
+
+heatmap_genes(may2018TrtCali,vsdTrt,'Astroides','calcification',vsdTrt@colData@rownames,"may2018 - transplant true")
+heatmap_genes(may2018ExclTrtCali,vsdTrt,'Astroides','calcification',vsdTrt@colData@rownames,"may2018 - transplant true GM exclusive DEGs")
+
+# sept2018 
+
+scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
+setwd(scriptPath)
+samples<-read.table('tximport_design_gardenShort.txt',header=T)
+samplesBck<-read.table('tximport_design_gardenShort_bck.txt',header=T)
+samplesGas<-read.table('tximport_design_gardenShort_gas.txt',header=T)
+samplesGasSame<-read.table('tximport_design_gardenShort_gas_same.txt',header=T)
+samplesGasDiff<-read.table('tximport_design_gardenShort_gas_diff.txt',header=T)
+candidateGenes<-read.csv('candidateGenes.csv',header=T,sep=',')
+dataPath<-'/Users/mmeynadier/Documents/PhD/species/Astroides/analysis/STARmapping/teixido/adult/sept2018'
+outputPath<-'/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/output/DESeq2/annotatedGenome/adult/gardenShort/'
+setwd(dataPath)
+data<-list.files(pattern = "*ReadsPerGene.out.tab$", full.names = TRUE)
+counts.files <- lapply(data, read.table, skip = 4)
+raw_counts <- as.data.frame(sapply(counts.files, function(x) x[ , 4]))
+data <- gsub( "Users/mmeynadier/Documents/PhD/species/Astroides/analysis/STARmapping/teixido/adult/sept2018", "", data )
+data <- gsub( "_ReadsPerGene.out.tab", "", data )
+data <- gsub( "./", "", data )
+colnames(raw_counts) <- data
+row.names(raw_counts) <- counts.files[[1]]$V1
+
+raw_counts_bck <- raw_counts[,grep("bck", colnames(raw_counts))] 
+raw_counts_gas <- raw_counts[,grep("gas", colnames(raw_counts))] 
+regexGasSame <- sub('abundance_adult_sept2018_','',samplesGasSame$samples)
+regexGasSame <- sub('_[^_]*$', '', regexGasSame)
+regexGasSame <- sub('_[^_]*$', '', regexGasSame)
+regexGasDiff <- sub('abundance_adult_sept2018_','',samplesGasDiff$samples)
+regexGasDiff <- sub('_[^_]*$', '', regexGasDiff)
+regexGasDiff <- sub('_[^_]*$', '', regexGasDiff)
+raw_counts_gas_same <- raw_counts[,grep(paste(regexGasSame,collapse="|"), colnames(raw_counts))] 
+raw_counts_gas_diff <- raw_counts[,grep(paste(regexGasDiff,collapse="|"), colnames(raw_counts))]
+
+dds<-DESeqDataSetFromMatrix(countData = raw_counts, colData = samples,design = ~originSite_finalSite_experiment)
+ddsBck<-DESeqDataSetFromMatrix(countData = raw_counts_bck, colData = samplesBck,design = ~originSite_finalSite_experiment)
+ddsGas<-DESeqDataSetFromMatrix(countData = raw_counts_gas, colData = samplesGas,design = ~originSite_finalSite_experiment)
+ddsGasSame<-DESeqDataSetFromMatrix(countData = raw_counts_gas_same, colData = samplesGasSame,design = ~originSite_finalSite_experiment)
+ddsGasDiff<-DESeqDataSetFromMatrix(countData = raw_counts_gas_diff, colData = samplesGasDiff,design = ~originSite_finalSite_experiment)
+
+dds <- dds[keep,]
+keep <- rowSums(counts(ddsBck)) >= 10 
+ddsBck <- ddsBck[keep,]
+keep <- rowSums(counts(ddsGas)) >= 10 
+ddsGas <- ddsGas[keep,]
+keep <- rowSums(counts(ddsGasSame)) >= 10 
+ddsGasSame <- ddsGasSame[keep,]
+keep <- rowSums(counts(ddsGasDiff)) >= 10 
+ddsGasDiff <- ddsGasDiff[keep,]
+
+dds<-DESeq(dds)
+ddsBck<-DESeq(ddsBck)
+ddsGas<-DESeq(ddsGas)
+ddsGasSame<-DESeq(ddsGasSame)
+ddsGasDiff<-DESeq(ddsGasDiff)
+cbind(resultsNames(dds))
+pv_pv_bck_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_bck","gm_gm_bck"), alpha = 0.05)
+sp_sp_bck_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_bck","gm_gm_bck"), alpha = 0.05)
+pv_pv_bck_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_bck","sp_sp_bck"), alpha = 0.05)
+gm_gm_gas_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_gm_gas","gm_gm_bck"), alpha = 0.05)
+pv_pv_gas_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_gas","pv_pv_bck"), alpha = 0.05)
+sp_sp_gas_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_gas","sp_sp_bck"), alpha = 0.05)
+pv_pv_gas_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_gas","gm_gm_bck"), alpha = 0.05)
+sp_sp_gas_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_gas","gm_gm_bck"), alpha = 0.05)
+pv_gm_gas_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_gm_gas","pv_pv_bck"), alpha = 0.05)
+sp_gm_gas_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_gm_gas","sp_sp_bck"), alpha = 0.05)
+pv_gm_gas_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_gm_gas","gm_gm_bck"), alpha = 0.05)
+sp_gm_gas_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_gas","gm_gm_bck"), alpha = 0.05)
+gm_pv_gas_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_pv_gas","pv_pv_bck"), alpha = 0.05)
+gm_sp_gas_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_sp_gas","sp_sp_bck"), alpha = 0.05)
+gm_pv_gas_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_pv_gas","gm_gm_bck"), alpha = 0.05)
+gm_sp_gas_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_sp_gas","gm_gm_bck"), alpha = 0.05)
+
+vsd = vst(dds,blind=T)
+vsdBck = vst(ddsBck,blind=T)
+vsdGas = vst(ddsGas,blind=T)
+vsdGasSame = vst(ddsGasSame,blind=T)
+vsdGasDiff = vst(ddsGasDiff,blind=T)
+
+sept2018BckCali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/sept2018_bck.csv',header=T,sep=',')
+sept2018ExclBckCali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/sept2018_excl_gm_bck.csv',header=T,sep=',')
+
+sept2018GasSameCali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/sept2018_gas_same.csv',header=T,sep=',')
+sept2018ExclGasSameCali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/sept2018_excl_gm_gas_same.csv',header=T,sep=',')
+
+sept2018GasDiffCali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/sept2018_gas_diff.csv',header=T,sep=',')
+sept2018ExclGasDiffCali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/sept2018_excl_gm_gas_diff.csv',header=T,sep=',')
+
+heatmap_genes(sept2018BckCali,vsdBck,'Astroides','calcification',vsdBck@colData@rownames,"sept2018 - background")
+heatmap_genes(sept2018ExclBckCali,vsdBck,'Astroides','calcification',vsdBck@colData@rownames,"sept2018 - background GM exclusive DEGs")
+
+heatmap_genes(sept2018GasSameCali,vsdGasSame,'Astroides','calcification',vsdGasSame@colData@rownames,"sept2018 - garden short same site")
+heatmap_genes(sept2018ExclGasSameCali,vsdGasSame,'Astroides','calcification',vsdGasSame@colData@rownames,"sept2018 - garden short same site GM exclusive DEGs")
+
+heatmap_genes(sept2018GasDiffCali,vsdGasDiff,'Astroides','calcification',vsdGasDiff@colData@rownames,"sept2018 - garden short different site")
+heatmap_genes(sept2018ExclGasDiffCali,vsdGasDiff,'Astroides','calcification',vsdGasDiff@colData@rownames,"sept2018 - garden short different site GM exclusive DEGs")
+```
+

@@ -1,12 +1,12 @@
-dir samples Site
-juvenile abundance_juvenile_rep1_gm_low_R1BA8_ GM
-juvenile abundance_juvenile_rep2_gm_low_R2EA3_ GM
-juvenile abundance_juvenile_rep3_gm_low_R3DA1_ GM
-juvenile abundance_juvenile_rep4_gm_low_R4EA1_ GM
-juvenile abundance_juvenile_rep1_sp_amb_R1AA8_ SP
-juvenile abundance_juvenile_rep2_sp_amb_R2BA7_ SP
-juvenile abundance_juvenile_rep3_sp_amb_R3EA10_ SP
-juvenile abundance_juvenile_rep4_sp_amb_R4AA12_ SP
+samples site 
+juvenile_rep1_gm_low_R1BA8_paired_trimmed GM
+juvenile_rep1_sp_amb_R1AA8_paired_trimmed SP 
+juvenile_rep2_sp_amb_R2BA7_paired_trimmed SP 
+juvenile_rep3_gm_low_R3DA1_paired_trimmed GM 
+juvenile_rep3_sp_amb_R3EA10_paired_trimmed SP 
+juvenile_rep4_gm_low_R4EA1_paired_trimmed GM 
+juvenile_rep4_sp_amb_R4AA12_paired_trimmed SP 
+
 
 
 

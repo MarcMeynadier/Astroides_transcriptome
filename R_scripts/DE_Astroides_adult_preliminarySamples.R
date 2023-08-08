@@ -13,40 +13,60 @@ packageCheckClassic <- function(x){
   }
 }
 
-packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown','pheatmap','RColorBrewer','genefilter','gplots','vegan','dplyr'))
+packageCheckClassic(c('DESeq2','adegenet','devtools','BiocManager','ggplot2','ggrepel','markdown','pheatmap','RColorBrewer','genefilter','gplots','vegan','dplyr','limma'))
 #BiocManager::install('tximport', force = TRUE)
 #BiocManager::install('apeglm')
 #BiocManager::install('ashr')
 #BiocManager::install("EnhancedVolcano")
+#BiocManager::install("arrayQualityMetrics")
 if (!require(devtools)) install.packages("devtools")
 devtools::install_github("yanlinlin82/ggvenn")
+library("adegenet")
 library('ggvenn')
 library('tximport')
 library('apeglm')
 library('ashr')
 library('EnhancedVolcano')
+library('BiocManager')
 source_url("https://raw.githubusercontent.com/obigriffith/biostar-tutorials/master/Heatmaps/heatmap.3.R")
 
-# Working environment 
+# Working environment and data loading
 scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(scriptPath)
-samples<-read.table('tximport_design_preliminarySamples.txt',header=T)
-tx2gene<-read.table('tx2gene_adultTranscriptome',header=T)
 candidateGenes<-read.csv('candidateGenes.csv',header=T,sep=',')
-scriptPath <- sub("/[^/]+$", "", scriptPath)
-scriptPath <- sub("/[^/]+$", "", scriptPath)
-dataPath<-'/data/net/6_kallisto/adultTranscriptome/adult/1_preliminarySamples'
-outputPath<-paste(scriptPath,'/output/DESeq2/adultTranscriptome/adult/1_preliminarySamples/',sep='')
-wdPath<-paste(scriptPath,dataPath,sep='')
-setwd(wdPath)
+samples<-read.table('tximport_design_preliminarySamples.txt',header=T)
+dataPath<-'/Users/mmeynadier/Documents/PhD/species/Astroides/analysis/STARmapping/teixido/adult/nov2016'
+outputPath<-'/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/output/DESeq2/annotatedGenome/adult/preliminarySamples/'
+setwd(dataPath)
+data<-list.files(pattern = "*ReadsPerGene.out.tab$", full.names = TRUE)
+counts.files <- lapply(data, read.table, skip = 4)
+raw_counts <- as.data.frame(sapply(counts.files, function(x) x[ , 4]))
+data <- gsub( "Users/mmeynadier/Documents/PhD/species/Astroides/analysis/STARmapping/teixido/adult/nov2016", "", data )
+data <- gsub( "_ReadsPerGene.out.tab", "", data )
+data <- gsub( "./", "", data )
+colnames(raw_counts) <- data
+row.names(raw_counts) <- counts.files[[1]]$V1
 
-# Data importation - txImport
-files<-paste0(samples$sample,'.tsv')
-names(files)<-samples$sample
-txi<-tximport(files = files,type='kallisto',tx2gene = tx2gene)
-names(txi)
-head(txi$counts)
-dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~site)
+# DDS object
+dds<-DESeqDataSetFromMatrix(countData = raw_counts, colData = samples,design = ~site)
+
+# If data from kallisto
+# tx2gene<-read.table('tx2gene_adultTranscriptome',header=T)
+# scriptPath <- sub("/[^/]+$", "", scriptPath)
+# scriptPath <- sub("/[^/]+$", "", scriptPath)
+# dataPath<-'/data/net/6_kallisto/adultTranscriptome/adult/1_preliminarySamples'
+# outputPath<-paste(scriptPath,'/output/DESeq2/adultTranscriptome/adult/1_preliminarySamples/',sep='')
+# 
+# wdPath<-paste(scriptPath,dataPath,sep='')
+# setwd(wdPath)
+# 
+# # Data importation - txImport
+# files<-paste0(samples$sample,'.tsv')
+# names(files)<-samples$sample
+# txi<-tximport(files = files,type='kallisto',tx2gene = tx2gene)
+# names(txi)
+# head(txi$counts)
+# dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~site)
 
 # pre-filtering
 keep <- rowSums(counts(dds)) >= 10 
@@ -65,9 +85,7 @@ res_pv_sa<-results(dds, contrast=c("site","pv","sa"), alpha = 0.05)
 
 #MA-plot
 png(paste(outputPath,'DGE_MA-plot_adult_preliminarySamples_pv_VS_gm.png',sep=''), width=7, height=5, units = "in", res = 300)
-resLFC = lfcShrink(dds, contrast=c("site","pv","gm"), 
-                   type="ashr")
-plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), main = "MA-plot for the shrunken log2 fold changes\nPreliminary samples : pv VS gm")
+DESeq2::plotMA(res_pv_gm,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\nGarden short : pv VS gm")
 dev.off()
 
 # Volcano plot
@@ -87,10 +105,7 @@ dev.off()
 
 #MA-plot
 png(paste(outputPath,'DGE_MA-plot_adult_preliminarySamples_sa_VS_gm.png',sep=''), width=7, height=5, units = "in", res = 300)
-resLFC = lfcShrink(dds, contrast=c("site","sa","gm"), 
-                   type="ashr")
-plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), 
-       main = "MA-plot for the shrunken log2 fold changes\nPreliminary samples : sa VS gm")
+DESeq2::plotMA(res_sa_gm,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\nGarden short : sa VS gm")
 dev.off()
 
 # Volcano plot
@@ -108,10 +123,7 @@ dev.off()
 
 #MA-plot
 png(paste(outputPath,'DGE_MA-plot_adult_preliminarySamples_pv_VS_sa.png',sep=''), width=7, height=5, units = "in", res = 300)
-resLFC = lfcShrink(dds, contrast=c("site","pv","sa"), 
-                   type="ashr")
-plotMA(resLFC, alpha = 0.05, ylim=c(-25,25), 
-       main = "MA-plot for the shrunken log2 fold changes\nPreliminary samples : pv VS sa")
+DESeq2::plotMA(res_pv_sa,ylim=c(-50,50),main="MA-plot for the shrunken log2 fold changes\nGarden short : pv VS sa")
 dev.off()
 
 # Volcano plot
@@ -127,11 +139,18 @@ dev.off()
 
 # Principal Component Analysis
 
+
 vsd = vst(dds,blind=T)
+mat <- assay(vsd)
+mm <- model.matrix(~site,colData(vsd))
+mat<-limma::removeBatchEffect(mat,batch1=vsd$site,design=mm)
+assay(vsd)<-mat
+
 
 pcaData = plotPCA(vsd, intgroup="site", 
-                  returnData=TRUE)
+                  returnData=TRUE,ntop=200)
 percentVar = round(100 * attr(pcaData, "percentVar"))
+
 
 png(paste(outputPath,'DGE_PCA_adult_preliminarySamples.png',sep=''), width=7, height=7, units = "in", res = 300)
 ggplot(pcaData, aes(PC1, PC2, colour = site)) + 
@@ -173,32 +192,39 @@ ggvenn(
 )
 dev.off()
 
-# Candidate genes heatmap
+# Candidate genes heatmap global
 
 listGenes <- candidateGenes$genes
+listGenes <- gsub("^([^.]*.[^.]*).*$", "\\1", listGenes)
+listGenes <- unique(listGenes)
 listGenes2 <- which(rownames(vsd) %in% listGenes)
 index <- which(listGenes %in% rownames(vsd))
 candidateGenes2 <- candidateGenes[index, ] 
 listProt <- candidateGenes2$pfam_annotation
 listGenes3 <- candidateGenes2$genes
+listGenes3 <- gsub("^([^.]*.[^.]*).*$", "\\1", listGenes3)
+
+removeGenes = c("STRG.35059","STRG.43478")
+indexRemoveGenes = which(listGenes3 %in% removeGenes)
+listProt <- listProt[-indexRemoveGenes]
+listGenes3 <- listGenes3[! listGenes3 %in% c("STRG.35059","STRG.43478")]
+
 
 vsdCandidate <- vsd[listGenes3, ]
 
-labColName <- c('gm','gm','gm','gm','pv','pv','pv','sa','sa','sa')
+labColName <- samples$originSite_finalSite_experiment
 colnames(vsdCandidate) <- labColName
-rownames(vsdCandidate) <- listProt
+rownames(vsdCandidate) <- paste(listProt,listGenes3,sep=" - ")
 
-topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
+topVarGenesVsd <- order(rowVars(assay(vsdCandidate)), decreasing=TRUE)
+assayVsdCandidate<-unique(assay(vsdCandidate))
 png(paste(outputPath,'candidateGenes_preliminarySamples_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
-heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
-          key.title = "",
-          col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
-          xlab="sampling sites",ylab="proteins associated to genes",Colv=NA,margins = c(4, 7))
-
-main='Differential expression of 50 most expressed candidates genes\n\nPreliminary samples'
-title(main, cex.main = 0.7)
+pheatmap(assayVsdCandidate)
 dev.off()
 
+png(paste(outputPath,'candidateGenes_preliminarySamples_heatmap_rowScaling.png',sep=''), width=7, height=7, units = "in", res = 300)
+pheatmap(assayVsdCandidate,scale = "row")
+dev.off()
 
 # Inferences statistics
 count_tab_assay <- assay(vsd)
@@ -207,8 +233,56 @@ adonis(data=samples,dist_tab_assay ~ site, method="euclidian")
 anova(betadisper(dist_tab_assay,samples$site))
 
 # Exporting results
-write.csv(resOrderedDF_pv_gm, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/adult/DESeq2_results_adult_preliminarySamples_pv_VS_gm.csv',sep=''))
-write.csv(resOrderedDF_sa_gm, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/adult/DESeq2_results_adult_preliminarySamples_sa_VS_gm.csv',sep=''))
-write.csv(resOrderedDF_pv_sa, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/adult/DESeq2_results_adult_preliminarySamples_pv_VS_sa.csv',sep=''))
+write.csv(resOrderedDF_pv_gm, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_preliminarySamples_pv_VS_gm.csv',sep='\t')
+write.csv(resOrderedDF_sa_gm, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_preliminarySamples_sa_VS_gm.csv',sep='\t')
+write.csv(resOrderedDF_pv_sa, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_preliminarySamples_pv_VS_sa.csv',sep='\t')
+
+
+heatmap_genes <- function(candidateGenes,vsd,species,genesType,colNames,dataset) {
+  
+  newColNames = list()
+  len = length(newColNames)
+  newColNamesSplit = strsplit(sub("^([^_]+_[^_]+)_", "\\1,", colNames), ",")
+  c = 1
+  for (i in newColNamesSplit) {
+    nw = strsplit(sub("^([^_]+_[^_]+_[^_]+)_", "\\1,", i[2]), ",")
+    newColNames[[len+c]] = nw[[1]][1]
+    c = c + 1
+  }
+  
+  listGenes <- candidateGenes$genes
+  listGenes2 <- which(rownames(vsd) %in% listGenes)
+  index <- which(listGenes %in% rownames(vsd))
+  candidateGenes2 <- candidateGenes[index, ] 
+  listProt <- candidateGenes2$pfam_annotation
+  listGenes3 <- candidateGenes2$genes
+  
+  vsdCandidate <- vsd[listGenes3, ]
+  
+  colnames(vsdCandidate) <- newColNames
+  rownames(vsdCandidate) <- listProt
+  
+  topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
+  
+  heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
+            key.title = "",
+            col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
+            ylab="PFAM annotation of expressed genes",Colv = F,margins = c(6, 7))
+  main=paste("Expression level of genes related to",genesType,"in",species,"\n",dataset,sep= " ")
+  title(main, cex.main = 0.9)
+}
+
+
+nov2016Cali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/nov2016_ortho.csv',header=T,sep=',')
+exclusiveGm <- read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/nov2016_gm.csv',header=T,sep=',')
+
+heatmap_genes(nov2016Cali,vsd,'Astroides','calcification',vsd@colData@rownames,"nov2016 orthologs")
+
+
+
+
+
+
+
 
 sessionInfo()

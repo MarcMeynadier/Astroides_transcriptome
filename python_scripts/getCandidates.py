@@ -80,12 +80,12 @@ def getAnnotation():
        Pandas dataframe, contains successively the gene IDs, the Pfam annotations, the Pfam codes and the protein sequences. 
     """
 
-    codingSequences = getProteinSequences()
+    #codingSequences = getProteinSequences()
     curedFile = []
-    with open('../../data/net/8_functionalAnnotation/hmmsearchOutput.out') as f:
+    with open('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/ast_all_domtbl.out') as f:
         contents = f.readlines()
     for i in contents:
-        if 'TRINITY' in i:
+        if 'STRG' in i:
             curedFile.append(i)
     geneNames=[] ; pfamAnnot= [] ; pfamCode = []
     separator = "PF"
@@ -97,8 +97,8 @@ def getAnnotation():
         pfamAnnot.append(splitAnnot) ; pfamCode.append(splitCode)
     dic={'genes':geneNames,'pfam_annotation':pfamAnnot,'pfam_code':pfamCode}
     mergeDf=pd.DataFrame(dic) 
-    mergeDf = mergeDf.merge(codingSequences,how='inner')
-    mergeDf = mergeDf.replace(to_replace ='(_i).*', value = '', regex = True)
+    #mergeDf = mergeDf.merge(codingSequences,how='inner')
+    #mergeDf = mergeDf.replace(to_replace ='(_i).*', value = '', regex = True)
     return mergeDf
 
 

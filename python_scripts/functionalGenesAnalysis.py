@@ -240,8 +240,8 @@ def main_menu(threshold,flagCandidate):
                 print('\nNo results are available for this experiment condition')
                 main_menu(threshold,flagCandidate)
             dfs,conditions,experiment = filenamesToDfFinal(filenames,experiment,flagCandidate)
-            prepareBoxplots(dfs,conditions)
-            #exploitResultsBoxplots(dfs,conditions,experiment)
+            meltDf = prepareBoxplots(dfs,conditions)
+            exploitResultsBoxplots(meltDf,conditions,experiment)
         elif answer==5:
             parsing_settings(threshold,flagCandidate)
         elif answer==6:

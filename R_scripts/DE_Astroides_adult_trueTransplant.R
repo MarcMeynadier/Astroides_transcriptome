@@ -15,7 +15,7 @@ packageCheckClassic <- function(x){
   }
 }
 
-packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown','RColorBrewer','genefilter','gplots','vegan','dplyr'))
+packageCheckClassic(c('DESeq2','devtools','BiocManager','ggplot2','ggrepel','markdown','pheatmap','RColorBrewer','genefilter','gplots','vegan','dplyr'))
 #BiocManager::install('tximport', force = TRUE)
 #BiocManager::install('apeglm')
 #BiocManager::install('ashr')
@@ -39,38 +39,67 @@ samplesBck<-read.table('tximport_design_trueTransplant_bck.txt',header=T)
 samplesTro<-read.table('tximport_design_trueTransplant_tro.txt',header=T)
 samplesBckTro<-read.table('tximport_design_trueTransplant_tro_bck.txt',header=T)
 samplesTrt<-read.table('tximport_design_trueTransplant_trt.txt',header=T)
-tx2gene<-read.table('tx2gene_adultTranscriptome',header=T)
 candidateGenes<-read.csv('candidateGenes.csv',header=T,sep=',')
-scriptPath <- sub("/[^/]+$", "", scriptPath)
-scriptPath <- sub("/[^/]+$", "", scriptPath)
-dataPath<-'/data/net/6_kallisto/adultTranscriptome/adult/4_trueTransplant'
-outputPath<-paste(scriptPath,'/output/DESeq2/adultTranscriptome/adult/4_trueTransplant/',sep='')
-wdPath<-paste(scriptPath,dataPath,sep='')
-setwd(wdPath)
+dataPath<-'/Users/mmeynadier/Documents/PhD/species/Astroides/analysis/STARmapping/teixido/adult/may2018'
+outputPath<-'/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/output/DESeq2/annotatedGenome/adult/trueTransplant/'
+setwd(dataPath)
+data<-list.files(pattern = "*ReadsPerGene.out.tab$", full.names = TRUE)
+counts.files <- lapply(data, read.table, skip = 4)
+raw_counts <- as.data.frame(sapply(counts.files, function(x) x[ , 4]))
+data <- gsub( "Users/mmeynadier/Documents/PhD/species/Astroides/analysis/STARmapping/teixido/adult/may2018", "", data )
+data <- gsub( "_ReadsPerGene.out.tab", "", data )
+data <- gsub( "./", "", data )
+colnames(raw_counts) <- data
+row.names(raw_counts) <- counts.files[[1]]$V1
+unusedData<-setdiff(colnames(raw_counts),samples[['sample']])
+raw_counts = raw_counts[,!(names(raw_counts) %in% unusedData),]
 
+raw_counts_bck <- raw_counts[,grep("bck", colnames(raw_counts))] 
+raw_counts_tro <- raw_counts[,grep("tro", colnames(raw_counts))] 
+raw_counts_bck_tro <- raw_counts[,grep("bck|tro", colnames(raw_counts))] 
+raw_counts_trt <- raw_counts[,grep("trt", colnames(raw_counts))] 
+
+# DDS object
+dds<-DESeqDataSetFromMatrix(countData = raw_counts, colData = samples,design = ~originSite_finalSite_experiment)
+ddsBck<-DESeqDataSetFromMatrix(countData = raw_counts_bck, colData = samplesBck,design = ~originSite_finalSite_experiment)
+ddsTro<-DESeqDataSetFromMatrix(countData = raw_counts_tro, colData = samplesTro,design = ~originSite_finalSite_experiment)
+ddsBckTro<-DESeqDataSetFromMatrix(countData = raw_counts_bck_tro, colData = samplesBckTro,design = ~originSite_finalSite_experiment)
+ddsTrt<-DESeqDataSetFromMatrix(countData = raw_counts_trt, colData = samplesTrt,design = ~originSite_finalSite_experiment)
+
+# If data from kallisto
+
+# tx2gene<-read.table('tx2gene_adultTranscriptome',header=T)
+# scriptPath <- sub("/[^/]+$", "", scriptPath)
+# scriptPath <- sub("/[^/]+$", "", scriptPath)
+# dataPath<-'/data/net/6_kallisto/adultTranscriptome/adult/1_preliminarySamples'
+# outputPath<-paste(scriptPath,'/output/DESeq2/adultTranscriptome/adult/4_trueTransplant/',sep='')
+# 
+# wdPath<-paste(scriptPath,dataPath,sep='')
+# setwd(wdPath)
+# 
 # Data importation - txImport
-files<-paste0(samples$samples,'.tsv')
-filesBck<-paste0(samplesBck$samples,'.tsv')
-filesTro<-paste0(samplesTro$samples,'.tsv')
-filesBckTro<-paste0(samplesBckTro$samples,'.tsv')
-filesTrt<-paste0(samplesTrt$samples,'.tsv')
-names(files)<-samples$samples
-names(filesBck)<-samplesBck$samples
-names(filesTro)<-samplesTro$samples
-names(filesBckTro)<-samplesBckTro$samples
-names(filesTrt)<-samplesTrt$samples
-txi<-tximport(files = files,type='kallisto',tx2gene = tx2gene)
-txiBck<-tximport(files = filesBck,type='kallisto',tx2gene = tx2gene)
-txiTro<-tximport(files = filesTro,type='kallisto',tx2gene = tx2gene)
-txiBckTro<-tximport(files = filesBckTro,type='kallisto',tx2gene = tx2gene)
-txiTrt<-tximport(files = filesTrt,type='kallisto',tx2gene = tx2gene)
-names(txi)
-head(txi$counts)
-dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~originSite_finalSite_experiment)
-ddsBck<-DESeqDataSetFromTximport(txiBck,colData=samplesBck,design= ~originSite_finalSite_experiment)
-ddsTro<-DESeqDataSetFromTximport(txiTro,colData=samplesTro,design= ~originSite_finalSite_experiment)
-ddsBckTro<-DESeqDataSetFromTximport(txiBckTro,colData=samplesBckTro,design= ~originSite_finalSite_experiment)
-ddsTrt<-DESeqDataSetFromTximport(txiTrt,colData=samplesTrt,design= ~originSite_finalSite_experiment)
+#files<-paste0(samples$samples,'.tsv')
+#filesBck<-paste0(samplesBck$samples,'.tsv')
+#filesTro<-paste0(samplesTro$samples,'.tsv')
+#filesBckTro<-paste0(samplesBckTro$samples,'.tsv')
+#filesTrt<-paste0(samplesTrt$samples,'.tsv')
+#names(files)<-samples$samples
+#names(filesBck)<-samplesBck$samples
+#names(filesTro)<-samplesTro$samples
+#names(filesBckTro)<-samplesBckTro$samples
+#names(filesTrt)<-samplesTrt$samples
+#txi<-tximport(files = files,type='kallisto',tx2gene = tx2gene)
+#txiBck<-tximport(files = filesBck,type='kallisto',tx2gene = tx2gene)
+#txiTro<-tximport(files = filesTro,type='kallisto',tx2gene = tx2gene)
+#txiBckTro<-tximport(files = filesBckTro,type='kallisto',tx2gene = tx2gene)
+#txiTrt<-tximport(files = filesTrt,type='kallisto',tx2gene = tx2gene)
+#names(txi)
+#head(txi$counts)
+#dds<-DESeqDataSetFromTximport(txi,colData=samples,design= ~originSite_finalSite_experiment)
+#ddsBck<-DESeqDataSetFromTximport(txiBck,colData=samplesBck,design= ~originSite_finalSite_experiment)
+#ddsTro<-DESeqDataSetFromTximport(txiTro,colData=samplesTro,design= ~originSite_finalSite_experiment)
+#ddsBckTro<-DESeqDataSetFromTximport(txiBckTro,colData=samplesBckTro,design= ~originSite_finalSite_experiment)
+#ddsTrt<-DESeqDataSetFromTximport(txiTrt,colData=samplesTrt,design= ~originSite_finalSite_experiment)
 
 # pre-filtering
 keep <- rowSums(counts(dds)) >= 10 
@@ -91,9 +120,14 @@ ddsTro<-DESeq(ddsTro)
 ddsBckTro<-DESeq(ddsBckTro)
 ddsTrt<-DESeq(ddsTrt)
 cbind(resultsNames(dds))
+pv_pv_bck_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_bck","gm_gm_bck"), alpha = 0.05)
+sp_sp_bck_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_bck","gm_gm_bck"), alpha = 0.05)
+pv_pv_bck_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_bck","sp_sp_bck"), alpha = 0.05)
 gm_gm_tro_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","gm_gm_tro","gm_gm_bck"), alpha = 0.05)
 pv_pv_tro_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_tro","pv_pv_bck"), alpha = 0.05)
 sp_sp_tro_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_tro","sp_sp_bck"), alpha = 0.05)
+pv_pv_tro_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_tro","gm_gm_bck"), alpha = 0.05)
+sp_sp_tro_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_tro","gm_gm_bck"), alpha = 0.05)
 pv_gm_trt_VS_pv_pv_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_gm_trt","pv_pv_bck"), alpha = 0.05)
 sp_gm_trt_VS_sp_sp_bck<-results(dds, contrast=c("originSite_finalSite_experiment","sp_gm_trt","sp_sp_bck"), alpha = 0.05)
 pv_gm_trt_VS_gm_gm_bck<-results(dds, contrast=c("originSite_finalSite_experiment","pv_gm_trt","gm_gm_bck"), alpha = 0.05)
@@ -313,6 +347,10 @@ dev.off()
 
 # Global
 vsd = vst(dds,blind=T)
+mat <- assay(vsd)
+mm <- model.matrix(~originSite_finalSite_experiment,colData(vsd))
+mat<-limma::removeBatchEffect(mat,batch1=vsd$originSite_finalSite_experiment,design=mm)
+assay(vsd)<-mat
 
 pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment", 
                   returnData=TRUE)
@@ -331,6 +369,10 @@ dev.off()
 
 # Background
 vsdBck = vst(ddsBck,blind=T)
+mat <- assay(vsdBck)
+mm <- model.matrix(~originSite_finalSite_experiment,colData(vsdBck))
+mat<-limma::removeBatchEffect(mat,batch1=vsdBck$originSite_finalSite_experiment,design=mm)
+assay(vsdBck)<-mat
 
 pcaData = plotPCA(vsdBck, intgroup="originSite_finalSite_experiment", 
                   returnData=TRUE)
@@ -349,6 +391,10 @@ dev.off()
 
 # Transplant origin
 vsdTro = vst(ddsTro,blind=T)
+mat <- assay(vsdTro)
+mm <- model.matrix(~originSite_finalSite_experiment,colData(vsdTro))
+mat<-limma::removeBatchEffect(mat,batch1=vsdTro$originSite_finalSite_experiment,design=mm)
+assay(vsdTro)<-mat
 
 pcaData = plotPCA(vsdTro, intgroup="originSite_finalSite_experiment", 
                   returnData=TRUE)
@@ -367,6 +413,10 @@ dev.off()
 
 # Background & transplant origin
 vsdBckTro = vst(ddsBckTro,blind=T)
+mat <- assay(vsdBckTro)
+mm <- model.matrix(~originSite_finalSite_experiment,colData(vsdBckTro))
+mat<-limma::removeBatchEffect(mat,batch1=vsdBckTro$originSite_finalSite_experiment,design=mm)
+assay(vsdBckTro)<-mat
 
 pcaData = plotPCA(vsdBckTro, intgroup="originSite_finalSite_experiment", 
                   returnData=TRUE)
@@ -384,6 +434,10 @@ dev.off()
 
 # True transplant
 vsdTrt = vst(ddsTrt,blind=T)
+mat <- assay(vsdTrt)
+mm <- model.matrix(~originSite_finalSite_experiment,colData(vsdTrt))
+mat<-limma::removeBatchEffect(mat,batch1=vsdTrt$originSite_finalSite_experiment,design=mm)
+assay(vsdTrt)<-mat
 
 pcaData = plotPCA(vsdTrt, intgroup="originSite_finalSite_experiment", 
                   returnData=TRUE)
@@ -401,6 +455,17 @@ ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) +
 dev.off()
 
 # Venn diagramm 
+
+# bck
+resOrdered_pv_pv_bck_VS_gm_gm_bck <- pv_pv_bck_VS_gm_gm_bck[order(pv_pv_bck_VS_gm_gm_bck$padj),]
+resOrderedDF_pv_pv_bck_VS_gm_gm_bck <- as.data.frame(resOrdered_pv_pv_bck_VS_gm_gm_bck)
+
+resOrdered_sp_sp_bck_VS_gm_gm_bck <- sp_sp_bck_VS_gm_gm_bck[order(sp_sp_bck_VS_gm_gm_bck$padj),]
+resOrderedDF_sp_sp_bck_VS_gm_gm_bck <- as.data.frame(resOrdered_sp_sp_bck_VS_gm_gm_bck)
+
+resOrdered_pv_pv_bck_VS_sp_sp_bck <- pv_pv_bck_VS_gm_gm_bck[order(pv_pv_bck_VS_sp_sp_bck$padj),]
+resOrderedDF_pv_pv_bck_VS_sp_sp_bck <- as.data.frame(resOrdered_pv_pv_bck_VS_sp_sp_bck)
+
 
 # tro VS bck diagramm
 resOrdered_gm_gm_tro_VS_gm_gm_bck <- gm_gm_tro_VS_gm_gm_bck[order(gm_gm_tro_VS_gm_gm_bck$padj),]
@@ -420,6 +485,20 @@ resOrderedDF_sp_sp_tro_VS_sp_sp_bck <- as.data.frame(resOrdered_sp_sp_tro_VS_sp_
 resOrderedDF_sp_sp_tro_VS_sp_sp_bck_venn <- filter(resOrderedDF_sp_sp_tro_VS_sp_sp_bck,padj < 0.05)
 resOrderedDF_sp_sp_tro_VS_sp_sp_bck_venn <- list(rownames(resOrderedDF_sp_sp_tro_VS_sp_sp_bck_venn))
 resOrderedDF_sp_sp_tro_VS_sp_sp_bck_venn <- unlist(resOrderedDF_sp_sp_tro_VS_sp_sp_bck_venn)
+
+
+resOrdered_sp_sp_tro_VS_gm_gm_bck <- sp_sp_tro_VS_gm_gm_bck[order(sp_sp_tro_VS_gm_gm_bck$padj),]
+resOrderedDF_sp_sp_tro_VS_gm_gm_bck <- as.data.frame(resOrdered_sp_sp_tro_VS_gm_gm_bck)
+resOrderedDF_sp_sp_tro_VS_gm_gm_bck_venn <- filter(resOrderedDF_sp_sp_tro_VS_gm_gm_bck,padj < 0.05)
+resOrderedDF_sp_sp_tro_VS_gm_gm_bck_venn <- list(rownames(resOrderedDF_sp_sp_tro_VS_gm_gm_bck_venn))
+resOrderedDF_sp_sp_tro_VS_gm_gm_bck_venn <- unlist(resOrderedDF_sp_sp_tro_VS_gm_gm_bck_venn)
+
+resOrdered_pv_pv_tro_VS_gm_gm_bck <- pv_pv_tro_VS_gm_gm_bck[order(pv_pv_tro_VS_gm_gm_bck$padj),]
+resOrderedDF_pv_pv_tro_VS_gm_gm_bck <- as.data.frame(resOrdered_pv_pv_tro_VS_gm_gm_bck)
+resOrderedDF_pv_pv_tro_VS_gm_gm_bck_venn <- filter(resOrderedDF_pv_pv_tro_VS_gm_gm_bck,padj < 0.05)
+resOrderedDF_pv_pv_tro_VS_gm_gm_bck_venn <- list(rownames(resOrderedDF_pv_pv_tro_VS_gm_gm_bck_venn))
+resOrderedDF_pv_pv_tro_VS_gm_gm_bck_venn <- unlist(resOrderedDF_pv_pv_tro_VS_gm_gm_bck_venn)
+
 
 x = list('gm_gm_tro VS gm_gm_bck' = resOrderedDF_gm_gm_tro_VS_gm_gm_bck_venn, 'pv_pv_tro VS pv_pv_bck' = resOrderedDF_pv_pv_tro_VS_pv_pv_bck_venn, 'sp_sp_tro VS sp_sp_bck' = resOrderedDF_sp_sp_tro_VS_sp_sp_bck_venn)
 
@@ -505,93 +584,139 @@ dev.off()
 
 # Candidate genes heatmap
 
-#Global
+# Global
 
 listGenes <- candidateGenes$genes
+listGenes <- gsub("^([^.]*.[^.]*).*$", "\\1", listGenes)
+listGenes <- unique(listGenes)
 listGenes2 <- which(rownames(vsd) %in% listGenes)
 index <- which(listGenes %in% rownames(vsd))
 candidateGenes2 <- candidateGenes[index, ] 
 listProt <- candidateGenes2$pfam_annotation
 listGenes3 <- candidateGenes2$genes
+listGenes3 <- gsub("^([^.]*.[^.]*).*$", "\\1", listGenes3)
+
+removeGenes = c("STRG.37944","STRG.35059","STRG.43478")
+indexRemoveGenes = which(listGenes3 %in% removeGenes)
+listProt <- listProt[-indexRemoveGenes]
+listGenes3 <- listGenes3[! listGenes3 %in% c("STRG.37944","STRG.35059","STRG.43478")]
+
 
 vsdCandidate <- vsd[listGenes3, ]
 
-labColName <- c('gm_gm_bck','gm_gm_bck','gm_gm_bck','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_pv_trt',
-                'gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_sp_trt','gm_sp_trt','gm_sp_trt','gm_sp_trt','gm_sp_trt',
-                'pv_gm_trt','pv_gm_trt','pv_gm_trt','pv_gm_trt','pv_gm_trt','pv_pv_bck','pv_pv_bck','pv_pv_bck','pv_pv_tro',
-                'pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro','sp_gm_trt','sp_gm_trt','sp_gm_trt','sp_gm_trt',
-                'sp_sp_bck','sp_sp_bck','sp_sp_bck','sp_sp_tro','sp_sp_tro','sp_sp_tro','sp_sp_tro','sp_sp_tro')
-
+labColName <- samples$originSite_finalSite_experiment
 colnames(vsdCandidate) <- labColName
-rownames(vsdCandidate) <- listProt
+rownames(vsdCandidate) <- paste(listProt,listGenes3,sep=" - ")
 
-topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
-png(paste(outputPath,'candidateGenes_trueTransplant_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
-heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
-          key.title = "",
-          col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
-          xlab="sampling sites",ylab="proteins associated to genes",Colv=NA,margins = c(6, 7))
+topVarGenesVsd <- order(rowVars(assay(vsdCandidate)), decreasing=TRUE)
+assayVsdCandidate<-unique(assay(vsdCandidate))
+png(paste(outputPath,'candidateGenes_preliminarySamples_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
+pheatmap(assayVsdCandidate)
+dev.off()
 
-main='Differential expression of 50 most expressed candidates genes\n\nTrue transplant'
-title(main, cex.main = 0.7)
+png(paste(outputPath,'candidateGenes_preliminarySamples_heatmap_rowScaling.png',sep=''), width=7, height=7, units = "in", res = 300)
+pheatmap(assayVsdCandidate,scale = "row")
+dev.off()
+
+# Transplant origin
+
+listGenes <- candidateGenes$genes
+listGenes <- gsub("^([^.]*.[^.]*).*$", "\\1", listGenes)
+listGenes <- unique(listGenes)
+listGenes2 <- which(rownames(vsdTro) %in% listGenes)
+index <- which(listGenes %in% rownames(vsdTro))
+candidateGenes2 <- candidateGenes[index, ] 
+listProt <- candidateGenes2$pfam_annotation
+listGenes3 <- candidateGenes2$genes
+listGenes3 <- gsub("^([^.]*.[^.]*).*$", "\\1", listGenes3)
+
+removeGenes = c("STRG.37944","STRG.35059","STRG.43478")
+indexRemoveGenes = which(listGenes3 %in% removeGenes)
+listProt <- listProt[-indexRemoveGenes]
+listGenes3 <- listGenes3[! listGenes3 %in% c("STRG.37944","STRG.35059","STRG.43478")]
+
+
+vsdCandidate <- vsdTro[listGenes3, ]
+
+labColName <- samplesTro$originSite_finalSite_experiment
+colnames(vsdCandidate) <- labColName
+rownames(vsdCandidate) <- paste(listProt,listGenes3,sep=" - ")
+
+topVarGenesVsd <- order(rowVars(assay(vsdCandidate)), decreasing=TRUE)
+assayVsdCandidate<-unique(assay(vsdCandidate))
+png(paste(outputPath,'candidateGenes_preliminarySamples_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
+pheatmap(assayVsdCandidate)
+dev.off()
+
+png(paste(outputPath,'candidateGenes_preliminarySamples_heatmap_rowScaling.png',sep=''), width=7, height=7, units = "in", res = 300)
+pheatmap(assayVsdCandidate,scale = "row")
 dev.off()
 
 # Background & Transplant origin
 
 listGenes <- candidateGenes$genes
+listGenes <- gsub("^([^.]*.[^.]*).*$", "\\1", listGenes)
+listGenes <- unique(listGenes)
 listGenes2 <- which(rownames(vsdBckTro) %in% listGenes)
 index <- which(listGenes %in% rownames(vsdBckTro))
 candidateGenes2 <- candidateGenes[index, ] 
 listProt <- candidateGenes2$pfam_annotation
 listGenes3 <- candidateGenes2$genes
+listGenes3 <- gsub("^([^.]*.[^.]*).*$", "\\1", listGenes3)
+
+removeGenes = c("STRG.37944","STRG.35059","STRG.43478")
+indexRemoveGenes = which(listGenes3 %in% removeGenes)
+listProt <- listProt[-indexRemoveGenes]
+listGenes3 <- listGenes3[! listGenes3 %in% c("STRG.37944","STRG.35059","STRG.43478")]
+
 
 vsdCandidate <- vsdBckTro[listGenes3, ]
 
-labColName <- c('gm_gm_bck','gm_gm_bck','gm_gm_bck','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_gm_tro','gm_gm_tro',
-                'pv_pv_bck','pv_pv_bck','pv_pv_bck','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro','pv_pv_tro',
-                'sp_sp_bck','sp_sp_bck','sp_sp_bck','sp_sp_tro','sp_sp_tro','sp_sp_tro','sp_sp_tro','sp_sp_tro')
-
+labColName <- samplesBckTro$originSite_finalSite_experiment
 colnames(vsdCandidate) <- labColName
-rownames(vsdCandidate) <- listProt
+rownames(vsdCandidate) <- paste(listProt,listGenes3,sep=" - ")
 
-topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
-png(paste(outputPath,'candidateGenes_trueTransplant_bck_tro_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
-heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
-          key.title = "",
-          col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
-          xlab="sampling sites",ylab="proteins associated to genes",Colv=NA,margins = c(6, 7))
-
-main='Differential expression of 50 most expressed candidates genes\n\nTrue transplant - Focus on bck and tro'
-title(main, cex.main = 0.7)
+topVarGenesVsd <- order(rowVars(assay(vsdCandidate)), decreasing=TRUE)
+assayVsdCandidate<-unique(assay(vsdCandidate))
+png(paste(outputPath,'candidateGenes_preliminarySamples_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
+pheatmap(assayVsdCandidate)
 dev.off()
 
-# True transplant
+png(paste(outputPath,'candidateGenes_preliminarySamples_heatmap_rowScaling.png',sep=''), width=7, height=7, units = "in", res = 300)
+pheatmap(assayVsdCandidate,scale = "row")
+dev.off()
+
+# Transplant true
 
 listGenes <- candidateGenes$genes
+listGenes <- gsub("^([^.]*.[^.]*).*$", "\\1", listGenes)
+listGenes <- unique(listGenes)
 listGenes2 <- which(rownames(vsdTrt) %in% listGenes)
 index <- which(listGenes %in% rownames(vsdTrt))
 candidateGenes2 <- candidateGenes[index, ] 
 listProt <- candidateGenes2$pfam_annotation
 listGenes3 <- candidateGenes2$genes
+listGenes3 <- gsub("^([^.]*.[^.]*).*$", "\\1", listGenes3)
+
+removeGenes = c("STRG.37944","STRG.35059","STRG.43478")
+indexRemoveGenes = which(listGenes3 %in% removeGenes)
+listProt <- listProt[-indexRemoveGenes]
+listGenes3 <- listGenes3[! listGenes3 %in% c("STRG.37944","STRG.35059","STRG.43478")]
 
 vsdCandidate <- vsdTrt[listGenes3, ]
 
-labColName <- c('gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_pv_trt','gm_sp_trt','gm_sp_trt',
-                'gm_sp_trt','gm_sp_trt','gm_sp_trt','pv_gm_trt','pv_gm_trt','pv_gm_trt','pv_gm_trt',
-                'pv_gm_trt','sp_gm_trt','sp_gm_trt','sp_gm_trt','sp_gm_trt')
-
+labColName <- samplesTrt$originSite_finalSite_experiment
 colnames(vsdCandidate) <- labColName
-rownames(vsdCandidate) <- listProt
+rownames(vsdCandidate) <- paste(listProt,listGenes3,sep=" - ")
 
-topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
-png(paste(outputPath,'candidateGenes_trueTransplant_trt_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
-heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
-          key.title = "",
-          col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
-          xlab="sampling sites",ylab="proteins associated to genes",Colv=NA,margins = c(6, 7))
+topVarGenesVsd <- order(rowVars(assay(vsdCandidate)), decreasing=TRUE)
+assayVsdCandidate<-unique(assay(vsdCandidate))
+png(paste(outputPath,'candidateGenes_preliminarySamples_heatmap.png',sep=''), width=7, height=7, units = "in", res = 300)
+pheatmap(assayVsdCandidate)
+dev.off()
 
-main='Differential expression of 50 most expressed candidates genes\n\nTrue transplant - Focus on trt'
-title(main, cex.main = 0.7)
+png(paste(outputPath,'candidateGenes_preliminarySamples_heatmap_rowScaling.png',sep=''), width=7, height=7, units = "in", res = 300)
+pheatmap(assayVsdCandidate,scale = "row")
 dev.off()
 
 # Inferences statistics
@@ -614,17 +739,61 @@ dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
 adonis(data=samplesTrt,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
 anova(betadisper(dist_tab_assay,samplesTrt$originSite_finalSite_experiment))
 
+
+heatmap_genes <- function(candidateGenes,vsd,species,genesType,colNames) {
+  listGenes <- candidateGenes$genes
+  listGenes2 <- which(rownames(vsd) %in% listGenes)
+  index <- which(listGenes %in% rownames(vsd))
+  candidateGenes2 <- candidateGenes[index, ] 
+  listProt <- candidateGenes2$pfam_annotation
+  listGenes3 <- candidateGenes2$genes
+  
+  vsdCandidate <- vsd[listGenes3, ]
+  
+  colnames(vsdCandidate) <- colNames
+  rownames(vsdCandidate) <- listProt
+  
+  topVarGenesVsd <- head(order(rowVars(assay(vsdCandidate)), decreasing=TRUE), 50 )
+  
+  heatmap.2(assay(vsdCandidate)[topVarGenesVsd,], trace="none",scale="row",keysize=1.15,key.xlab = "",
+            key.title = "",
+            col=colorRampPalette(rev(brewer.pal(11,"PuOr")))(255), cexRow=0.6, cexCol=0.7,density.info="none",
+            ylab="PFAM annotation of expressed genes",Colv = F,margins = c(6, 7))
+  main=paste("Expression level of genes related to",genesType,"in",species,sep= " ")
+  title(main, cex.main = 0.9)
+}
+
+colnamesMay2018Bck <- c('gm1','gm2','gm3','pv1','pv2','pv3','sp1','sp2','sp3')
+colMayTro <- c('gm','gm','gm','gm','gm','pv','pv','pv','pv','pv','pv','sp','sp','sp','sp','sp')
+
+newCol = sub(".*may2018_ ", "",vsdTro@colData@rownames)
+newCol
+
+may2018BckCali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/may2018_bck.csv',header=T,sep=',')
+may2018TroCali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/may2018_tro.csv',header=T,sep=',')
+may2018TrtCali<-read.csv('/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/8_functionalAnnotation/calicoblasticGenes/may2018_trt.csv',header=T,sep=',')
+
+heatmap_genes(may2018BckCali,vsdBck,'Astroides','calcification',colnamesMay2018Bck)
+heatmap_genes(may2018TroCali,vsdTro,'Astroides','calcification',colMayTro)
+heatmap_genes(may2018TrtCali,vsdTrt,'Astroides','calcification',vsdTrt@colData@rownames)
+
 # Exporting results
-write.csv(resOrderedDF_gm_gm_tro_VS_gm_gm_bck, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/adult/DESeq2_results_adult_trueTransplant_gm_gm_tro_VS_gm_gm_bck.csv',sep=''))
-write.csv(resOrderedDF_pv_pv_tro_VS_pv_pv_bck, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/adult/DESeq2_results_adult_trueTransplant_pv_pv_tro_VS_pv_pv_bck.csv',sep=''))
-write.csv(resOrderedDF_sp_sp_tro_VS_sp_sp_bck, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/adult/DESeq2_results_adult_trueTransplant_sp_sp_tro_VS_sp_sp_bck.csv',sep=''))
-write.csv(resOrderedDF_pv_gm_trt_VS_pv_pv_bck, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/adult/DESeq2_results_adult_trueTransplant_pv_gm_trt_VS_pv_pv_bck.csv',sep=''))
-write.csv(resOrderedDF_sp_gm_trt_VS_sp_sp_bck, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/adult/DESeq2_results_adult_trueTransplant_sp_gm_trt_VS_sp_sp_bck.csv',sep=''))
-write.csv(resOrderedDF_pv_gm_trt_VS_gm_gm_bck, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/adult/DESeq2_results_adult_trueTransplant_pv_gm_trt_VS_gm_gm_bck.csv',sep=''))
-write.csv(resOrderedDF_sp_gm_trt_VS_gm_gm_bck, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/adult/DESeq2_results_adult_trueTransplant_sp_gm_trt_VS_gm_gm_bck.csv',sep=''))
-write.csv(resOrderedDF_gm_pv_trt_VS_pv_pv_bck, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/adult/DESeq2_results_adult_trueTransplant_gm_pv_trt_VS_pv_pv_bck.csv',sep=''))
-write.csv(resOrderedDF_gm_sp_trt_VS_sp_sp_bck, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/adult/DESeq2_results_adult_trueTransplant_gm_sp_trt_VS_sp_sp_bck.csv',sep=''))
-write.csv(resOrderedDF_gm_pv_trt_VS_gm_gm_bck, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/adult/DESeq2_results_adult_trueTransplant_gm_pv_trt_VS_gm_gm_bck.csv',sep=''))
-write.csv(resOrderedDF_gm_sp_trt_VS_gm_gm_bck, file = paste(scriptPath,'/data/net/7_deseq2/adultTranscriptome/adult/DESeq2_results_adult_trueTransplant_gm_sp_trt_VS_gm_gm_bck.csv',sep=''))
+
+write.csv(resOrderedDF_pv_pv_bck_VS_gm_gm_bck, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_trueTransplant_pv_pv_bck_VS_gm_gm_bck.csv',sep='\t')
+write.csv(resOrderedDF_sp_sp_bck_VS_gm_gm_bck, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_trueTransplant_sp_sp_bck_VS_gm_gm_bck.csv',sep='\t')
+write.csv(resOrderedDF_pv_pv_bck_VS_sp_sp_bck, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_trueTransplant_pv_pv_bck_VS_sp_sp_bck.csv',sep='\t')
+write.csv(resOrderedDF_gm_gm_tro_VS_gm_gm_bck, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_trueTransplant_gm_gm_tro_VS_gm_gm_bck.csv',sep='\t')
+write.csv(resOrderedDF_pv_pv_tro_VS_pv_pv_bck, file ='/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_trueTransplant_pv_pv_tro_VS_pv_pv_bck.csv',sep='\t')
+write.csv(resOrderedDF_sp_sp_tro_VS_sp_sp_bck, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_trueTransplant_sp_sp_tro_VS_sp_sp_bck.csv',sep='\t')
+write.csv(resOrderedDF_sp_sp_tro_VS_gm_gm_bck, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_trueTransplant_sp_sp_tro_VS_gm_gm_bck.csv',sep='\t')
+write.csv(resOrderedDF_pv_pv_tro_VS_gm_gm_bck, file ='/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_trueTransplant_pv_pv_tro_VS_gm_gm_bck.csv',sep='\t')
+write.csv(resOrderedDF_pv_gm_trt_VS_pv_pv_bck, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_trueTransplant_pv_gm_trt_VS_pv_pv_bck.csv',sep='\t')
+write.csv(resOrderedDF_sp_gm_trt_VS_sp_sp_bck, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_trueTransplant_sp_gm_trt_VS_sp_sp_bck.csv',sep='\t')
+write.csv(resOrderedDF_pv_gm_trt_VS_gm_gm_bck, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_trueTransplant_pv_gm_trt_VS_gm_gm_bck.csv',sep='\t')
+write.csv(resOrderedDF_sp_gm_trt_VS_gm_gm_bck, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_trueTransplant_sp_gm_trt_VS_gm_gm_bck.csv',sep='\t')
+write.csv(resOrderedDF_gm_pv_trt_VS_pv_pv_bck, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_trueTransplant_gm_pv_trt_VS_pv_pv_bck.csv',sep='\t')
+write.csv(resOrderedDF_gm_sp_trt_VS_sp_sp_bck, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_trueTransplant_gm_sp_trt_VS_sp_sp_bck.csv',sep='\t')
+write.csv(resOrderedDF_gm_pv_trt_VS_gm_gm_bck, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_trueTransplant_gm_pv_trt_VS_gm_gm_bck.csv',sep='\t')
+write.csv(resOrderedDF_gm_sp_trt_VS_gm_gm_bck, file = '/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/data/net/7_deseq2/annotatedGenome/adult/DESeq2_results_adult_trueTransplant_gm_sp_trt_VS_gm_gm_bck.csv',sep='\t')
 
 sessionInfo()

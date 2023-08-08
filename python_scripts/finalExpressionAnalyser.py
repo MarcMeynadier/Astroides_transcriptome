@@ -20,7 +20,7 @@ import statistics
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import seaborn as sb
-from matplotlib import pyplot
+from matplotlib.backends.backend_pdf import PdfPages
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -258,14 +258,15 @@ def sortResultsBoxplots(df,condition):
     protFam = protFamilies()
     protAnnot = protResults()
     protExpr = protResults()
-    exprSD = []
+    df = df.rename(columns={df.columns[3]: 'lfc'})
+    #df = df[df.lfc < 10]
     for index, row in df.iterrows():   
         for j in protFam:
             for k in protFam[j]:
                 if k in row['GO_annotation']:  
                     annot = row['pfam_annotation'].split(' ',1)[1]     
                     protAnnot[j].append(annot)   
-                    protExpr[j].append(row['lfc_'+condition])   
+                    protExpr[j].append(row['lfc'])   
                     break
     return protAnnot,protExpr
 
@@ -437,31 +438,22 @@ def prepareBoxplots(dfs,conditions):
     concatDf = pd.concat([catabolic_enzyme_df,isomerase_enzyme_df,binding_enzyme_df,ion_regulation_df,
     genetic_regulation_df,transcriptomic_regulation_df,cytoskeleton_regulation_df,redox_regulation_df,other_df]) 
     meltDf = pd.melt(concatDf,id_vars=['Function'],var_name=['Conditions'])
-    ax = sb.boxplot(x="Function", y="value", hue="Conditions",data=meltDf)
-    ax.set_ylabel( "LFC" , size = 10)
-    ax.set_xticklabels(ax.get_xticklabels(),rotation=45)
-    ax.set_xlabel( "Protein functions" , size = 5) 
-    plt.show()
-    
-    """
-    df1 = pd.DataFrame(np.random.randn(4,8), columns=list(range(1,9))).assign(Trial=1) 
-    df2 = pd.DataFrame(np.random.randn(5,5), columns=list(range(1,6))).assign(Trial=2)
-    df3 = pd.DataFrame(np.random.randn(5,5), columns=list(range(1,6))).assign(Trial=3)
-    cdf = pd.concat([df1, df2, df3])                                # CONCATENATE
-    mdf = pd.melt(cdf, id_vars=['Trial'], var_name=['Number'])      # MELT
-    ax = sb.boxplot(x="Trial", y="value", hue="Number", data=mdf)  # RUN PLOT
-    """
-    
-    #plt.show()
+    return meltDf
 
-def exploitResultsBoxplots(dfs,conditions,experiment):
+def exploitResultsBoxplots(meltDf,conditions,experiment):
     if len(conditions) == 0:
         print('No results are available for this experiment condition')
-        return
-    outputPath = '../../../../../output/functionalGenesAnnotation/'
-    
-    
-        
+        return 
+    plt.figure(figsize=(12,10))
+    ax = sb.boxplot(x="Function", y="value", hue="Conditions",data=meltDf)
+    ax.set_xticklabels(ax.get_xmajorticklabels(), fontsize = 6.5)
+    plt.setp(ax.get_xticklabels(), rotation=30)
+    plt.xlabel("Protein functions") ; plt.ylabel("LFC")
+    conditionsStr = '_X_'.join(conditions) 
+    outputPath = '../../../../../output/functionalGenesAnnotation/' 
+    plt.savefig(outputPath+'FGA_boxplot_'+experiment+'_'+conditionsStr+'.png')
+    plt.show() 
+    plt.close()
     
     
     

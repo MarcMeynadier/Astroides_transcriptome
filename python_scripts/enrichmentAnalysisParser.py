@@ -58,7 +58,8 @@ def getOntologyFileGOMWU():
 
     url = 'http://purl.obolibrary.org/obo/go.obo'
     wget.download(url)
-    shutil.move('go.obo', '../../data/net/8_functionalAnnotation/GO_MWU')
+    shutil.move('go.obo', '../../data/net/8_functionalAnnotation/ontologizer')
+
 
 def swap_columns(df, col1, col2):
     """
@@ -104,23 +105,31 @@ def getAnnotationFile():
     """
 
     curedFile = []
-    with open('../../data/net/8_functionalAnnotation/hmmsearchOutput.out') as f:
+    with open('../../data/net/8_functionalAnnotation/ast_all_domtbl.out') as f:
         contents = f.readlines()
     for i in contents:
-        if 'TRINITY' in i:
+        if 'STRG' in i:
             curedFile.append(i)
     geneNames=[] ; pfamAnnot= [] ; pfamCode = []
     separator = "PF"
     for i in range(len(curedFile)):
         geneNames.append(curedFile[i].split(" - ",1)[0])
-        geneNames[i]=geneNames[i].replace('TRINITY_','')
+        #geneNames[i]=geneNames[i].replace('TRINITY_','')
+        geneNames[i]=geneNames[i].rsplit(".",2)[0]
         splitDash = curedFile[i].split(" - ",1)[1]
         splitAnnot = splitDash.split(separator,1)[0] ; splitAnnot = splitAnnot.strip()
         splitCode = splitDash.split(separator,1)[1] ; splitCode = splitCode.split(".",1)[0] ; splitCode = separator + splitCode
         pfamAnnot.append(splitAnnot) ; pfamCode.append(splitCode)
-    dic={'genes':geneNames,'pfam_annotation':pfamAnnot,'pfam_code':pfamCode}
+    pfamAnnotCured = []
+    for i in pfamAnnot:
+        try:
+            annot = i.split(" ")[1]
+        except IndexError:
+            annot = ""
+        pfamAnnotCured.append(annot)
+    dic={'genes':geneNames,'pfam_annotation':pfamAnnotCured,'pfam_code':pfamCode}
     annotDf=pd.DataFrame(dic)
-    annotDf = annotDf.replace(to_replace ='(_i).*', value = '', regex = True)
+    annotDf = annotDf.drop_duplicates(subset='genes',ignore_index=False)
     return annotDf
 
 def getAssociationFile(): 
@@ -194,6 +203,7 @@ def getAssociationFile():
     annotSequenceDf = getAnnotationFile()
     mergeDf = pd.DataFrame(dic)
     mergeDf = mergeDf.merge(annotSequenceDf,how='inner')
+    mergeDf = mergeDf.drop_duplicates(subset='pfam_code',ignore_index=False)
     mergeDf.drop(['GO_annotation', 'pfam_annotation','pfam_code'], axis=1, inplace=True)
     mergeDf = swap_columns(mergeDf,'GO_code','genes') 
     pathOntologizer = '../../data/net/8_functionalAnnotation/ontologizer/'
@@ -216,12 +226,12 @@ def getPopulationFile():
     """   
 
     curedFile = []
-    with open('../../data/net/8_functionalAnnotation/ontologizer/adult_trinity_longest_CD_HIT.Trinity.fasta') as f:
+    with open('../../data/net/8_functionalAnnotation/ontologizer/AstroidesProteins.fasta') as f:
         contents = f.readlines()
     for i in contents:
-        if 'TRINITY' in i:
-            i = i.split("TRINITY_",1)[1]
-            i = i.split("_i",1)[0]
+        if '>' in i:
+            i = i.split("|",1)[1]
+            i = i.split(" ",1)[0]
             curedFile.append(i)
     f=open('populationFile.txt', 'a')
     f.writelines("%s\n" % i for i in curedFile)
@@ -270,7 +280,7 @@ def getProteinSequences():
     sequencesDf = pd.DataFrame(dic)
     return sequencesDf
 
-def getStudysetFileOntologizer(threshold):
+def getStudysetFileOntologizer(folderOrg):
     """
     Description
     -----------
@@ -289,9 +299,8 @@ def getStudysetFileOntologizer(threshold):
     None
     """
 
-    protDf = getProteinSequences() 
-    folderOrg = 'adult'
-    os.chdir('../../data/net/7_deseq2/adultTranscriptome/'+folderOrg) 
+    #protDf = getProteinSequences() 
+    os.chdir('../../data/net/7_deseq2/annotatedGenome/'+folderOrg) 
     path=os.getcwd()
     for file in os.listdir(path):
         if file.endswith(".csv"):
@@ -299,39 +308,23 @@ def getStudysetFileOntologizer(threshold):
             txtName=file.replace(".csv",".txt")
             csvFile = pd.read_csv(file)
             csvFile.rename(columns={ csvFile.columns[0]: "genes" }, inplace = True)
-            csvFile = csvFile[csvFile.padj<threshold] 
+            csvFile = csvFile[csvFile.padj<0.05] 
             csvFile = csvFile[csvFile['padj'].notna()]  
-            csvFile = csvFile.merge(protDf,how='inner',on='genes') 
+            #csvFile = csvFile.merge(protDf,how='inner',on='genes') 
             geneNames = csvFile.iloc[:,0].tolist()
+            """
             for i in geneNames:
-                if 'TRINITY' in i:
+                if 'STRG' in i:
                     i = i.split("TRINITY_",1)[1]
                     curedFile.append(i)
+            """
             f=open(txtName,'a')
-            f.writelines("%s\n" % i for i in curedFile)
+            f.writelines("%s\n" % i for i in geneNames)
             f.close()
-            shutil.move(txtName, '../../../8_functionalAnnotation/ontologizer/studySamples') 
-    folderOrg = 'juvenile'
-    os.chdir('../'+folderOrg) 
-    path=os.getcwd()
-    for file in os.listdir(path):
-        if file.endswith(".csv"):
-            curedFile = []
-            txtName=file.replace(".csv",".txt")
-            csvFile = pd.read_csv(file)
-            csvFile.rename(columns={ csvFile.columns[0]: "genes" }, inplace = True)
-            csvFile = csvFile[csvFile.padj<threshold] 
-            csvFile = csvFile[csvFile['padj'].notna()]  
-            csvFile = csvFile.merge(protDf,how='inner',on='genes') 
-            geneNames = csvFile.iloc[:,0].tolist()
-            for i in geneNames:
-                if 'TRINITY' in i:
-                    i = i.split("TRINITY_",1)[1]
-                    curedFile.append(i)
-            f=open(txtName,'a')
-            f.writelines("%s\n" % i for i in curedFile)
-            f.close()
-            shutil.move(txtName, '../../../8_functionalAnnotation/ontologizer/studySamples')
+            shutil.move(txtName, '../../../8_functionalAnnotation/ontologizer/studySamples/'+folderOrg) 
+    
+
+getStudysetFileOntologizer("juvenile")
 
 def getStudysetFileGOMWU(threshold):
     """
