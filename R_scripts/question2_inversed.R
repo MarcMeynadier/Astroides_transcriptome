@@ -1,0 +1,503 @@
+# Packages and dependence
+packageCheckClassic <- function(x){
+  # 
+  for( i in x ){
+    if( ! require( i , character.only = TRUE ) ){
+      install.packages( i , dependencies = TRUE )
+      require( i , character.only = TRUE )
+    }
+  }
+}
+
+packageCheckClassic(c('gridExtra','DESeq2','adegenet','devtools','patchwork','BiocManager','ggplot2','ggrepel','markdown','pheatmap','RColorBrewer','genefilter','gplots','vegan','dplyr','limma'))
+#BiocManager::install('tximport', force = TRUE)
+#BiocManager::install('apeglm')
+#BiocManager::install('ashr')
+#BiocManager::install("EnhancedVolcano")
+#BiocManager::install("arrayQualityMetrics")
+if (!require(devtools)) install.packages("devtools")
+devtools::install_github("yanlinlin82/ggvenn")
+library("adegenet")
+library('ggvenn')
+library('tximport')
+library('apeglm')
+library('ashr')
+library('pairwiseAdonis')
+library('EnhancedVolcano')
+library('BiocManager')
+source_url("https://raw.githubusercontent.com/obigriffith/biostar-tutorials/master/Heatmaps/heatmap.3.R")
+
+
+# Functions
+
+trimFunction <- function(resLFC,p_adj_cut,lfc_cut) {
+  resOrdered<-resLFC[order(resLFC$padj),]
+  y<-na.omit(resOrdered)
+  resTrim<-y[y$padj < p_adj_cut,]
+  resTrim <- resTrim[ which( resTrim$log2FoldChange > lfc_cut | resTrim$log2FoldChange < -lfc_cut), ]
+  resTrim <- as.data.frame(resTrim)
+  resTrim$genes <- rownames(resTrim)
+  return(resTrim)
+}
+
+applyAnnot <- function(inputDf,inputDfAnnot) {
+  gene_and_annot_col <- character(0)
+  inputDf_annot_genes <- inputDfAnnot$genes
+  inputDf_annot_pfam <- inputDfAnnot$pfam_annotation
+  for (i in 1:length(inputDf_annot_genes)) {
+    gene_and_annot_col <- c(gene_and_annot_col, 
+                            paste(inputDf_annot_genes[i], " - ", inputDf_annot_pfam[i]))
+  }
+  inputDf_genes <- inputDf$genes
+  new_gene_annot_col <- character(0)
+  for (i in inputDf_genes) {
+    gene <- i
+    for (j in gene_and_annot_col) {
+      j_split <- strsplit(j, " ", fixed = TRUE)[[1]]
+      if (i %in% j_split[1]) {
+        gene <- j
+      }
+    }
+    new_gene_annot_col <- c(new_gene_annot_col, gene)
+  }
+  inputDf$genes <- new_gene_annot_col
+  return(inputDf)
+}
+
+heatmapFunction <- function(newColNames,commonGenes,commonGenesAll,vsd,nameCode) {
+  vsdCommonGm <- vsd[commonGenes$genes,]
+  vsdCommonGm@colData@rownames = newColNames
+  annot_genes = commonGenesAll$genes
+  genes = names(vsdCommonGm)
+  
+  new_names = list()
+  for (i in annot_genes) {
+    gene = i
+    for (j in genes) {
+      if (i == j) {
+        gene = j
+      }
+    }
+    new_names <- c(new_names,gene)
+  }
+  names(vsdCommonGm) <- new_names
+  p<-pheatmap(assay(vsdCommonGm),main=nameCode,scale="row", cluster_rows=TRUE, show_rownames=TRUE,
+           cluster_cols=FALSE,cellwidth = 20,fontsize_row = 8,treeheight_row = 0, treeheight_col = 0)
+  return(vsdCommonGm)
+}
+
+similarityFunction <- function(dataset1,dataset2) {
+  c = 0
+  for (i in rownames(dataset1)) {
+    if (i %in% rownames(dataset2)) {
+      c = c + 1
+    }
+  }
+  sim = (c / as.integer(length(rownames(dataset2)))) * 100
+  return(sim)
+}
+
+#### May 2018 ####
+
+scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
+setwd(scriptPath)
+A_pfam<-read.csv('Astroides_pfam.csv',header=T,sep=',')
+samplesSP<-read.table('tximport_design_SP_may2018_inversed.txt',header=T)
+samplesPV<-read.table('tximport_design_PV_may2018_inversed.txt',header=T)
+samplesGM<-read.table('tximport_design_GM_may2018_inversed.txt',header=T)
+dataPath<-'/Users/mmeynadier/Documents/PhD/species/Astroides/analysis/STARmapping/teixido/adult/may2018'
+outputPath<-'/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/output/DESeq2/annotatedGenome/adult/trueTransplant/'
+setwd(dataPath)
+data<-list.files(pattern = "*ReadsPerGene.out.tab$", full.names = TRUE)
+counts.files <- lapply(data, read.table, skip = 4)
+raw_counts <- as.data.frame(sapply(counts.files, function(x) x[ , 2]))
+data <- gsub( "Users/mmeynadier/Documents/PhD/species/Astroides/analysis/STARmapping/teixido/adult/may2018", "", data )
+data <- gsub( "_ReadsPerGene.out.tab", "", data )
+data <- gsub( "./", "", data )
+colnames(raw_counts) <- data
+row.names(raw_counts) <- counts.files[[1]]$V1
+raw_counts_sp <- raw_counts[,grep("may2018_sp_sp|may2018_gm_sp", colnames(raw_counts))] 
+raw_counts_pv <- raw_counts[,grep("may2018_pv_pv|may2018_gm_pv", colnames(raw_counts))] 
+raw_counts_gm <- raw_counts[,grep("may2018_gm_gm|may2018_sp_gm|may2018_pv_gm", colnames(raw_counts))] 
+#samples_order_sp = c(5,6,7,8,9,10,11,12,1,2,3,4)
+#samples_order_pv = c(6,7,8,9,10,11,12,13,14,1,2,3,4,5)
+#samples_order_gm = c(1,2,3,4,5,6,7,8,14,15,16,17,18,9,10,11,12,13)
+#raw_counts_sp <- raw_counts_sp[,samples_order_sp]
+#raw_counts_pv <- raw_counts_pv[,samples_order_pv]
+#raw_counts_gm <- raw_counts_gm[,samples_order_gm]
+
+#### SP ####
+
+# DDS object
+dds<-DESeqDataSetFromMatrix(countData = raw_counts_sp, colData = samplesSP,design = ~originSite_finalSite_experiment)
+
+# pre-filtering
+keep <- rowSums(counts(dds)) >= 10 
+dds <- dds[keep,]
+
+# Differential expression analysis
+dds<-DESeq(dds)
+cbind(resultsNames(dds))
+sp_sp_bck_VS_sp_sp_tro_lfc2_intra<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_bck","sp_sp_tro"), lfcThreshold = 1,alpha = 0.05)
+sp_sp_bck_VS_sp_sp_tro_lfc2_intra<-trimFunction(sp_sp_bck_VS_sp_sp_tro_lfc2_intra,0.05,1)
+
+sp_sp_bck_VS_gm_sp_trt_lfc2_intra<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_bck","gm_sp_trt"), lfcThreshold = 1,alpha = 0.05)
+sp_sp_bck_VS_gm_sp_trt_lfc2_intra<-trimFunction(sp_sp_bck_VS_gm_sp_trt_lfc2_intra,0.05,1)
+
+rownames1_intra = row.names(sp_sp_bck_VS_gm_sp_trt_lfc2_intra)
+rownames2_intra = row.names(sp_sp_bck_VS_sp_sp_tro_lfc2_intra)
+rownames_intra <- union(rownames1_intra,rownames2_intra)
+rownames_intra <- data.frame(genes=rownames_intra)
+
+rownames_annot_intra = merge(rownames_intra,A_pfam,by="genes")
+rownames_annot_all_intra <- applyAnnot(rownames_intra,rownames_annot_intra)
+rownames_annot_all_intra
+
+vsd = vst(dds,blind=T)
+newColNames <- samplesSP$originSite_finalSite_experiment
+
+vsd_common_gm_lfc2_intra_may2018_SP = heatmapFunction(newColNames,rownames_intra,rownames_annot_all_intra,vsd,"May2018 SP")
+
+pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment",returnData=TRUE,ntop=200)
+percentVar = round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
+  geom_point(size = 5) + theme_bw() + 
+  scale_color_manual(values = c("#ff4040","#8B0000","#00008B","#6495ED")) +
+  geom_point() +
+  ggtitle("Principal Component Analysis of adult corals", subtitle = "may2018 dataset - SP") +
+  theme(text = element_text(size=14),legend.text = element_text(size=12), legend.position = 'bottom') +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+
+
+count_tab_assay <- assay(vsd)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+ad<-adonis2(data=samplesSP,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+ad
+pair.mod<-pairwise.adonis(dist_tab_assay,factors=samplesSP$originSite_finalSite_experiment)
+pair.mod
+mod <- betadisper(dist_tab_assay,samplesSP$originSite_finalSite_experiment)
+mod.HSD <- TukeyHSD(mod)
+mod.HSD
+
+
+#### PV ####
+
+# DDS object
+dds<-DESeqDataSetFromMatrix(countData = raw_counts_pv, colData = samplesPV,design = ~originSite_finalSite_experiment)
+
+# pre-filtering
+keep <- rowSums(counts(dds)) >= 10 
+dds <- dds[keep,]
+
+# Differential expression analysis
+dds<-DESeq(dds)
+cbind(resultsNames(dds))
+pv_pv_bck_VS_pv_pv_tro_lfc2_intra<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_bck","pv_pv_tro"), lfcThreshold = 1,alpha = 0.05)
+pv_pv_bck_VS_pv_pv_tro_lfc2_intra<-trimFunction(pv_pv_bck_VS_pv_pv_tro_lfc2_intra,0.05,1)
+
+pv_pv_bck_VS_gm_pv_trt_lfc2_intra<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_bck","gm_pv_trt"), lfcThreshold = 1,alpha = 0.05)
+pv_pv_bck_VS_gm_pv_trt_lfc2_intra<-trimFunction(pv_pv_bck_VS_gm_pv_trt_lfc2_intra,0.05,1)
+
+rownames1_intra = row.names(pv_pv_bck_VS_gm_pv_trt_lfc2_intra)
+rownames2_intra = row.names(pv_pv_bck_VS_pv_pv_tro_lfc2_intra)
+rownames_intra <- union(rownames1_intra,rownames2_intra)
+rownames_intra <- data.frame(genes=rownames_intra)
+
+rownames_annot_intra = merge(rownames_intra,A_pfam,by="genes")
+rownames_annot_all_intra <- applyAnnot(rownames_intra,rownames_annot_intra)
+rownames_annot_all_intra
+
+vsd = vst(dds,blind=T)
+newColNames <- samplesPV$originSite_finalSite_experiment
+
+vsd_common_gm_lfc2_intra_may2018_PV = heatmapFunction(newColNames,rownames_intra,rownames_annot_all_intra,vsd,"May2018 PV")
+
+pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment",returnData=TRUE,ntop=200)
+percentVar = round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
+  geom_point(size = 5) + theme_bw() + 
+  scale_color_manual(values = c("#ff4040","#8B0000","#00008B","#6495ED")) +
+  geom_point() +
+  ggtitle("Principal Component Analysis of adult corals", subtitle = "may2018 dataset - PV") +
+  theme(text = element_text(size=14),legend.text = element_text(size=12), legend.position = 'bottom') +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+
+count_tab_assay <- assay(vsd)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+ad<-adonis2(data=samplesPV,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+ad
+pair.mod<-pairwise.adonis(dist_tab_assay,factors=samplesPV$originSite_finalSite_experiment)
+pair.mod
+mod <- betadisper(dist_tab_assay,samplesPV$originSite_finalSite_experiment)
+mod.HSD <- TukeyHSD(mod)
+mod.HSD
+
+
+#### GM ####
+
+# DDS object
+dds<-DESeqDataSetFromMatrix(countData = raw_counts_gm, colData = samplesGM,design = ~originSite_finalSite_experiment)
+
+# pre-filtering
+keep <- rowSums(counts(dds)) >= 10 
+dds <- dds[keep,]
+
+# Differential expression analysis
+dds<-DESeq(dds)
+cbind(resultsNames(dds))
+gm_gm_bck_VS_gm_gm_tro_lfc2_intra<-results(dds, contrast=c("originSite_finalSite_experiment","gm_gm_bck","gm_gm_tro"), lfcThreshold = 1,alpha = 0.05)
+gm_gm_bck_VS_gm_gm_tro_lfc2_intra<-trimFunction(gm_gm_bck_VS_gm_gm_tro_lfc2_intra,0.05,1)
+
+gm_gm_bck_VS_sp_gm_trt_lfc2_intra<-results(dds, contrast=c("originSite_finalSite_experiment","gm_gm_bck","sp_gm_trt"), lfcThreshold = 1,alpha = 0.05)
+gm_gm_bck_VS_sp_gm_trt_lfc2_intra<-trimFunction(gm_gm_bck_VS_sp_gm_trt_lfc2_intra,0.05,1)
+
+gm_gm_bck_VS_pv_gm_trt_lfc2_intra<-results(dds, contrast=c("originSite_finalSite_experiment","gm_gm_bck","pv_gm_trt"), lfcThreshold = 1,alpha = 0.05)
+gm_gm_bck_VS_pv_gm_trt_lfc2_intra<-trimFunction(gm_gm_bck_VS_pv_gm_trt_lfc2_intra,0.05,1)
+
+
+rownames1_intra = row.names(gm_gm_bck_VS_gm_gm_tro_lfc2_intra)
+rownames2_intra = row.names(gm_gm_bck_VS_sp_gm_trt_lfc2_intra)
+rownames3_intra = row.names(gm_gm_bck_VS_pv_gm_trt_lfc2_intra)
+rownames_intra <- union(rownames1_intra,rownames2_intra)
+rownames_intra <- union(rownames_intra,rownames3_intra)
+rownames_intra <- data.frame(genes=rownames_intra)
+
+rownames_annot_intra = merge(rownames_intra,A_pfam,by="genes")
+rownames_annot_all_intra <- applyAnnot(rownames_intra,rownames_annot_intra)
+rownames_annot_all_intra
+
+vsd = vst(dds,blind=T)
+newColNames <- samplesGM$originSite_finalSite_experiment
+
+vsd_common_gm_lfc2_intra_may2018_GM = heatmapFunction(newColNames,rownames_intra,rownames_annot_all_intra,vsd,"May2018 GM")
+
+pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment",returnData=TRUE,ntop=200)
+percentVar = round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
+  geom_point(size = 5) + theme_bw() + 
+  scale_color_manual(values = c("#ff4040","#8B0000","#00008B","#6495ED")) +
+  geom_point() +
+  ggtitle("Principal Component Analysis of adult corals", subtitle = "may2018 dataset - GM") +
+  theme(text = element_text(size=14),legend.text = element_text(size=12), legend.position = 'bottom') +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+
+# Inference statistics
+count_tab_assay <- assay(vsd)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+ad<-adonis2(data=samplesGM,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+ad
+pair.mod<-pairwise.adonis(dist_tab_assay,factors=samplesGM$originSite_finalSite_experiment)
+pair.mod
+mod <- betadisper(dist_tab_assay,samplesGM$originSite_finalSite_experiment)
+mod.HSD <- TukeyHSD(mod)
+mod.HSD
+
+
+#### Sept2018 ####
+
+scriptPath<-dirname(rstudioapi::getSourceEditorContext()$path)
+setwd(scriptPath)
+A_pfam<-read.csv('Astroides_pfam.csv',header=T,sep=',')
+samplesSP<-read.table('tximport_design_SP_sept2018_inversed.txt',header=T)
+samplesPV<-read.table('tximport_design_PV_sept2018_inversed.txt',header=T)
+samplesGM<-read.table('tximport_design_GM_sept2018_inversed.txt',header=T)
+dataPath<-'/Users/mmeynadier/Documents/PhD/species/Astroides/analysis/STARmapping/teixido/adult/sept2018'
+outputPath<-'/Users/mmeynadier/Documents/Astroides/comparative_transcriptomics_astroides/output/DESeq2/annotatedGenome/adult/trueTransplant/'
+setwd(dataPath)
+data<-list.files(pattern = "*ReadsPerGene.out.tab$", full.names = TRUE)
+counts.files <- lapply(data, read.table, skip = 4)
+raw_counts <- as.data.frame(sapply(counts.files, function(x) x[ , 2]))
+data <- gsub( "Users/mmeynadier/Documents/PhD/species/Astroides/analysis/STARmapping/teixido/adult/sept2018", "", data )
+data <- gsub( "_ReadsPerGene.out.tab", "", data )
+data <- gsub( "./", "", data )
+colnames(raw_counts) <- data
+row.names(raw_counts) <- counts.files[[1]]$V1
+raw_counts_sp <- raw_counts[,grep("sept2018_sp_sp|sept2018_gm_sp", colnames(raw_counts))] 
+raw_counts_pv <- raw_counts[,grep("sept2018_pv_pv|sept2018_gm_pv", colnames(raw_counts))] 
+raw_counts_gm <- raw_counts[,grep("sept2018_gm_gm|sept2018_sp_gm|sept2018_pv_gm", colnames(raw_counts))] 
+#samples_order_sp = c(8,9,10,11,12,13,14,15,16,1,2,3,4,5,6,7)
+#samples_order_pv = c(7,8,9,10,11,12,13,14,15,1,2,3,4,5,6)
+#samples_order_gm = c(1,2,3,4,5,6,7,8,9,10,18,19,20,21,22,23,24,11,12,13,14,15,16,17)
+#raw_counts_sp <- raw_counts_sp[,samples_order_sp]
+#raw_counts_pv <- raw_counts_pv[,samples_order_pv]
+#raw_counts_gm <- raw_counts_gm[,samples_order_gm]
+
+#### SP ####
+
+# DDS object
+dds<-DESeqDataSetFromMatrix(countData = raw_counts_sp, colData = samplesSP,design = ~originSite_finalSite_experiment)
+
+# pre-filtering
+keep <- rowSums(counts(dds)) >= 10 
+dds <- dds[keep,]
+
+# Differential expression analysis
+dds<-DESeq(dds)
+cbind(resultsNames(dds))
+sp_sp_bck_VS_sp_sp_gas_lfc2_intra<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_bck","sp_sp_gas"), lfcThreshold = 1,alpha = 0.05)
+sp_sp_bck_VS_sp_sp_gas_lfc2_intra<-trimFunction(sp_sp_bck_VS_sp_sp_gas_lfc2_intra,0.05,1)
+
+sp_sp_bck_VS_gm_sp_gas_lfc2_intra<-results(dds, contrast=c("originSite_finalSite_experiment","sp_sp_bck","gm_sp_gas"), lfcThreshold = 1,alpha = 0.05)
+sp_sp_bck_VS_gm_sp_gas_lfc2_intra<-trimFunction(sp_sp_bck_VS_gm_sp_gas_lfc2_intra,0.05,1)
+
+rownames1_intra = row.names(sp_sp_bck_VS_gm_sp_gas_lfc2_intra)
+rownames2_intra = row.names(sp_sp_bck_VS_sp_sp_gas_lfc2_intra)
+rownames_intra <- union(rownames1_intra,rownames2_intra)
+rownames_intra <- data.frame(genes=rownames_intra)
+
+rownames_annot_intra = merge(rownames_intra,A_pfam,by="genes")
+rownames_annot_all_intra <- applyAnnot(rownames_intra,rownames_annot_intra)
+rownames_annot_all_intra
+
+vsd = vst(dds,blind=T)
+newColNames <- samplesSP$originSite_finalSite_experiment
+
+vsd_common_gm_lfc2_intra_sept2018_SP = heatmapFunction(newColNames,rownames_intra,rownames_annot_all_intra,vsd,"Sept2018 SP")
+
+pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment",returnData=TRUE,ntop=200)
+percentVar = round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
+  geom_point(size = 5) + theme_bw() + 
+  scale_color_manual(values = c("#ff4040","#8B0000","#00008B","#6495ED")) +
+  geom_point() +
+  ggtitle("Principal Component Analysis of adult corals", subtitle = "sept2018 dataset - SP") +
+  theme(text = element_text(size=14),legend.text = element_text(size=12), legend.position = 'bottom') +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+
+# Inference statistics
+count_tab_assay <- assay(vsd)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+ad<-adonis2(data=samplesSP,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+ad
+pair.mod<-pairwise.adonis(dist_tab_assay,factors=samplesSP$originSite_finalSite_experiment)
+pair.mod
+mod <- betadisper(dist_tab_assay,samplesSP$originSite_finalSite_experiment)
+mod.HSD <- TukeyHSD(mod)
+mod.HSD
+
+
+#### PV ####
+
+# DDS object
+dds<-DESeqDataSetFromMatrix(countData = raw_counts_pv, colData = samplesPV,design = ~originSite_finalSite_experiment)
+
+# pre-filtering
+keep <- rowSums(counts(dds)) >= 10 
+dds <- dds[keep,]
+
+# Differential expression analysis
+dds<-DESeq(dds)
+cbind(resultsNames(dds))
+pv_pv_bck_VS_pv_pv_gas_lfc2_intra<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_bck","pv_pv_gas"), lfcThreshold = 1,alpha = 0.05)
+pv_pv_bck_VS_pv_pv_gas_lfc2_intra<-trimFunction(pv_pv_bck_VS_pv_pv_gas_lfc2_intra,0.05,1)
+
+pv_pv_bck_VS_gm_pv_gas_lfc2_intra<-results(dds, contrast=c("originSite_finalSite_experiment","pv_pv_bck","gm_pv_gas"), lfcThreshold = 1,alpha = 0.05)
+pv_pv_bck_VS_gm_pv_gas_lfc2_intra<-trimFunction(pv_pv_bck_VS_gm_pv_gas_lfc2_intra,0.05,1)
+
+rownames1_intra = row.names(pv_pv_bck_VS_gm_pv_gas_lfc2_intra)
+rownames2_intra = row.names(pv_pv_bck_VS_pv_pv_gas_lfc2_intra)
+rownames_intra <- union(rownames1_intra,rownames2_intra)
+rownames_intra <- data.frame(genes=rownames_intra)
+
+rownames_annot_intra = merge(rownames_intra,A_pfam,by="genes")
+rownames_annot_all_intra <- applyAnnot(rownames_intra,rownames_annot_intra)
+rownames_annot_all_intra
+
+vsd = vst(dds,blind=T)
+newColNames <- samplesPV$originSite_finalSite_experiment
+
+vsd_common_gm_lfc2_intra_sept2018_PV = heatmapFunction(newColNames,rownames_intra,rownames_annot_all_intra,vsd,"Sept2018 PV")
+
+pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment",returnData=TRUE,ntop=200)
+percentVar = round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
+  geom_point(size = 5) + theme_bw() + 
+  scale_color_manual(values = c("#ff4040","#8B0000","#00008B","#6495ED")) +
+  geom_point() +
+  ggtitle("Principal Component Analysis of adult corals", subtitle = "sept2018 dataset - PV") +
+  theme(text = element_text(size=14),legend.text = element_text(size=12), legend.position = 'bottom') +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+
+# Inference statistics
+count_tab_assay <- assay(vsd)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+ad<-adonis2(data=samplesPV,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+ad
+pair.mod<-pairwise.adonis(dist_tab_assay,factors=samplesPV$originSite_finalSite_experiment)
+pair.mod
+mod <- betadisper(dist_tab_assay,samplesPV$originSite_finalSite_experiment)
+mod.HSD <- TukeyHSD(mod)
+mod.HSD
+
+#### GM ####
+
+
+# DDS object
+dds<-DESeqDataSetFromMatrix(countData = raw_counts_gm, colData = samplesGM,design = ~originSite_finalSite_experiment)
+
+# pre-filtering
+keep <- rowSums(counts(dds)) >= 10 
+dds <- dds[keep,]
+
+# Differential expression analysis
+dds<-DESeq(dds)
+cbind(resultsNames(dds))
+gm_gm_bck_VS_gm_gm_gas_lfc2_intra<-results(dds, contrast=c("originSite_finalSite_experiment","gm_gm_bck","gm_gm_gas"), lfcThreshold = 1,alpha = 0.05)
+gm_gm_bck_VS_gm_gm_gas_lfc2_intra<-trimFunction(gm_gm_bck_VS_gm_gm_gas_lfc2_intra,0.05,1)
+
+gm_gm_bck_VS_sp_gm_gas_lfc2_intra<-results(dds, contrast=c("originSite_finalSite_experiment","gm_gm_bck","sp_gm_gas"), lfcThreshold = 1,alpha = 0.05)
+gm_gm_bck_VS_sp_gm_gas_lfc2_intra<-trimFunction(gm_gm_bck_VS_sp_gm_gas_lfc2_intra,0.05,1)
+
+gm_gm_bck_VS_pv_gm_gas_lfc2_intra<-results(dds, contrast=c("originSite_finalSite_experiment","gm_gm_bck","pv_gm_gas"), lfcThreshold = 1,alpha = 0.05)
+gm_gm_bck_VS_pv_gm_gas_lfc2_intra<-trimFunction(gm_gm_bck_VS_pv_gm_gas_lfc2_intra,0.05,1)
+
+rownames1_intra = row.names(gm_gm_bck_VS_gm_gm_gas_lfc2_intra)
+rownames2_intra = row.names(gm_gm_bck_VS_sp_gm_gas_lfc2_intra)
+rownames3_intra = row.names(gm_gm_bck_VS_pv_gm_gas_lfc2_intra)
+rownames_intra <- union(rownames1_intra,rownames2_intra)
+rownames_intra <- union(rownames_intra,rownames3_intra)
+rownames_intra <- data.frame(genes=rownames_intra)
+
+rownames_annot_intra = merge(rownames_intra,A_pfam,by="genes")
+rownames_annot_all_intra <- applyAnnot(rownames_intra,rownames_annot_intra)
+rownames_annot_all_intra
+
+vsd = vst(dds,blind=T)
+newColNames <- samplesGM$originSite_finalSite_experiment
+
+vsd_common_gm_lfc2_intra_sept2018_GM = heatmapFunction(newColNames,rownames_intra,rownames_annot_all_intra,vsd,"Sept2018 GM")
+
+pcaData = plotPCA(vsd, intgroup="originSite_finalSite_experiment",returnData=TRUE,ntop=200)
+percentVar = round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(PC1, PC2, colour = originSite_finalSite_experiment)) + 
+  geom_point(size = 5) + theme_bw() + 
+  scale_color_manual(values = c("#ff4040","#8B0000","#00008B","#6495ED")) +
+  geom_point() +
+  ggtitle("Principal Component Analysis of adult corals", subtitle = "sept2018 dataset - GM") +
+  theme(text = element_text(size=14),legend.text = element_text(size=12), legend.position = 'bottom') +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) 
+
+# Inference statistics
+count_tab_assay <- assay(vsd)
+dist_tab_assay <- dist(t(count_tab_assay),method="euclidian")
+ad<-adonis2(data=samplesGM,dist_tab_assay ~ originSite_finalSite_experiment, method="euclidian")
+ad
+pair.mod<-pairwise.adonis(dist_tab_assay,factors=samplesGM$originSite_finalSite_experiment)
+pair.mod
+mod <- betadisper(dist_tab_assay,samplesGM$originSite_finalSite_experiment)
+mod.HSD <- TukeyHSD(mod)
+mod.HSD
+
+
+
+# patchwork heatmaps
+
+
+
+
