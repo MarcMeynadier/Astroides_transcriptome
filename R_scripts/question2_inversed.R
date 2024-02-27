@@ -82,7 +82,7 @@ heatmapFunction <- function(newColNames,commonGenes,commonGenesAll,vsd,nameCode)
   }
   names(vsdCommonGm) <- new_names
   p<-pheatmap(assay(vsdCommonGm),main=nameCode,scale="row", cluster_rows=TRUE, show_rownames=TRUE,
-           cluster_cols=FALSE,cellwidth = 20,fontsize_row = 8,treeheight_row = 0, treeheight_col = 0)
+           cluster_cols=FALSE,cellwidth = 20,fontsize_row = 12,treeheight_row = 0, treeheight_col = 0)
   return(vsdCommonGm)
 }
 
